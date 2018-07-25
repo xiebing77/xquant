@@ -1,7 +1,6 @@
 #!/usr/bin/python
 from .engine import Engine
 from setup import *
-from pymongo import MongoClient
 from exchange.binanceExchange import BinanceExchange
 from exchange.okexExchange import OkexExchange
 import common.xquant as xquant
@@ -89,8 +88,8 @@ class RealEngine(Engine):
             status=xquant.ORDER_STATUS_OPEN)
         return order_id
 
-    def cancle_orders(self):
-        orders = self.__exchange.get_open_orders()
+    def cancle_orders(self, symbol):
+        orders = self.__exchange.get_open_orders(symbol)
         for order in orders:
             if order['strategy_id'] == self.strategy_id:
                 self.__db.update_order(id=order['_id'], status=xquant.ORDER_STATUS_CANCELLING)

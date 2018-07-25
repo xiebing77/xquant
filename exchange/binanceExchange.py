@@ -109,4 +109,13 @@ class BinanceExchange(Exchange):
             self.debug('Error result: %s' % ret)
             return None
 
+    def get_open_orders(self, symbol):
+        exchange_symbol = __trans_symbol(symbol)
+        orders = self.__client.get_open_orders(symbol=exchange_symbol)
+        return orders
+
+    def cancel_orders(self, symbol, order_id):
+        exchange_symbol = __trans_symbol(symbol)
+        self.__client.cancel_order(symbol=exchange_symbol, orderId=order_id)
+
 
