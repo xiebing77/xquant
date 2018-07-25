@@ -58,6 +58,7 @@ class MixedKDJStrategy(Strategy):
         kdj_d_cur = df['kdj_d'].values[-1]
         kdj_j_cur = df['kdj_j'].values[-1]
         cur_price = df['close'].values[-1]
+        cur_price = utils.str_to_float(cur_price, self.base_amount_digits)
         logging.info('current price: %s;  kdj_k: %s; kdj_d: %s; kdj: %s', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
 
         free_target_amount =utils.str_to_float(target_balance['free'], self.target_amount_digits)

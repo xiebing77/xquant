@@ -91,7 +91,7 @@ class RealEngine(Engine):
 
     def cancle_orders(self, symbol):
         db_orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol, status=xquant.ORDER_STATUS_OPEN)
-        if len(db_orders) <= 0
+        if len(db_orders) <= 0:
             return
 
         orders = self.__exchange.get_open_orders(symbol)
