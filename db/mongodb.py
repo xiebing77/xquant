@@ -40,7 +40,12 @@ class MongoDB(object):
         print('querys: ', querys)
         print('*querys: ', *querys)
         # print('**querys: ', **querys)
-        orders = self.__client.orders.find(querys)
+        orders = []
+        ret = self.__client.orders.find(querys)
+        for i in ret:
+            orders.append(i)
+
+        print('orders: ', orders)
         return orders
 
     '''

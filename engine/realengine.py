@@ -45,17 +45,9 @@ class RealEngine(Engine):
                 return
         return amount, value
 
-    def get_open_orders(self, symbol):
-        orders = []
-        ret = self.__db.get_orders(symbol=symbol, status=xquant.ORDER_STATUS_OPEN)
-        for i in ret:
-            orders.append(i)
-        print('orders: ', orders)
-        return orders
-
 
     def sync_orders(self, symbol):
-        orders = self.has_open_orders(symbol)
+        orders = self.__db.get_orders(symbol=symbol, status=xquant.ORDER_STATUS_OPEN)
         if len(orders) <= 0:
             return
 
@@ -98,8 +90,8 @@ class RealEngine(Engine):
         return order_id
 
     def cancle_orders(self, symbol):
-        orders = self.get_open_orders(symbol)
-        if len(orders) <= 0:
+        db_orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol, status=xquant.ORDER_STATUS_OPEN)
+        if len(db_orders) <= 0
             return
 
         orders = self.__exchange.get_open_orders(symbol)
