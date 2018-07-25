@@ -31,13 +31,16 @@ class MongoDB(object):
             'status': status }})
     '''
     def update_order(self, id, **datas):
-        self.__client.orders.update_one({'_id': ObjectId(id)}, {'$set':{datas}})
+        self.__client.orders.update_one({'_id': ObjectId(id)}, {'$set':{*datas}})
 
 
 
     #
     def get_orders(self, **querys):
-        orders = self.__client.orders.find_many(querys)
+        print('querys: ', querys)
+        print('*querys: ', *querys)
+        # print('**querys: ', **querys)
+        orders = self.__client.orders.find(querys)
         return orders
 
     '''

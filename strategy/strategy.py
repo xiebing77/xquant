@@ -6,6 +6,7 @@ import logging
 import argparse
 from engine.realengine import RealEngine 
 import common.xquant as xquant
+import utils.utils as utils
 
 class Strategy(object):
     """docstring for Strategy"""
@@ -50,7 +51,7 @@ class Strategy(object):
         logging.info('cost_base_amount: %f',cost_base_amount)
 
         if cost_base_amount > 0: #
-            buy_target_amount = reserve_float(cost_base_amount / cur_price, self.target_amount_digits)
+            buy_target_amount = utils.reserve_float(cost_base_amount / cur_price, self.target_amount_digits)
             logging.info('buy target coin amount: %f', buy_target_amount)
             limit_buy_price = reserve_float(cur_price * 1.1, self.base_amount_digits)
             order_id = self.engine.send_order(xquant.SIDE_BUY, xquant.ORDER_TYPE_LIMIT,
@@ -60,7 +61,7 @@ class Strategy(object):
             pass
 
     def limit_sell(self, target_free_count, cur_price):
-        sell_target_amount = reserve_float(target_free_count, self.target_amount_digits)
+        sell_target_amount = utils.reserve_float(target_free_count, self.target_amount_digits)
         if sell_target_amount > 0: # 持仓
             logging.info('sell target coin num: %f',target_free_count)
             limit_sell_price = reserve_float(cur_price * 0.9, self.base_amount_digits)

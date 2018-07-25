@@ -29,7 +29,7 @@ class MixedKDJStrategy(Strategy):
             self.gold_price = cur_price
             self.gold_timestamp = datetime.datetime.now()
 
-        logging.info('gold price: %f;  time: %s', self.gold_price, self.gold_timestamp)
+        logging.info('gold price: %s;  time: %s', self.gold_price, self.gold_timestamp)
 
 
     def set_die_fork(self, cur_price):
@@ -37,7 +37,7 @@ class MixedKDJStrategy(Strategy):
             self.die_price = cur_price
             self.die_timestamp = datetime.datetime.now()
 
-        logging.info('die price: %f;  time: %s', self.die_price, self.die_timestamp)
+        logging.info('die price: %s;  time: %s', self.die_price, self.die_timestamp)
 
 
     def OnTick(self):
@@ -58,7 +58,7 @@ class MixedKDJStrategy(Strategy):
         kdj_d_cur = df['kdj_d'].values[-1]
         kdj_j_cur = df['kdj_j'].values[-1]
         cur_price = df['close'].values[-1]
-        logging.info('current price: %f;  kdj_k: %f; kdj_d: %f; kdj: %f', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
+        logging.info('current price: %s;  kdj_k: %s; kdj_d: %s; kdj: %s', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
 
         free_target_amount =utils.str_to_float(target_balance['free'], self.target_amount_digits)
         if kdj_j_cur-1 > kdj_k_cur and kdj_k_cur > kdj_d_cur+1: # 开仓
