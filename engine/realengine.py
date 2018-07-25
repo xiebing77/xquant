@@ -21,14 +21,14 @@ class RealEngine(Engine):
             print('Wrong exchange name: %s' % exchange)
             exit(1)
 
-        self.__db = MongoDB(db_user, db_pwd, db_name, db_url)
+        self.__db = MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
 
-    def get_klines_1day(self, symbol):
+    def get_klines_1day(self, symbol, size):
         return self.__exchange.get_klines_1day(symbol, size)
 
     def get_balances(self, *coins):
-       return self.__exchange.get_balances(coins)
+       return self.__exchange.get_balances(*coins)
 
     def get_position(self, symbol):
         amount = 0
@@ -93,7 +93,7 @@ class RealEngine(Engine):
         for order in orders:
             if order['strategy_id'] == self.strategy_id:
                 self.__db.update_order(id=order['_id'], status=xquant.ORDER_STATUS_CANCELLING)
-                self.__exchange.cancel_order(order['order_id'])
+                self.__exchange.cancel_order(symbol, order['order_id'])
 
 
 def test():

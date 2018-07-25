@@ -76,12 +76,13 @@ class Strategy(object):
         while True:
             tickStart = datetime.datetime.now()
             logging.info('%s OnTick start...', tickStart)
-
+            self.OnTick()
+            '''
             try:
                 self.OnTick()
             except Exception as e:
                 logging.critical(e)
-
+            '''
             tickEnd = datetime.datetime.now()
             logging.info('%s OnTick end...; tick  cost: %s', tickEnd, tickEnd-tickStart)
             time.sleep(int(self.interval))

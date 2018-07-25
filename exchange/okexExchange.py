@@ -3,6 +3,7 @@ import os
 import common.xquant as xquant
 from .exchange import Exchange
 from .okex.OkcoinSpotAPI import OKCoinSpot
+import pandas as pd
 
 api_key = os.environ.get('OKEX_API_KEY')
 secret_key = os.environ.get('OKEX_SECRET_KEY')
@@ -29,14 +30,14 @@ class OkexExchange(Exchange):
         else:
             return None
 
-    def __get_klines(self, symbol, interval, size=300, since=''):
+    def __get_klines(self, symbol, interval, size, since):
         exchange_symbol = __trans_symbol(symbol)
 
-        klines = self.client.get_kline(exchange_symbol, interval, size, since)
+        klines = self.client.get_kline(symbol=exchange_symbol, interval=interval, size=size)
         df = pd.DataFrame(klines, columns=['open_time', 'open','high','low','close','volume','close_time'])
         return df
 
-    def get_klines_1day(self, symbol, size, since):
+    def get_klines_1day(self, symbol, size=300, since=''):
         return self.__get_klines(symbol, '1day', size, since)
         
 
@@ -48,7 +49,7 @@ class OkexExchange(Exchange):
 
         for coin in coins:
             coinKey = self.__get_coinkey(coin)
-            balance = self.__create_balance(coin, free[coinKey], frozen[coinKey])
+            balance = self.create_balance(coin, free[coinKey], frozen[coinKey])
             coin_balances.append(balance)
 
         return tuple(coin_balances)

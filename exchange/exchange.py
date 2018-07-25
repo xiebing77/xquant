@@ -6,7 +6,7 @@ class Exchange(object):
     def __init__(self):
         super().__init__()
 
-    def __creat_balance(self, coin, free, frozen):
+    def create_balance(self, coin, free, frozen):
         return {'coin': coin, 'free': free, 'frozen': frozen}
 
     def get_balance_free(self, balance):
