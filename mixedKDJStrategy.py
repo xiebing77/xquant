@@ -52,18 +52,12 @@ class MixedKDJStrategy(Strategy):
 
         # 
         df = self.engine.get_klines_1day(self.symbol, 300)
-        close = [utils.str_to_float(x, self.base_amount_digits) for x in df['close']]
-        df['close'] = pd.Series(close)
-        # df['open'] = pd.Series([utils.reserve_float(x, self.base_amount_digits) for x in df['open']])
-        df['high'] = pd.Series([utils.str_to_float(x, self.base_amount_digits) for x in df['high']])
-        # df['low'] = pd.Series([utils.reserve_float(x, self.base_amount_digits) for x in df['low']])
-
         # 
         KDJ(df)
         kdj_k_cur = df['kdj_k'].values[-1]
         kdj_d_cur = df['kdj_d'].values[-1]
         kdj_j_cur = df['kdj_j'].values[-1]
-        cur_price = close[-1]
+        cur_price = df['close'].values[-1]
         logging.info('current price: %f;  kdj_k: %f; kdj_d: %f; kdj: %f', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
 
         free_target_amount =utils.str_to_float(target_balance['free'], self.target_amount_digits)
