@@ -31,6 +31,8 @@ class RealEngine(Engine):
        return self.__exchange.get_balances(*coins)
 
     def get_position(self, symbol):
+        self.sync_orders(symbol)
+
         amount = 0
         value = 0
         orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol)
@@ -45,8 +47,17 @@ class RealEngine(Engine):
                 return
         return amount, value
 
+    def has_open_orders(self, symbol):
+        db_orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol, status=xquant.ORDER_STATUS_OPEN)
+        if len(db_orders) > 0:
+            return True
+        return False
 
+    # 注意：触发是本策略有未完成的委托，但同步是account下所有委托，避免重复查询成交
     def sync_orders(self, symbol):
+        if self.has_open_orders(symbol) == False:
+            return
+
         orders = self.__db.get_orders(symbol=symbol, status=xquant.ORDER_STATUS_OPEN)
         if len(orders) <= 0:
             return
@@ -54,7 +65,6 @@ class RealEngine(Engine):
         df_amount, df_value = self.__exchange.get_deals(symbol)
 
         for order in orders:
-            _id = order['_id']
             order_id = order['orderId']
             deal_amount = df_amount[order_id]
             deal_value = df_value[order_id]
@@ -68,7 +78,7 @@ class RealEngine(Engine):
                 if self.__exchange.order_status_is_close(order_id):
                     status = xquant.ORDER_STATUS_CLOSE
 
-            self.__db.update_order(id=_id, deal_amount=deal_amount, deal_value=deal_value, status=status)
+            self.__db.update_order(_id=order['_id'], deal_amount=deal_amount, deal_value=deal_value, status=status)
         return
 
     def send_order(self, side, type, symbol, price, amount):
@@ -90,8 +100,7 @@ class RealEngine(Engine):
         return order_id
 
     def cancle_orders(self, symbol):
-        db_orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol, status=xquant.ORDER_STATUS_OPEN)
-        if len(db_orders) <= 0:
+        if self.has_open_orders(symbol) == False:
             return
 
         orders = self.__exchange.get_open_orders(symbol)

@@ -30,8 +30,8 @@ class MongoDB(object):
             'order_id': order_id,
             'status': status }})
     '''
-    def update_order(self, id, **datas):
-        self.__client.orders.update_one({'_id': ObjectId(id)}, {'$set':{datas}})
+    def update_order(self, _id, **datas):
+        self.__client.orders.update_one({'_id': ObjectId(_id)}, {'$set':{datas}})
 
 
 
