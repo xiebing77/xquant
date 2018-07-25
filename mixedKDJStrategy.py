@@ -44,11 +44,8 @@ class MixedKDJStrategy(Strategy):
         # 之前的挂单全撤掉
         self.engine.cancle_orders(self.symbol)
 
-        target_coin, base_coin = xquant.get_symbol_coins(self.symbol)
-        print('target_coin: %s, base_coin: %s' % (target_coin, base_coin))
-        target_balance, base_balance = self.engine.get_balances(target_coin, base_coin)
-        logging.info('target balance:  %s', target_balance)
-        logging.info('base   balance:  %s', base_balance)
+        position_amount, position_value = self.engine.get_position(self.symbol)
+        print('position_amount: %s, position_value: %s' % (position_amount, position_value))
 
         # 
         df = self.engine.get_klines_1day(self.symbol, 300)
@@ -61,21 +58,25 @@ class MixedKDJStrategy(Strategy):
         cur_price = utils.str_to_float(cur_price, self.base_amount_digits)
         logging.info('current price: %s;  kdj_k: %s; kdj_d: %s; kdj: %s', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
 
-        free_target_amount =utils.str_to_float(target_balance['free'], self.target_amount_digits)
         if kdj_j_cur-1 > kdj_k_cur and kdj_k_cur > kdj_d_cur+1: # 开仓
             logging.info('开仓信号: j-1 > k > d+1')
             self.set_gold_fork(cur_price)
 
-            if free_target_amount > 0: # 持仓
+            if position_amount > 0: # 持仓
                 pass
             else:                     # 空仓
+                target_coin, base_coin = xquant.get_symbol_coins(self.symbol)
+                print('target_coin: %s, base_coin: %s' % (target_coin, base_coin))
+                target_balance, base_balance = self.engine.get_balances(target_coin, base_coin)
+                logging.info('target balance:  %s', target_balance)
+                logging.info('base   balance:  %s', base_balance)
                 self.limit_buy(utils.str_to_float(base_balance['free'], self.base_amount_digits), cur_price)
 
         elif kdj_j_cur+1 < kdj_k_cur and kdj_k_cur < kdj_d_cur-1 : # 平仓
             logging.info('平仓信号: j+1 < k < d-1')
             self.set_die_fork(cur_price)
 
-            self.limit_sell(free_target_amount, cur_price)
+            self.limit_sell(position_amount, cur_price)
 
         else:
             logging.info('木有信号: 不买不卖')
