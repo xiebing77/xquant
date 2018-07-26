@@ -3,7 +3,7 @@ import os
 import common.xquant as xquant
 from .exchange import Exchange
 from .binance.client import Client
-from .binance.enums import KLINE_INTERVAL_1DAY
+from .binance.enums import *
 import pandas as pd
 
 api_key = os.environ.get('BINANCE_API_KEY')
@@ -63,8 +63,9 @@ class BinanceExchange(Exchange):
 
         return tuple(coin_balances)
 
-    def order_status_is_close(self, order_id):
-        order = self.__client.get_order(orderId=order_id)
+    def order_status_is_close(self, symbol, order_id):
+        exchange_symbol = self.__trans_symbol(symbol)
+        order = self.__client.get_order(symbol=exchange_symbol, orderId=order_id)
         if order['status'] in [ORDER_STATUS_FILLED, ORDER_STATUS_CANCELED, ORDER_STATUS_REJECTED, ORDER_STATUS_EXPIRED]:
             return True
         return False
@@ -73,18 +74,18 @@ class BinanceExchange(Exchange):
         exchange_symbol = self.__trans_symbol(symbol)
         trades = self.__client.get_my_trades(symbol=exchange_symbol)
         df = pd.DataFrame(trades)
-
-        df_qty = df['qty'].groupby('orderId').sum()
-
+        df[['price','qty']] = df[['price','qty']].apply(pd.to_numeric)
         df['value'] = df['price'] * df['qty']
-        df_value = df['value'].groupby('orderId').sum()
-
-        return df_qty, df_value
+        
+        print('deals df:', df)
+        df_s = df.groupby('orderId')['qty', 'value'].sum()
+        print('df_s: ', df_s)
+        return df_s['qty'], df_s['value']
 
 
     def send_order(self, side, type, symbol, price, amount, client_order_id):
         exchange_symbol = self.__trans_symbol(symbol)
-        self.debug('send order: pair(%s), side(%s), price(%s), amount(%s)' % (exchange_symbol, side, price, amount))
+        # self.debug('send order: pair(%s), side(%s), price(%s), amount(%s)' % (exchange_symbol, side, price, amount))
 
         binance_side = self.__trans_side(side)
         if binance_side is None:
@@ -94,7 +95,7 @@ class BinanceExchange(Exchange):
             return
 
         ret = self.__client.create_order(symbol=exchange_symbol, side=binance_side, type=binance_type,
-            timeInForce=TIME_IN_FORCE_GTC, price=price, quantity=amount, clientOrderId=client_order_id)
+            timeInForce=TIME_IN_FORCE_GTC, price=price, quantity=amount)
         # self.debug(ret)
         try:
             if ret['orderId']:
@@ -104,10 +105,10 @@ class BinanceExchange(Exchange):
                 # self.debug('Return buy order ID: %s' % ret['orderId'])
                 return ret['orderId']
             else:
-                self.debug('Place order failed')
+                # self.debug('Place order failed')
                 return None
         except Exception:
-            self.debug('Error result: %s' % ret)
+            # self.debug('Error result: %s' % ret)
             return None
 
     def get_open_orders(self, symbol):

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from pymongo import MongoClient
-
+from bson import ObjectId
 
 class MongoDB(object):
     """docstring for MongoDB"""
@@ -19,19 +19,21 @@ class MongoDB(object):
             'order_id': '',
             'pirce': pirce,
             'amount': amount,
-            'status': xquant.ORDER_STATUS_WAIT,
+            'status': status,
             'cancle_amount': 0,
             'deal_amount': 0,
             'deal_value': 0 }).inserted_id
         return _id
-        '''
+    '''
     def update_order(self, id, order_id, status):
         self.__client.orders.update_one({'_id': ObjectId(id)}, {$set:{
             'order_id': order_id,
             'status': status }})
     '''
-    def update_order(self, _id, **datas):
-        self.__client.orders.update_one({'_id': ObjectId(_id)}, {'$set':{datas}})
+    def update_order(self, id, **datas):
+        print('datas: ', datas)
+        print('*datas: ', *datas)
+        self.__client.orders.update_one({'_id': ObjectId(id)}, {'$set':datas})
 
 
 

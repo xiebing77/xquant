@@ -53,7 +53,7 @@ class Strategy(object):
         if cost_base_amount > 0: #
             buy_target_amount = utils.reserve_float(cost_base_amount / cur_price, self.target_amount_digits)
             logging.info('buy target coin amount: %f', buy_target_amount)
-            limit_buy_price = reserve_float(cur_price * 1.1, self.base_amount_digits)
+            limit_buy_price = utils.reserve_float(cur_price * 1.1, self.base_amount_digits)
             order_id = self.engine.send_order(xquant.SIDE_BUY, xquant.ORDER_TYPE_LIMIT,
                 self.symbol, limit_buy_price, buy_target_amount)
             logging.info('current price: %f;  limit buy price: %f;  order_id: %s ',cur_price, limit_buy_price, order_id)
@@ -64,7 +64,7 @@ class Strategy(object):
         sell_target_amount = utils.reserve_float(target_free_count, self.target_amount_digits)
         if sell_target_amount > 0: # 持仓
             logging.info('sell target coin num: %f',target_free_count)
-            limit_sell_price = reserve_float(cur_price * 0.9, self.base_amount_digits)
+            limit_sell_price = utils.reserve_float(cur_price * 0.9, self.base_amount_digits)
             order_id = self.engine.send_order(xquant.SIDE_SELL, xquant.ORDER_TYPE_LIMIT,
                 self.symbol, limit_sell_price, sell_target_amount)
             logging.info('current price: %f;  limit sell price: %f;  order_id: %s',cur_price, limit_sell_price, order_id)
@@ -85,7 +85,7 @@ class Strategy(object):
                 logging.critical(e)
             '''
             tickEnd = datetime.datetime.now()
-            logging.info('%s OnTick end...; tick  cost: %s', tickEnd, tickEnd-tickStart)
+            logging.info('%s OnTick end...; tick  cost: %s \n\n', tickEnd, tickEnd-tickStart)
             time.sleep(int(self.interval))
 
 		

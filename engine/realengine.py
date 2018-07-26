@@ -63,22 +63,34 @@ class RealEngine(Engine):
             return
 
         df_amount, df_value = self.__exchange.get_deals(symbol)
-
+        print('df_amount: ', df_amount)
+        print('df_value : ', df_value)
         for order in orders:
-            order_id = order['orderId']
+            print('order: ', order)
+            order_id = order['order_id']
+            order_amount = order['amount']
+
             deal_amount = df_amount[order_id]
             deal_value = df_value[order_id]
 
             status = xquant.ORDER_STATUS_OPEN
-            if deal_amount > order['deal_amount']:
+            if deal_amount > order_amount:
+                print('错误：最新成交数量大于委托数量')
                 continue
-            elif deal_amount == order['deal_amount']:
+            elif deal_amount == order_amount:
                 status = xquant.ORDER_STATUS_CLOSE
             else:
-                if self.__exchange.order_status_is_close(order_id):
+                if deal_amount < order['deal_amount']:
+                    print('错误：最新成交数量小于委托里记载的旧成交数量')
+                    continue
+                elif deal_amount == order['deal_amount']:
+                    print('成交数量没有更新')
+                else:
+                    pass
+                if self.__exchange.order_status_is_close(symbol, order_id):
                     status = xquant.ORDER_STATUS_CLOSE
-
-            self.__db.update_order(_id=order['_id'], deal_amount=deal_amount, deal_value=deal_value, status=status)
+            print('deal_amount: %s,  deal_value: %s', (deal_amount, deal_value))
+            self.__db.update_order(id=order['_id'], deal_amount=deal_amount, deal_value=deal_value, status=status)
         return
 
     def send_order(self, side, type, symbol, price, amount):
@@ -89,9 +101,9 @@ class RealEngine(Engine):
             type=type,
             pirce=price,
             amount=amount,
-            status=ORDER_STATUS_WAIT)
+            status=xquant.ORDER_STATUS_WAIT)
 
-        order_id = self.__exchange.send_order(side, type, symbol, price, amount, client_order_id)
+        order_id = self.__exchange.send_order(side, type, symbol, price, amount, id)
 
         self.__db.update_order(
             id=id,

@@ -45,7 +45,7 @@ class MixedKDJStrategy(Strategy):
         self.engine.cancle_orders(self.symbol)
 
         position_amount, position_value = self.engine.get_position(self.symbol)
-        print('position_amount: %s, position_value: %s' % (position_amount, position_value))
+        logging.info('position_amount: %s, position_value: %s' % (position_amount, position_value))
 
         # 
         df = self.engine.get_klines_1day(self.symbol, 300)

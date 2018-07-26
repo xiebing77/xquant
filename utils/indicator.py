@@ -21,7 +21,7 @@ def KDJ(df, n=9,ksgn='close'):
     highList = pd.Series(df['high']).rolling(n).max()
     highList.fillna(value=pd.Series(df['high']).expanding().max(), inplace=True)
 
-    p = pd.Series([float(x) for x in df[ksgn]])
+    p = df[ksgn].apply(pd.to_numeric)
     rsv = (p - lowList) / (highList - lowList) * 100
     df['RSV'] = rsv
     df['kdj_k'] = rsv.ewm(com=2,adjust=False).mean() #pd.ewma(rsv,com=2)
