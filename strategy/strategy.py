@@ -67,7 +67,7 @@ class Strategy(object):
         if target_coin_amount <= 0:
             return
 
-        logging.info('sell target coin num: %f',target_free_count)
+        logging.info('sell target coin num: %f',target_coin_amount)
         limit_sell_price = utils.reserve_float(cur_price * 0.9, self.base_amount_digits)
         order_id = self.engine.send_order(xquant.SIDE_SELL, xquant.ORDER_TYPE_LIMIT,
             self.symbol, limit_sell_price, target_coin_amount)

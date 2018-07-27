@@ -5,6 +5,7 @@ from .exchange import Exchange
 from .binance.client import Client
 from .binance.enums import *
 import pandas as pd
+import logging
 
 api_key = os.environ.get('BINANCE_API_KEY')
 secret_key = os.environ.get('BINANCE_SECRET_KEY')
@@ -83,7 +84,6 @@ class BinanceExchange(Exchange):
 
     def send_order(self, side, type, symbol, price, amount, client_order_id):
         exchange_symbol = self.__trans_symbol(symbol)
-        # self.debug('send order: pair(%s), side(%s), price(%s), amount(%s)' % (exchange_symbol, side, price, amount))
 
         binance_side = self.__trans_side(side)
         if binance_side is None:
@@ -92,9 +92,10 @@ class BinanceExchange(Exchange):
         if binance_type is None:
             return
 
+        logging.info('send order: pair(%s), side(%s), type(%s), price(%f), amount(%f)' % (exchange_symbol, binance_side, binance_type, price, amount))
         ret = self.__client.create_order(symbol=exchange_symbol, side=binance_side, type=binance_type,
             timeInForce=TIME_IN_FORCE_GTC, price=price, quantity=amount)
-        # self.debug(ret)
+        logging.debug(ret)
         try:
             if ret['orderId']:
 
