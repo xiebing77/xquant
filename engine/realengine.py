@@ -31,22 +31,35 @@ class RealEngine(Engine):
     def get_balances(self, *coins):
        return self.__exchange.get_balances(*coins)
 
-    def get_position(self, symbol):
+    def get_position(self, symbol, cur_price):
         self.sync_orders(symbol)
 
-        amount = 0
-        value = 0
+        position_amount = 0
+        buy_value = 0
+        sell_value = 0
         orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol)
         for order in orders:
             if order['side'] == xquant.SIDE_BUY:
-                amount += order['deal_amount']
-                value += order['deal_value']
+                position_amount += order['deal_amount']
+                buy_value += order['deal_value']
             elif order['side'] == xquant.SIDE_SELL:
-                amount -= order['deal_amount']
-                value -= order['deal_value']
+                position_amount -= order['deal_amount']
+                sell_value += order['deal_value']
             else:
+                logging.error('错误的委托方向')
                 return
-        return amount, value
+
+        profit = 0
+        if position_amount == 0:
+            profit = sell_value - buy_value
+        elif position_amount > 0:
+            position_value = cur_price * position_amount
+            profit = position_value + sell_value - buy_value
+        else:
+            logging.error('持仓数量不可能小于0')
+            return
+
+        return position_amount, profit
 
     def has_open_orders(self, symbol):
         db_orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol, status=xquant.ORDER_STATUS_OPEN)

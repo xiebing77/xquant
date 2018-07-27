@@ -44,12 +44,8 @@ class MixedKDJStrategy(Strategy):
         # 之前的挂单全撤掉
         self.engine.cancle_orders(self.symbol)
 
-        position_amount, position_value = self.engine.get_position(self.symbol)
-        logging.info('position_amount: %f, position_value: %f' % (position_amount, position_value))
-
-        # 
+        # 计算指标
         df = self.engine.get_klines_1day(self.symbol, 300)
-        # 
         KDJ(df)
         kdj_k_cur = df['kdj_k'].values[-1]
         kdj_d_cur = df['kdj_d'].values[-1]
@@ -57,6 +53,10 @@ class MixedKDJStrategy(Strategy):
         cur_price = df['close'].values[-1]
         cur_price = utils.str_to_float(cur_price, self.base_amount_digits)
         logging.info('current price: %f;  kdj_k: %f; kdj_d: %f; kdj: %f', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
+
+        # 持仓
+        position_amount, profit = self.engine.get_position(self.symbol, cur_price)
+        logging.info('symbol: %s, position_amount: %f, profit: %f' % (self.symbol, position_amount, profit))
 
         if kdj_j_cur-1 > kdj_k_cur and kdj_k_cur > kdj_d_cur+1: # 开仓
             logging.info('开仓信号: j-1 > k > d+1')
