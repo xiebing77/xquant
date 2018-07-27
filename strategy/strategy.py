@@ -11,7 +11,9 @@ import utils.utils as utils
 class Strategy(object):
     """docstring for Strategy"""
 
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.debug_flag = debug
+
         parser = argparse.ArgumentParser(description='coin trade')
         parser.add_argument('-b', help='base coin')
         parser.add_argument('-t', help='target coin')
@@ -76,16 +78,16 @@ class Strategy(object):
 
         while True:
             tickStart = datetime.datetime.now()
-            logging.info('%s OnTick start...', tickStart)
-            self.OnTick()
-            '''
-            try:
+            logging.info('\n %s OnTick start......................................', tickStart)
+            if self.debug_flag:
                 self.OnTick()
-            except Exception as e:
-                logging.critical(e)
-            '''
+            else:
+                try:
+                    self.OnTick()
+                except Exception as e:
+                    logging.critical(e)
             tickEnd = datetime.datetime.now()
-            logging.info('%s OnTick end...; tick  cost: %s \n\n', tickEnd, tickEnd-tickStart)
+            logging.info('%s OnTick end...; tick  cost: %s -----------------------\n', tickEnd, tickEnd-tickStart)
             time.sleep(int(self.interval))
 
 		

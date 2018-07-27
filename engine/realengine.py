@@ -5,6 +5,7 @@ from exchange.binanceExchange import BinanceExchange
 from exchange.okexExchange import OkexExchange
 import common.xquant as xquant
 from db.mongodb import MongoDB
+import logging
 
 class RealEngine(Engine):
     """docstring for Engine"""
@@ -63,10 +64,8 @@ class RealEngine(Engine):
             return
 
         df_amount, df_value = self.__exchange.get_deals(symbol)
-        print('df_amount: ', df_amount)
-        print('df_value : ', df_value)
         for order in orders:
-            print('order: ', order)
+            logging.debug('order: ', order)
             order_id = order['order_id']
             order_amount = order['amount']
 
@@ -75,21 +74,21 @@ class RealEngine(Engine):
 
             status = xquant.ORDER_STATUS_OPEN
             if deal_amount > order_amount:
-                print('错误：最新成交数量大于委托数量')
+                logging.error('最新成交数量大于委托数量')
                 continue
             elif deal_amount == order_amount:
                 status = xquant.ORDER_STATUS_CLOSE
             else:
                 if deal_amount < order['deal_amount']:
-                    print('错误：最新成交数量小于委托里记载的旧成交数量')
+                    logging.warning('最新成交数量小于委托里记载的旧成交数量')
                     continue
                 elif deal_amount == order['deal_amount']:
-                    print('成交数量没有更新')
+                    logging.info('成交数量没有更新')
                 else:
                     pass
                 if self.__exchange.order_status_is_close(symbol, order_id):
                     status = xquant.ORDER_STATUS_CLOSE
-            print('deal_amount: %s,  deal_value: %s', (deal_amount, deal_value))
+            logging.debug('deal_amount: %s,  deal_value: %s' % (deal_amount, deal_value))
             self.__db.update_order(id=order['_id'], deal_amount=deal_amount, deal_value=deal_value, status=status)
         return
 

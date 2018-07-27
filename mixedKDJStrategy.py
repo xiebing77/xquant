@@ -13,7 +13,7 @@ from strategy.strategy import Strategy
 
 class MixedKDJStrategy(Strategy):
     """docstring for KDJ"""
-    def __init__(self):
+    def __init__(self, debug):
 
         self._arguments = [['-limit', 'base coin limit']]
 
@@ -29,7 +29,7 @@ class MixedKDJStrategy(Strategy):
             self.gold_price = cur_price
             self.gold_timestamp = datetime.datetime.now()
 
-        logging.info('gold price: %s;  time: %s', self.gold_price, self.gold_timestamp)
+        logging.info('gold price: %f;  time: %s', self.gold_price, self.gold_timestamp)
 
 
     def set_die_fork(self, cur_price):
@@ -37,7 +37,7 @@ class MixedKDJStrategy(Strategy):
             self.die_price = cur_price
             self.die_timestamp = datetime.datetime.now()
 
-        logging.info('die price: %s;  time: %s', self.die_price, self.die_timestamp)
+        logging.info('die price: %f;  time: %s', self.die_price, self.die_timestamp)
 
 
     def OnTick(self):
@@ -45,7 +45,7 @@ class MixedKDJStrategy(Strategy):
         self.engine.cancle_orders(self.symbol)
 
         position_amount, position_value = self.engine.get_position(self.symbol)
-        logging.info('position_amount: %s, position_value: %s' % (position_amount, position_value))
+        logging.info('position_amount: %f, position_value: %f' % (position_amount, position_value))
 
         # 
         df = self.engine.get_klines_1day(self.symbol, 300)
@@ -56,7 +56,7 @@ class MixedKDJStrategy(Strategy):
         kdj_j_cur = df['kdj_j'].values[-1]
         cur_price = df['close'].values[-1]
         cur_price = utils.str_to_float(cur_price, self.base_amount_digits)
-        logging.info('current price: %s;  kdj_k: %s; kdj_d: %s; kdj: %s', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
+        logging.info('current price: %f;  kdj_k: %f; kdj_d: %f; kdj: %f', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
 
         if kdj_j_cur-1 > kdj_k_cur and kdj_k_cur > kdj_d_cur+1: # 开仓
             logging.info('开仓信号: j-1 > k > d+1')
@@ -68,8 +68,8 @@ class MixedKDJStrategy(Strategy):
                 target_coin, base_coin = xquant.get_symbol_coins(self.symbol)
                 print('target_coin: %s, base_coin: %s' % (target_coin, base_coin))
                 target_balance, base_balance = self.engine.get_balances(target_coin, base_coin)
-                logging.info('target balance:  %s', target_balance)
-                logging.info('base   balance:  %s', base_balance)
+                logging.info('target balance:  %f', target_balance)
+                logging.info('base   balance:  %f', base_balance)
                 self.limit_buy(utils.str_to_float(base_balance['free'], self.base_amount_digits), cur_price)
 
         elif kdj_j_cur+1 < kdj_k_cur and kdj_k_cur < kdj_d_cur-1 : # 平仓
@@ -84,5 +84,5 @@ class MixedKDJStrategy(Strategy):
 
 if __name__ == "__main__":
 
-    s = MixedKDJStrategy()
+    s = MixedKDJStrategy(debug=True)
     s.run()

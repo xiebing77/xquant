@@ -77,9 +77,7 @@ class BinanceExchange(Exchange):
         df[['price','qty']] = df[['price','qty']].apply(pd.to_numeric)
         df['value'] = df['price'] * df['qty']
         
-        print('deals df:', df)
         df_s = df.groupby('orderId')['qty', 'value'].sum()
-        print('df_s: ', df_s)
         return df_s['qty'], df_s['value']
 
 

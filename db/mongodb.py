@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from pymongo import MongoClient
 from bson import ObjectId
+import logging
 
 class MongoDB(object):
     """docstring for MongoDB"""
@@ -10,50 +11,23 @@ class MongoDB(object):
         self.__client.authenticate(user, password)
 
 
-    def insert_order(self, strategy_id, symbol, side, type, pirce, amount, status):
-        _id = self.__client.orders.insert_one({
-            'strategy_id': strategy_id,
-            'symbol': symbol,
-            'side': side,
-            'type': type,
-            'order_id': '',
-            'pirce': pirce,
-            'amount': amount,
-            'status': status,
-            'cancle_amount': 0,
-            'deal_amount': 0,
-            'deal_value': 0 }).inserted_id
+    def insert_order(self, **datas):
+        datas['order_id'] = ''
+        datas['cancle_amount'] = 0
+        datas['deal_amount'] = 0
+        datas['deal_value'] = 0
+        logging.debug('mongodb orders insert : %s', datas)
+        _id = self.__client.orders.insert_one(datas).inserted_id
         return _id
-    '''
-    def update_order(self, id, order_id, status):
-        self.__client.orders.update_one({'_id': ObjectId(id)}, {$set:{
-            'order_id': order_id,
-            'status': status }})
-    '''
+
     def update_order(self, id, **datas):
-        print('datas: ', datas)
-        print('*datas: ', *datas)
+        logging.debug('mongodb orders(_id=%s) update : %s', id, datas)
         self.__client.orders.update_one({'_id': ObjectId(id)}, {'$set':datas})
 
-
-
-    #
     def get_orders(self, **querys):
-        print('querys: ', querys)
-        print('*querys: ', *querys)
-        # print('**querys: ', **querys)
         orders = []
         ret = self.__client.orders.find(querys)
         for i in ret:
             orders.append(i)
 
-        print('orders: ', orders)
         return orders
-
-    '''
-    def get_order(self, strategy_id, order_id):
-        order = self.__client.orders.find_one({
-            'strategy_id': strategy_id,
-            'order_id': order_id })
-        return order
-    '''
