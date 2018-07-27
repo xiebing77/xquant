@@ -52,33 +52,33 @@ class Strategy(object):
         cost_base_amount = min(free_base_amount, self.limit_base_amount)
         logging.info('cost_base_amount: %f',cost_base_amount)
 
-        if cost_base_amount > 0: #
-            buy_target_amount = utils.reserve_float(cost_base_amount / cur_price, self.target_amount_digits)
-            logging.info('buy target coin amount: %f', buy_target_amount)
-            limit_buy_price = utils.reserve_float(cur_price * 1.1, self.base_amount_digits)
-            order_id = self.engine.send_order(xquant.SIDE_BUY, xquant.ORDER_TYPE_LIMIT,
-                self.symbol, limit_buy_price, buy_target_amount)
-            logging.info('current price: %f;  limit buy price: %f;  order_id: %s ',cur_price, limit_buy_price, order_id)
-        else:
-            pass
+        if cost_base_amount <= 0: #
+            return
 
-    def limit_sell(self, target_free_count, cur_price):
-        sell_target_amount = utils.reserve_float(target_free_count, self.target_amount_digits)
-        if sell_target_amount > 0: # 持仓
-            logging.info('sell target coin num: %f',target_free_count)
-            limit_sell_price = utils.reserve_float(cur_price * 0.9, self.base_amount_digits)
-            order_id = self.engine.send_order(xquant.SIDE_SELL, xquant.ORDER_TYPE_LIMIT,
-                self.symbol, limit_sell_price, sell_target_amount)
-            logging.info('current price: %f;  limit sell price: %f;  order_id: %s',cur_price, limit_sell_price, order_id)
+        buy_target_amount = utils.reserve_float(cost_base_amount / cur_price, self.target_amount_digits)
+        logging.info('buy target coin amount: %f', buy_target_amount)
+        limit_buy_price = utils.reserve_float(cur_price * 1.1, self.base_amount_digits)
+        order_id = self.engine.send_order(xquant.SIDE_BUY, xquant.ORDER_TYPE_LIMIT,
+            self.symbol, limit_buy_price, buy_target_amount)
+        logging.info('current price: %f;  limit buy price: %f;  order_id: %s ',cur_price, limit_buy_price, order_id)
 
-        else:                     # 空仓
-            pass
+
+    def limit_sell(self, target_coin_amount, cur_price):
+        if target_coin_amount <= 0:
+            return
+
+        logging.info('sell target coin num: %f',target_free_count)
+        limit_sell_price = utils.reserve_float(cur_price * 0.9, self.base_amount_digits)
+        order_id = self.engine.send_order(xquant.SIDE_SELL, xquant.ORDER_TYPE_LIMIT,
+            self.symbol, limit_sell_price, target_coin_amount)
+        logging.info('current price: %f;  limit sell price: %f;  order_id: %s',cur_price, limit_sell_price, order_id)
+
 
     def run(self):
 
         while True:
             tickStart = datetime.datetime.now()
-            logging.info('\n %s OnTick start......................................', tickStart)
+            logging.info('%s OnTick start......................................', tickStart)
             if self.debug_flag:
                 self.OnTick()
             else:
@@ -87,7 +87,7 @@ class Strategy(object):
                 except Exception as e:
                     logging.critical(e)
             tickEnd = datetime.datetime.now()
-            logging.info('%s OnTick end...; tick  cost: %s -----------------------\n', tickEnd, tickEnd-tickStart)
+            logging.info('%s OnTick end...; tick  cost: %s -----------------------\n\n', tickEnd, tickEnd-tickStart)
             time.sleep(int(self.interval))
 
 		

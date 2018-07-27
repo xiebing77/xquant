@@ -64,7 +64,7 @@ class MixedKDJStrategy(Strategy):
 
             if position_amount > 0: # 持仓
                 pass
-            else:                     # 空仓
+            else:                   # 空仓
                 target_coin, base_coin = xquant.get_symbol_coins(self.symbol)
                 print('target_coin: %s, base_coin: %s' % (target_coin, base_coin))
                 target_balance, base_balance = self.engine.get_balances(target_coin, base_coin)

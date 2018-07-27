@@ -113,7 +113,11 @@ class RealEngine(Engine):
             type=type,
             pirce=price,
             amount=amount,
-            status=xquant.ORDER_STATUS_WAIT)
+            status=xquant.ORDER_STATUS_WAIT,
+            order_id = '',
+            cancle_amount = 0,
+            deal_amount = 0,
+            deal_value = 0)
 
         order_id = self.__exchange.send_order(side, type, symbol, price, amount, id)
 

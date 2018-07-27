@@ -12,10 +12,6 @@ class MongoDB(object):
 
 
     def insert_order(self, **datas):
-        datas['order_id'] = ''
-        datas['cancle_amount'] = 0
-        datas['deal_amount'] = 0
-        datas['deal_value'] = 0
         logging.debug('mongodb orders insert : %s', datas)
         _id = self.__client.orders.insert_one(datas).inserted_id
         return _id
