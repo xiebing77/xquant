@@ -51,8 +51,12 @@ class MixedKDJStrategy(Strategy):
         kdj_d_cur = df['kdj_d'].values[-1]
         kdj_j_cur = df['kdj_j'].values[-1]
         cur_price = df['close'].values[-1]
-        cur_price = utils.str_to_float(cur_price, self.base_amount_digits)
+        cur_price = pd.to_numeric(cur_price, self.base_amount_digits)
         logging.info('current price: %f;  kdj_k: %f; kdj_d: %f; kdj: %f', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
+
+        today_high_price = pd.to_numeric(df['high'].values[-1])
+        today_fall_rate = (1 - cur_price / today_high_price) * 100
+        logging.info('today high price:%f;  fall rate: %f%% ;', today_high_price, today_fall_rate)
 
         # 持仓
         position_amount, profit = self.engine.get_position(self.symbol, cur_price)
@@ -68,8 +72,8 @@ class MixedKDJStrategy(Strategy):
                 target_coin, base_coin = xquant.get_symbol_coins(self.symbol)
                 print('target_coin: %s, base_coin: %s' % (target_coin, base_coin))
                 target_balance, base_balance = self.engine.get_balances(target_coin, base_coin)
-                logging.info('target balance:  %f', target_balance)
-                logging.info('base   balance:  %f', base_balance)
+                logging.info('target balance:  %s', target_balance)
+                logging.info('base   balance:  %s', base_balance)
                 self.limit_buy(utils.str_to_float(base_balance['free'], self.base_amount_digits), cur_price)
 
         elif kdj_j_cur+1 < kdj_k_cur and kdj_k_cur < kdj_d_cur-1 : # 平仓
