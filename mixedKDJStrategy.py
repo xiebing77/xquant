@@ -51,24 +51,31 @@ class MixedKDJStrategy(Strategy):
         kdj_d_cur = df['kdj_d'].values[-1]
         kdj_j_cur = df['kdj_j'].values[-1]
         cur_price = df['close'].values[-1]
-        cur_price = pd.to_numeric(cur_price, self.base_amount_digits)
+        cur_price = pd.to_numeric(cur_price)
         logging.info('current price: %f;  kdj_k: %f; kdj_d: %f; kdj: %f', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
-
-        # 计算当天最高价的回落比例
-        today_high_price = pd.to_numeric(df['high'].values[-1])
-        today_fall_rate = (1 - cur_price / today_high_price) * 100
-        logging.info('today high price:%f;  fall rate: %f%% ;', today_high_price, today_fall_rate)
 
         # 持仓
         position_amount, profit, start_time = self.engine.get_position(self.symbol, cur_price)
         logging.info('symbol: %s, position_amount: %f, profit: %f, start_time: %s' % (self.symbol, position_amount, profit, start_time))
 
-        # 计算开仓日期到现在最高价的回落比例
-        start_timestamp = time.mktime(start_time.timetuple())
-        period_df = df[df['open_time'] > start_timestamp*1000]
-        period_high_price = period_df['high'].max()
-        period_fall_rate = (1 - cur_price / period_high_price) * 100
-        logging.info('start_timestamp: %s, period_high_price: %f, period_fall_rate: %f' % (start_timestamp, period_high_price, period_fall_rate))
+        if position_amount > 0:
+            # 计算当天最高价的回落比例
+            today_high_price = pd.to_numeric(df['high'].values[-1])
+            today_fall_rate = (1 - cur_price / today_high_price) * 100
+            logging.info('today high price:%f;  fall rate: %f%% ;', today_high_price, today_fall_rate)
+    
+            # 计算开仓日期到现在最高价的回落比例
+            start_timestamp = time.mktime(start_time.timetuple())
+            # print('start_timestamp: %s, type:%s' % (start_timestamp, type(start_timestamp)))
+            period_df = df[df['open_time'].map(lambda x:int(x)) > start_timestamp*1000]
+            # print(df)
+            # print(period_df)
+            period_high_price = period_df['high'].apply(pd.to_numeric).max()
+            # print('start_timestamp: %s, period_high_price: %f' % (start_timestamp, period_high_price))
+    
+            period_fall_rate = (1 - cur_price / period_high_price) * 100
+            #print('start_timestamp: %s, period_high_price: %f, period_fall_rate: %f' % (start_timestamp, period_high_price, period_fall_rate))
+            logging.info('start_timestamp: %s, period_high_price: %f, period_fall_rate: %f' % (start_timestamp, period_high_price, period_fall_rate))
 
 
         if kdj_j_cur-1 > kdj_k_cur and kdj_k_cur > kdj_d_cur+1: # 开仓

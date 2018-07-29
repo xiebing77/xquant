@@ -4,7 +4,7 @@ from setup import *
 from exchange.binanceExchange import BinanceExchange
 from exchange.okexExchange import OkexExchange
 import common.xquant as xquant
-from db.mongodb import md
+import db.mongodb as md
 import logging
 
 class RealEngine(Engine):

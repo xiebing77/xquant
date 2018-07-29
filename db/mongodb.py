@@ -33,5 +33,3 @@ class MongoDB(object):
 
         return orders
 
-    def get_timestamp(self, order):
-        ObjectId(order['_id']).
