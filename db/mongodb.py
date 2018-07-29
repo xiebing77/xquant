@@ -3,6 +3,11 @@ from pymongo import MongoClient
 from bson import ObjectId
 import logging
 
+
+def get_datetime_by_id(id):
+    return ObjectId(id).generation_time
+
+
 class MongoDB(object):
     """docstring for MongoDB"""
     def __init__(self, user, password, db_name, db_url):
@@ -27,3 +32,6 @@ class MongoDB(object):
             orders.append(i)
 
         return orders
+
+    def get_timestamp(self, order):
+        ObjectId(order['_id']).

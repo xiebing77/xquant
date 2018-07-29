@@ -54,13 +54,22 @@ class MixedKDJStrategy(Strategy):
         cur_price = pd.to_numeric(cur_price, self.base_amount_digits)
         logging.info('current price: %f;  kdj_k: %f; kdj_d: %f; kdj: %f', cur_price, kdj_k_cur, kdj_d_cur, kdj_j_cur)
 
+        # 计算当天最高价的回落比例
         today_high_price = pd.to_numeric(df['high'].values[-1])
         today_fall_rate = (1 - cur_price / today_high_price) * 100
         logging.info('today high price:%f;  fall rate: %f%% ;', today_high_price, today_fall_rate)
 
         # 持仓
-        position_amount, profit = self.engine.get_position(self.symbol, cur_price)
-        logging.info('symbol: %s, position_amount: %f, profit: %f' % (self.symbol, position_amount, profit))
+        position_amount, profit, start_time = self.engine.get_position(self.symbol, cur_price)
+        logging.info('symbol: %s, position_amount: %f, profit: %f, start_time: %s' % (self.symbol, position_amount, profit, start_time))
+
+        # 计算开仓日期到现在最高价的回落比例
+        start_timestamp = time.mktime(start_time.timetuple())
+        period_df = df[df['open_time'] > start_timestamp*1000]
+        period_high_price = period_df['high'].max()
+        period_fall_rate = (1 - cur_price / period_high_price) * 100
+        logging.info('start_timestamp: %s, period_high_price: %f, period_fall_rate: %f' % (start_timestamp, period_high_price, period_fall_rate))
+
 
         if kdj_j_cur-1 > kdj_k_cur and kdj_k_cur > kdj_d_cur+1: # 开仓
             logging.info('开仓信号: j-1 > k > d+1')

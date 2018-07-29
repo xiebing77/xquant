@@ -4,7 +4,7 @@ from setup import *
 from exchange.binanceExchange import BinanceExchange
 from exchange.okexExchange import OkexExchange
 import common.xquant as xquant
-from db.mongodb import MongoDB
+from db.mongodb import md
 import logging
 
 class RealEngine(Engine):
@@ -22,7 +22,7 @@ class RealEngine(Engine):
             print('Wrong exchange name: %s' % exchange)
             exit(1)
 
-        self.__db = MongoDB(mongo_user, mongo_pwd, db_name, db_url)
+        self.__db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
 
     def get_klines_1day(self, symbol, size):
@@ -34,12 +34,15 @@ class RealEngine(Engine):
     def get_position(self, symbol, cur_price):
         self.sync_orders(symbol)
 
+        start_time = None
         position_amount = 0
         buy_value = 0
         sell_value = 0
         orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol)
         for order in orders:
             if order['side'] == xquant.SIDE_BUY:
+                if position_amount == 0:
+                    start_time = md.get_datetime_by_id(order['_id'])
                 position_amount += order['deal_amount']
                 buy_value += order['deal_value']
             elif order['side'] == xquant.SIDE_SELL:
@@ -59,7 +62,7 @@ class RealEngine(Engine):
             logging.error('持仓数量不可能小于0')
             return
 
-        return position_amount, profit
+        return position_amount, profit, start_time
 
     def has_open_orders(self, symbol):
         db_orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol, status=xquant.ORDER_STATUS_OPEN)
