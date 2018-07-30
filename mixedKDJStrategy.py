@@ -55,13 +55,13 @@ class MixedKDJStrategy(Strategy):
         cost_price = 0
         logging.info('position:  symbol(%s), amount(%f), cost(%f), profit(%f), start_time(%s)' % 
             (self.symbol, position_amount, position_cost, profit, start_time))
-        if amount > 0:
+        if position_amount > 0:
             cost_price = position_cost / position_amount
             logging.info('position:  symbol(%s), cost price(%s)' % (self.symbol, cost_price))
 
         if position_amount > 0:
-            today_fall_rate = cacl_today_fall_rate(df)
-            period_fall_rate = cacl_period_fall_rate(df, start_time)
+            today_fall_rate = self.cacl_today_fall_rate(df)
+            period_fall_rate = self.cacl_period_fall_rate(df, start_time)
 
 
         KDJ(df)

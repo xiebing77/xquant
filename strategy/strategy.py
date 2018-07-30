@@ -8,6 +8,7 @@ from engine.realengine import RealEngine
 import common.xquant as xquant
 import utils.utils as utils
 import json
+import pandas as pd
 
 class Strategy(object):
     """docstring for Strategy"""
