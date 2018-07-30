@@ -47,28 +47,32 @@ class MixedKDJStrategy(Strategy):
         # 计算指标
         df = self.engine.get_klines_1day(self.symbol, 300)
         self.cur_price = pd.to_numeric(df['close'].values[-1])
-        logging.info('current price: %f', self.cur_price)
 
         # 持仓
         position_amount, position_cost, start_time = self.engine.get_position(self.symbol, self.cur_price)
         profit = position_amount * self.cur_price - position_cost
         cost_price = 0
-        logging.info('position:  symbol(%s), amount(%f), cost(%f), profit(%f), start_time(%s)' % 
-            (self.symbol, position_amount, position_cost, profit, start_time))
         if position_amount > 0:
             cost_price = position_cost / position_amount
-            logging.info('position:  symbol(%s), cost price(%s)' % (self.symbol, cost_price))
+        logging.info('position:  symbol(%s), current price(%f), cost price(%s), amount(%f), cost(%f), profit(%f), start_time(%s)' %
+            (self.symbol, self.cur_price, cost_price, position_amount, position_cost, profit, start_time))
 
-        if position_amount > 0:
-            today_fall_rate = self.cacl_today_fall_rate(df)
-            period_fall_rate = self.cacl_period_fall_rate(df, start_time)
-
+        # today_fall_rate = self.cacl_today_fall_rate(df)
+        period_fall_rate = self.cacl_period_fall_rate(df, start_time)
+        if period_fall_rate > 0.1:  # 平仓
+            if position_amount > 0:
+                self.limit_sell(self.symbol, position_amount)
+            return
+        '''
+        elif today_fall_rate > 0.05: # 减仓一半
+            return
+        '''
 
         KDJ(df)
         kdj_k_cur = df['kdj_k'].values[-1]
         kdj_d_cur = df['kdj_d'].values[-1]
         kdj_j_cur = df['kdj_j'].values[-1]
-        logging.info('current kdj K: %f; D: %f; J: %f', kdj_k_cur, kdj_d_cur, kdj_j_cur)
+        logging.info('current kdj K(%f); D(%f); J(%f)', kdj_k_cur, kdj_d_cur, kdj_j_cur)
         if kdj_j_cur-1 > kdj_k_cur and kdj_k_cur > kdj_d_cur+1: # 开仓
             logging.info('开仓信号: j-1 > k > d+1')
             self.set_gold_fork()

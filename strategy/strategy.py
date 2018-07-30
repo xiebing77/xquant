@@ -51,12 +51,12 @@ class Strategy(object):
     # 计算当天最高价的回落比例
     def cacl_today_fall_rate(self, df):
         today_high_price = pd.to_numeric(df['high'].values[-1])
-        today_fall_rate = (1 - self.cur_price / today_high_price) * 100
-        logging.info('today high price:%f;  fall rate: %f%% ;', today_high_price, today_fall_rate)
-        return today_fall_rate
+        today_fall_rate = (1 - self.cur_price / today_high_price)
+        logging.info('today  high price(%f);  fall rate(%f)', today_high_price, today_fall_rate)
+        return today_fall_percent
 
     # 计算开仓日期到现在最高价的回落比例
-    def cacl_period_fall_rate(self, df, start_time):
+    def cacl_period_fall_percent(self, df, start_time):
         if start_time is None:
             return
 
@@ -68,9 +68,9 @@ class Strategy(object):
         period_high_price = period_df['high'].apply(pd.to_numeric).max()
         # print('start_timestamp: %s, period_high_price: %f' % (start_timestamp, period_high_price))
 
-        period_fall_rate = (1 - self.cur_price / period_high_price) * 100
+        period_fall_rate = (1 - self.cur_price / period_high_price)
         #print('start_timestamp: %s, period_high_price: %f, period_fall_rate: %f' % (start_timestamp, period_high_price, period_fall_rate))
-        logging.info('period high price: %f, fall rate: %f%%, start time: %s' % (period_high_price, period_fall_rate, start_time))
+        logging.info('period high price(%f), fall rate(%f%%), start time(%s)' % (period_high_price, period_fall_rate, start_time))
         return period_fall_rate
 
     def limit_buy(self, symbol, base_coin_amount):
