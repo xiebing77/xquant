@@ -12,4 +12,4 @@
 source ~/.profile
 base_dir=$(cd `dirname $0`; pwd)
 
-python3.6 $base_dir/mixedKDJStrategy.py -t eth -b usdt -a 4 -d 2 -p 2 -e binance -s 600 -limit 20 -i 1
+python3.6 $base_dir/mixedKDJStrategy.py -symbol eth_usdt -digits '{"eth":8,"usdt":2}' -e binance -s 600 -limit 20 -i 1

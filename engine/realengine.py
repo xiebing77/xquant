@@ -35,34 +35,34 @@ class RealEngine(Engine):
         self.sync_orders(symbol)
 
         start_time = None
-        position_amount = 0
-        buy_value = 0
-        sell_value = 0
+        amount = 0
+        cost = 0
+        commission_rate = 0.001
+
         orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol)
         for order in orders:
             if order['side'] == xquant.SIDE_BUY:
-                if position_amount == 0:
+                if amount == 0:
                     start_time = md.get_datetime_by_id(order['_id'])
-                position_amount += order['deal_amount']
-                buy_value += order['deal_value']
+                amount += order['deal_amount']
+                cost += order['deal_value'] * (1+commission_rate)
             elif order['side'] == xquant.SIDE_SELL:
-                position_amount -= order['deal_amount']
-                sell_value += order['deal_value']
+                amount -= order['deal_amount']
+                cost -= order['deal_value'] * (1+commission_rate)
             else:
                 logging.error('错误的委托方向')
                 return
 
         profit = 0
-        if position_amount == 0:
-            profit = sell_value - buy_value
-        elif position_amount > 0:
-            position_value = cur_price * position_amount
-            profit = position_value + sell_value - buy_value
+        if amount == 0:
+            profit = 0 - cost
+        elif amount > 0:
+            profit = cur_price * amount - cost
         else:
             logging.error('持仓数量不可能小于0')
             return
 
-        return position_amount, profit, start_time
+        return amount, cost, start_time
 
     def has_open_orders(self, symbol):
         db_orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol, status=xquant.ORDER_STATUS_OPEN)
