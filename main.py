@@ -15,4 +15,4 @@ if __name__ == "__main__":
     config = json.loads(sys.argv[3])
 
     obj = createInstance(module_name, class_name, config, debug=True)
-    obj.test()
+    obj.run()

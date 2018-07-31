@@ -68,8 +68,7 @@ class MixedKDJStrategy(Strategy):
             logging.info('木有信号: 不买不卖')
             return
 
-    def handle_order(self, symbol, side, desired_position_rate):
-        self.cur_price = pd.to_numeric(df['close'].values[-1])
+    def handle_order(self, symbol, side, desired_position_rate, df):
 
         # 持仓
         position_amount, position_cost, start_time = self.engine.get_position(symbol, self.cur_price)
@@ -99,11 +98,11 @@ class MixedKDJStrategy(Strategy):
         if side == xquant.SIDE_BUY:
             desired_position_value = limit_base_amount * desired_position_rate
             buy_base_amount = desired_position_value - position_cost
-            self.limit_buy(symbol, utils.reserve_float(buy_base_amount),self.digits[base_coin])
+            self.limit_buy(symbol, utils.reserve_float(buy_base_amount),self.config['digits'][base_coin])
         elif side == xquant.SIDE_SELL:
             position_rate = position_cost / limit_base_amount
             desired_position_amount = position_amount * desired_position_rate / position_rate
-            sell_target_amount = position_amount - utils.reserve_float(desired_position_amount, self.digits[target_coin])
+            sell_target_amount = position_amount - utils.reserve_float(desired_position_amount, self.config['digits'][target_coin])
             self.limit_sell(symbol, sell_target_amount)
         else:
             return
@@ -116,8 +115,9 @@ class MixedKDJStrategy(Strategy):
 
         # 
         df = self.engine.get_klines_1day(symbol, 300)
+        self.cur_price = pd.to_numeric(df['close'].values[-1])
         side, desired_position_rate = self.check_kdj(df)
-        self.handle_order(symbol, side, desired_position_rate)
+        self.handle_order(symbol, side, desired_position_rate, df)
 
 
 
