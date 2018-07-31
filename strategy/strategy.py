@@ -13,40 +13,19 @@ import pandas as pd
 class Strategy(object):
     """docstring for Strategy"""
 
-    def __init__(self, debug=False):
+    def __init__(self, config, debug=False):
+        self.config = config
         self.debug_flag = debug
-        print('self.debug_flag: ', self.debug_flag)
 
-        parser = argparse.ArgumentParser(description='coin trade')
-        parser.add_argument('-symbol', help='symbol')
-        parser.add_argument('-digits', help='coins digits')
-
-        parser.add_argument('-e', help='exchange name')
-        parser.add_argument('-s', help='tick second')
-        parser.add_argument('-r', help='email receiver')
-        parser.add_argument('-i', help='instance No')
-
-        for argument in self._arguments:
-            parser.add_argument(argument[0], help=argument[1])
-
-        args = parser.parse_args()
-        print(args)
-
-        self._args = args
-
-        self.symbol = args.symbol
-        self.digits = json.loads(args.digits)
-        self.id = self.__class__.__name__ + '_' + self.symbol + '_' + args.i
-        self.interval = args.s
-        self.limit_base_amount = float(args.limit)
+        self.id = self.__class__.__name__ + '_' + self.config['symbol'] + '_' + self.config['id']
 
         logfilename = self.id + '_' + datetime.datetime.now().strftime('%Y%m%d') + '.log'
         print(logfilename)
         logging.basicConfig(level=logging.NOTSET, filename=logfilename)
 
-        logging.info('strategy name: %s;  args: %s', self.__class__.__name__, args)
+        logging.info('strategy name: %s;  config: %s', self.__class__.__name__, config)
 
-        self.engine = RealEngine(args.e, self.id)
+        self.engine = RealEngine(self.config['exchange'], self.id)
 
     # 计算当天最高价的回落比例
     def cacl_today_fall_rate(self, df):
@@ -74,6 +53,9 @@ class Strategy(object):
         return period_fall_rate
 
     def limit_buy(self, symbol, base_coin_amount):
+        if base_coin_amount <= 0:
+            return
+
         target_coin, base_coin = xquant.get_symbol_coins(symbol)
         base_balance = self.engine.get_balances(base_coin)
         logging.info('base   balance:  %s', base_balance)
@@ -85,11 +67,11 @@ class Strategy(object):
         if buy_base_amount <= 0: #
             return
 
-        target_amount_digits = self.digits[target_coin]
+        target_amount_digits = self.config['digits'][target_coin]
         buy_target_amount = utils.reserve_float(buy_base_amount / self.cur_price, target_amount_digits)
         logging.info('buy target coin amount: %f', buy_target_amount)
 
-        base_amount_digits = self.digits[base_coin]
+        base_amount_digits = self.config['digits'][base_coin]
         limit_buy_price = utils.reserve_float(self.cur_price * 1.1, base_amount_digits)
         order_id = self.engine.send_order(xquant.SIDE_BUY, xquant.ORDER_TYPE_LIMIT, symbol, limit_buy_price, buy_target_amount)
         logging.info('current price: %f;  limit buy price: %f;  order_id: %s ',self.cur_price, limit_buy_price, order_id)
@@ -102,7 +84,7 @@ class Strategy(object):
         logging.info('sell target coin num: %f',target_coin_amount)
 
         target_coin, base_coin = xquant.get_symbol_coins(symbol)
-        base_amount_digits = self.digits[base_coin]
+        base_amount_digits = self.config['digits'][base_coin]
         limit_sell_price = utils.reserve_float(self.cur_price * 0.9, base_amount_digits)
         order_id = self.engine.send_order(xquant.SIDE_SELL, xquant.ORDER_TYPE_LIMIT, symbol, limit_sell_price, target_coin_amount)
         logging.info('current price: %f;  limit sell price: %f;  order_id: %s',self.cur_price, limit_sell_price, order_id)
@@ -122,6 +104,6 @@ class Strategy(object):
                     logging.critical(e)
             tickEnd = datetime.datetime.now()
             logging.info('%s OnTick end...; tick  cost: %s -----------------------\n\n', tickEnd, tickEnd-tickStart)
-            time.sleep(int(self.interval))
+            time.sleep(self.config['sec'])
 
 		
