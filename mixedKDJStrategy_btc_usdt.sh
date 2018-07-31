@@ -12,4 +12,4 @@
 source ~/.profile
 base_dir=$(cd `dirname $0`; pwd)
 
-python3.6 $base_dir/mixedKDJStrategy.py -t btc -b usdt -a 8 -d 2 -p 2 -e binance -s 600 -limit 200 -i 1
+python3.6 $base_dir/main.py strategy/mixedKDJStrategy MixedKDJStrategy '{"symbol":"btc_usdt", "digits":{"btc":8,"usdt":2}, "exchange":"binance", "sec": 600, "limit":200, "id": "xb2"}'
