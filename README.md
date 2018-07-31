@@ -12,13 +12,14 @@ main.py
 ### common
 本项目共用
 ### db
-数据库
+数据库</br>
 目前支持mongodb
 ### exchange
-交易所，目前支持binance、okex（调试未完成）
+交易所</br>
+目前支持binance、okex（调试未完成）
 ### engine
-交易环境
-目前只支持实盘
-历史回测、实盘仿真：待续...
+交易环境</br>
+目前只支持实盘</br>
+历史回测、实盘仿真，待续...
 ### strategy
 策略库
