@@ -91,6 +91,8 @@ class Strategy(object):
             buy_base_amount = desired_position_value - position_info["cost"]
             self.limit_buy(symbol, utils.reserve_float(buy_base_amount),self.config['digits'][base_coin])
         elif desired_side == xquant.SIDE_SELL:
+            if position_info["cost"] == 0:
+                return
             position_rate = position_info["cost"] / limit_base_amount
             desired_position_amount = position_info["amount"] * desired_position_rate / position_rate
             sell_target_amount = position_info["amount"] - utils.reserve_float(desired_position_amount, self.config['digits'][target_coin])
