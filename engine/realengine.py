@@ -34,29 +34,38 @@ class RealEngine(Engine):
     def get_position(self, symbol, cur_price):
         self.sync_orders(symbol)
 
-        info = {"amount":0, "cost":0, "cost_price":0, "profit":0, "start_time":""}
+        info = {"amount":0, "price":0, "cost":0, "profit":0, "history_profit":0, "start_time":""}
         commission_rate = 0.001
 
         orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol)
         for order in orders:
+            deal_amount = order['deal_amount']
+            deal_value = order['deal_value']
+
             if order['side'] == xquant.SIDE_BUY:
+
                 if info["amount"] == 0:
                     info["start_time"] = md.get_datetime_by_id(order['_id'])
-                info["amount"] += order['deal_amount']
-                info["cost"] += order['deal_value'] * (1+commission_rate)
+
+                info["amount"] += deal_amount
+                info["cost"] += deal_value * (1+commission_rate)
             elif order['side'] == xquant.SIDE_SELL:
-                info["amount"] -= order['deal_amount']
-                info["cost"] -= order['deal_value'] * (1+commission_rate)
+                info["amount"] -= deal_amount
+                info["cost"] -= deal_value * (1+commission_rate)
             else:
                 logging.error('错误的委托方向')
                 return
 
-        profit = 0
+            if info["amount"] == 0:
+                info["history_profit"] -= info["cost"]
+                info["cost"] = 0
+
+
         if info["amount"] == 0:
-            info["profit"] = 0 - info["cost"]
+            pass
         elif info["amount"] > 0:
             info["profit"] = cur_price * info["amount"] - info["cost"]
-            info["cost_price"] = info["cost"] / info["amount"]
+            info["price"] = info["cost"] / info["amount"]
         else:
             logging.error('持仓数量不可能小于0')
             return

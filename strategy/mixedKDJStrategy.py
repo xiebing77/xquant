@@ -39,7 +39,7 @@ class MixedKDJStrategy(Strategy):
         cur_k = df['kdj_k'].values[-1]
         cur_d = df['kdj_d'].values[-1]
         cur_j = df['kdj_j'].values[-1]
-        logging.info('current kdj  J(%f), K(%f), D(%f)', cur_j, cur_k, cur_d)
+        logging.info(' current kdj  J(%f), K(%f), D(%f)', cur_j, cur_k, cur_d)
 
         y_k = df['kdj_k'].values[-2]
         y_d = df['kdj_d'].values[-2]
