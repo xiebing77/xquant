@@ -86,11 +86,11 @@ class Strategy(object):
 
         target_coin, base_coin = xquant.get_symbol_coins(symbol)
         limit_base_amount = self.config['limit']
-        if side == xquant.SIDE_BUY:
+        if desired_side == xquant.SIDE_BUY:
             desired_position_value = limit_base_amount * desired_position_rate
             buy_base_amount = desired_position_value - position_info["cost"]
             self.limit_buy(symbol, utils.reserve_float(buy_base_amount),self.config['digits'][base_coin])
-        elif side == xquant.SIDE_SELL:
+        elif desired_side == xquant.SIDE_SELL:
             position_rate = position_info["cost"] / limit_base_amount
             desired_position_amount = position_info["amount"] * desired_position_rate / position_rate
             sell_target_amount = position_info["amount"] - utils.reserve_float(desired_position_amount, self.config['digits'][target_coin])
