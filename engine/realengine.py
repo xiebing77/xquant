@@ -34,35 +34,35 @@ class RealEngine(Engine):
     def get_position(self, symbol, cur_price):
         self.sync_orders(symbol)
 
-        start_time = None
-        amount = 0
-        cost = 0
+        info = {"amount":0, "cost":0, "cost_price":0, "profit":0, "start_time":""}
         commission_rate = 0.001
 
         orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol)
         for order in orders:
             if order['side'] == xquant.SIDE_BUY:
-                if amount == 0:
-                    start_time = md.get_datetime_by_id(order['_id'])
-                amount += order['deal_amount']
-                cost += order['deal_value'] * (1+commission_rate)
+                if info["amount"] == 0:
+                    info["start_time"] = md.get_datetime_by_id(order['_id'])
+                info["amount"] += order['deal_amount']
+                info["cost"] += order['deal_value'] * (1+commission_rate)
             elif order['side'] == xquant.SIDE_SELL:
-                amount -= order['deal_amount']
-                cost -= order['deal_value'] * (1+commission_rate)
+                info["amount"] -= order['deal_amount']
+                info["cost"] -= order['deal_value'] * (1+commission_rate)
             else:
                 logging.error('错误的委托方向')
                 return
 
         profit = 0
-        if amount == 0:
-            profit = 0 - cost
-        elif amount > 0:
-            profit = cur_price * amount - cost
+        if info["amount"] == 0:
+            info["profit"] = 0 - info["cost"]
+        elif info["amount"] > 0:
+            info["profit"] = cur_price * info["amount"] - info["cost"]
+            info["cost_price"] = info["cost"] / info["amount"]
         else:
             logging.error('持仓数量不可能小于0')
             return
 
-        return amount, cost, start_time
+        logging.info('position:  symbol(%s), info:  %s' % (symbol, info))
+        return info
 
     def has_open_orders(self, symbol):
         db_orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol, status=xquant.ORDER_STATUS_OPEN)

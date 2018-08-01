@@ -52,6 +52,52 @@ class Strategy(object):
         logging.info('period high price(%f), fall rate(%f), start time(%s)' % (period_high_price, period_fall_rate, start_time))
         return period_fall_rate
 
+
+    def risk_control(self, symbol, df, position_info):
+        rc_side = None
+        rc_position_rate = 1
+
+        # 风控第一条：亏损金额超过额度的10%，如额度1000，亏损金额超过200即刻清仓
+        loss_limit = self.config['limit'] * 0.1
+        if loss_limit + position_info['profit'] <= 0:
+            rc_side = xquant.SIDE_SELL
+            rc_position_rate = min(0, rc_position_rate)
+            return
+
+        return rc_side, rc_position_rate
+
+
+    def handle_order(self, symbol, desired_side, desired_position_rate, df, position_info):
+        # 风控
+        rc_side, rc_position_rate = self.risk_control(symbol, df, position_info)
+        if rc_side == xquant.SIDE_BUY:
+            logging.warning('风控方向不能为买')
+            return
+
+        if rc_side == xquant.SIDE_SELL:
+            if desired_side == xquant.SIDE_SELL:
+                desired_position_rate = min(rc_position_rate, desired_position_rate)
+            else:
+                desired_side = xquant.SIDE_SELL
+                desired_position_rate = rc_position_rate
+
+        if desired_position_rate > 1 or desired_position_rate < 0:
+            return
+
+        target_coin, base_coin = xquant.get_symbol_coins(symbol)
+        limit_base_amount = self.config['limit']
+        if desired_side == xquant.SIDE_BUY:
+            desired_position_value = limit_base_amount * desired_position_rate
+            buy_base_amount = desired_position_value - position_info["cost"]
+            self.limit_buy(symbol, utils.reserve_float(buy_base_amount),self.config['digits'][base_coin])
+        elif desired_side == xquant.SIDE_SELL:
+            position_rate = position_info["cost"] / limit_base_amount
+            desired_position_amount = position_info["amount"] * desired_position_rate / position_rate
+            sell_target_amount = position_info["amount"] - utils.reserve_float(desired_position_amount, self.config['digits'][target_coin])
+            self.limit_sell(symbol, sell_target_amount)
+        else:
+            return
+
     def limit_buy(self, symbol, base_coin_amount):
         if base_coin_amount <= 0:
             return
