@@ -68,7 +68,12 @@ class Strategy(object):
 
 
     def handle_order(self, symbol, desired_side, desired_position_rate, df, position_info):
-        # 风控
+        '''
+        风控与期望的关系
+        风控方向只能是None、sell
+        None：说明风控没有触发。以期望方向、仓位率为准
+        sell：说明风控被触发。若期望为买或空，则以风控为主；若期望也为卖，则仓位率取少的
+        '''
         rc_side, rc_position_rate = self.risk_control(symbol, df, position_info)
         if rc_side == xquant.SIDE_BUY:
             logging.warning('风控方向不能为买')
@@ -82,6 +87,7 @@ class Strategy(object):
                 desired_position_rate = rc_position_rate
 
         if desired_position_rate > 1 or desired_position_rate < 0:
+            logging.warning('仓位率（%f）超出范围（0 ~ 1）' % (desired_position_rate))
             return
 
         target_coin, base_coin = xquant.get_symbol_coins(symbol)

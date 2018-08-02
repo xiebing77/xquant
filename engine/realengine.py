@@ -70,7 +70,7 @@ class RealEngine(Engine):
             logging.error('持仓数量不可能小于0')
             return
 
-        logging.info('position:  symbol(%s), info:  %s' % (symbol, info))
+        logging.info('symbol(%s); current price(%f); position info(%r)' % (symbol, cur_price, info))
         return info
 
     def has_open_orders(self, symbol):
