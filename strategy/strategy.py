@@ -53,11 +53,11 @@ class Strategy(object):
         return period_fall_rate
 
 
-    def risk_control(self, symbol, df, position_info):
+    def risk_control(self, symbol, position_info):
         rc_side = None
         rc_position_rate = 1
 
-        # 风控第一条：亏损金额超过额度的10%，如额度1000，亏损金额超过200即刻清仓
+        # 风控第一条：亏损金额超过额度的10%，如额度1000，亏损金额超过100即刻清仓
         loss_limit = self.config['limit'] * 0.1
         if loss_limit + position_info['profit'] <= 0:
             rc_side = xquant.SIDE_SELL
@@ -67,9 +67,14 @@ class Strategy(object):
         return rc_side, rc_position_rate
 
 
-    def handle_order(self, symbol, desired_side, desired_position_rate, df, position_info):
-        # 风控
-        rc_side, rc_position_rate = self.risk_control(symbol, df, position_info)
+    def handle_order(self, symbol, desired_side, desired_position_rate, position_info):
+        '''
+        风控与期望的关系
+        风控方向只能是None、sell
+        None：说明风控没有触发。以期望方向、仓位率为准
+        sell：说明风控被触发。若期望为买或空，则以风控为主；若期望也为卖，则仓位率取少的
+        '''
+        rc_side, rc_position_rate = self.risk_control(symbol, position_info)
         if rc_side == xquant.SIDE_BUY:
             logging.warning('风控方向不能为买')
             return
@@ -82,6 +87,7 @@ class Strategy(object):
                 desired_position_rate = rc_position_rate
 
         if desired_position_rate > 1 or desired_position_rate < 0:
+            logging.warning('仓位率（%f）超出范围（0 ~ 1）' % (desired_position_rate))
             return
 
         target_coin, base_coin = xquant.get_symbol_coins(symbol)
@@ -91,6 +97,8 @@ class Strategy(object):
             buy_base_amount = desired_position_value - position_info["cost"]
             self.limit_buy(symbol, utils.reserve_float(buy_base_amount),self.config['digits'][base_coin])
         elif desired_side == xquant.SIDE_SELL:
+            if position_info["cost"] == 0:
+                return
             position_rate = position_info["cost"] / limit_base_amount
             desired_position_amount = position_info["amount"] * desired_position_rate / position_rate
             sell_target_amount = position_info["amount"] - utils.reserve_float(desired_position_amount, self.config['digits'][target_coin])
@@ -140,16 +148,16 @@ class Strategy(object):
 
         while True:
             tickStart = datetime.datetime.now()
-            logging.info('%s OnTick start......................................', tickStart)
+            logging.info('%s tick start......................................', tickStart)
             if self.debug_flag:
-                self.OnTick()
+                self.on_tick()
             else:
                 try:
-                    self.OnTick()
+                    self.on_tick()
                 except Exception as e:
                     logging.critical(e)
             tickEnd = datetime.datetime.now()
-            logging.info('%s OnTick end...; tick  cost: %s -----------------------\n\n', tickEnd, tickEnd-tickStart)
+            logging.info('%s tick end...; tick  cost: %s -----------------------\n\n', tickEnd, tickEnd-tickStart)
             time.sleep(self.config['sec'])
 
 		
