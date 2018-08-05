@@ -6,7 +6,7 @@ import logging
 import argparse
 from engine.realengine import RealEngine 
 import common.xquant as xquant
-import utils.utils as utils
+import utils.tools as ts
 import json
 import pandas as pd
 
@@ -95,13 +95,13 @@ class Strategy(object):
         if desired_side == xquant.SIDE_BUY:
             desired_position_value = limit_base_amount * desired_position_rate
             buy_base_amount = desired_position_value - position_info["cost"]
-            self.limit_buy(symbol, utils.reserve_float(buy_base_amount),self.config['digits'][base_coin])
+            self.limit_buy(symbol, ts.reserve_float(buy_base_amount),self.config['digits'][base_coin])
         elif desired_side == xquant.SIDE_SELL:
             if position_info["cost"] == 0:
                 return
             position_rate = position_info["cost"] / limit_base_amount
             desired_position_amount = position_info["amount"] * desired_position_rate / position_rate
-            sell_target_amount = position_info["amount"] - utils.reserve_float(desired_position_amount, self.config['digits'][target_coin])
+            sell_target_amount = position_info["amount"] - ts.reserve_float(desired_position_amount, self.config['digits'][target_coin])
             self.limit_sell(symbol, sell_target_amount)
         else:
             return
@@ -114,7 +114,7 @@ class Strategy(object):
         base_balance = self.engine.get_balances(base_coin)
         logging.info('base   balance:  %s', base_balance)
 
-        free_base_amount = utils.str_to_float(base_balance['free'])
+        free_base_amount = ts.str_to_float(base_balance['free'])
         buy_base_amount = min(free_base_amount, base_coin_amount)
         logging.info('buy_base_amount: %f',buy_base_amount)
 
@@ -122,11 +122,11 @@ class Strategy(object):
             return
 
         target_amount_digits = self.config['digits'][target_coin]
-        buy_target_amount = utils.reserve_float(buy_base_amount / self.cur_price, target_amount_digits)
+        buy_target_amount = ts.reserve_float(buy_base_amount / self.cur_price, target_amount_digits)
         logging.info('buy target coin amount: %f', buy_target_amount)
 
         base_amount_digits = self.config['digits'][base_coin]
-        limit_buy_price = utils.reserve_float(self.cur_price * 1.1, base_amount_digits)
+        limit_buy_price = ts.reserve_float(self.cur_price * 1.1, base_amount_digits)
         order_id = self.engine.send_order(xquant.SIDE_BUY, xquant.ORDER_TYPE_LIMIT, symbol, limit_buy_price, buy_target_amount)
         logging.info('current price: %f;  limit buy price: %f;  order_id: %s ',self.cur_price, limit_buy_price, order_id)
         return
@@ -139,7 +139,7 @@ class Strategy(object):
 
         target_coin, base_coin = xquant.get_symbol_coins(symbol)
         base_amount_digits = self.config['digits'][base_coin]
-        limit_sell_price = utils.reserve_float(self.cur_price * 0.9, base_amount_digits)
+        limit_sell_price = ts.reserve_float(self.cur_price * 0.9, base_amount_digits)
         order_id = self.engine.send_order(xquant.SIDE_SELL, xquant.ORDER_TYPE_LIMIT, symbol, limit_sell_price, target_coin_amount)
         logging.info('current price: %f;  limit sell price: %f;  order_id: %s',self.cur_price, limit_sell_price, order_id)
 

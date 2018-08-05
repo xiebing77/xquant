@@ -20,7 +20,7 @@ class KDJStrategy(Strategy):
 
         self.cur_price = pd.to_numeric(k1d["close"].values[-1])
 
-        ic.KDJ(k1d)
+        ic.calc_kdj(k1d)
         cur_k = k1d["kdj_k"].values[-1]
         cur_d = k1d["kdj_d"].values[-1]
         cur_j = k1d["kdj_j"].values[-1]

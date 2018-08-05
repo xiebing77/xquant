@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import talib
 import common.xquant as xquant
-from utils.indicator import *
-import utils.utils as utils
+import utils.indicator as ic
 import logging
 from strategy.strategy import Strategy
 
@@ -35,7 +34,7 @@ class MixedKDJStrategy(Strategy):
         logging.info('die price: %f;  time: %s', self.die_price, self.die_timestamp)
 
     def check(self, df, position_info):
-        KDJ(df)
+        ic.calc_kdj(df)
         cur_k = df['kdj_k'].values[-1]
         cur_d = df['kdj_d'].values[-1]
         cur_j = df['kdj_j'].values[-1]
@@ -106,10 +105,3 @@ class MixedKDJStrategy(Strategy):
 
         self.handle_order(symbol, desired_side, desired_position_rate, position_info)
         return
-
-
-
-if __name__ == "__main__":
-
-    s = MixedKDJStrategy(debug=True)
-    s.run()
