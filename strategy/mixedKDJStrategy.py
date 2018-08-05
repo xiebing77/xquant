@@ -91,7 +91,7 @@ class MixedKDJStrategy(Strategy):
         return desired_side, desired_position_rate
 
 
-    def OnTick(self):
+    def on_tick(self):
         symbol = self.config['symbol']
         # 之前的挂单全撤掉
         self.engine.cancle_orders(symbol)
@@ -104,7 +104,7 @@ class MixedKDJStrategy(Strategy):
 
         desired_side, desired_position_rate = self.check(df, position_info)
 
-        self.handle_order(symbol, desired_side, desired_position_rate, df, position_info)
+        self.handle_order(symbol, desired_side, desired_position_rate, position_info)
         return
 
 
