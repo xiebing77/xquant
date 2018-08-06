@@ -4,7 +4,7 @@
 ## 程序入口
 main.py
 ### 使用方式
-参见kdjStrategy_btc_usdt.sh
+参见kdj_btc_usdt.sh
 
 ## 目录说明
 ### utils
