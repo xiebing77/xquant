@@ -13,7 +13,7 @@ import pandas as pd
 class Strategy(object):
     """docstring for Strategy"""
 
-    def __init__(self, config, debug=False):
+    def __init__(self, config, debug):
         self.config = config
         self.debug_flag = debug
 
@@ -159,5 +159,3 @@ class Strategy(object):
             tickEnd = datetime.datetime.now()
             logging.info('%s tick end...; tick  cost: %s -----------------------\n\n', tickEnd, tickEnd-tickStart)
             time.sleep(self.config['sec'])
-
-		

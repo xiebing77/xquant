@@ -77,16 +77,17 @@ class MixedKDJStrategy(Strategy):
         else:
             logging.info('木有信号: 不买不卖')
 
-        # today_fall_rate = self.cacl_today_fall_rate(df)
-        period_fall_rate = self.cacl_period_fall_rate(df, position_info["start_time"])
-        if period_fall_rate > 0.1:  # 平仓
-            # 清仓卖出
-            desired_side = xquant.SIDE_SELL
-            desired_position_rate = 0
-        '''
-        elif today_fall_rate > 0.05: # 减仓一半
-            pass
-        '''
+        if position_info["amount"] > 0:
+            # today_fall_rate = self.cacl_today_fall_rate(df)
+            period_fall_rate = self.cacl_period_fall_rate(df, position_info["start_time"])
+            if period_fall_rate > 0.1:  # 平仓
+                # 清仓卖出
+                desired_side = xquant.SIDE_SELL
+                desired_position_rate = 0
+            '''
+            elif today_fall_rate > 0.05: # 减仓一半
+                pass
+            '''
         return desired_side, desired_position_rate
 
 

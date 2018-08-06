@@ -1,10 +1,10 @@
 #!/usr/bin/python
-'''各种指标'''
+"""各种指标"""
 import pandas as pd
 
 
 def calc_kdj(kbar, period=9, ksgn="close"):
-    '''kdj'''
+    """kdj"""
 
     low_list = pd.Series(kbar["low"]).rolling(period).min()
     low_list.fillna(value=pd.Series(kbar["low"]).expanding().min(), inplace=True)
@@ -21,7 +21,7 @@ def calc_kdj(kbar, period=9, ksgn="close"):
 
 
 def calc_macd(kbar, fastperiod=12, slowperiod=26, signalperiod=9):
-    '''macd'''
+    """macd"""
     fast_ema = kbar["close"].ewm(span=fastperiod).mean()
     slow_ema = kbar["close"].ewm(span=slowperiod).mean()
 

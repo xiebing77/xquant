@@ -78,3 +78,6 @@ class OkexExchange(Exchange):
             self.debug('Error result: %s' % ret)
             return None
 
+    def cancel_order(self, symbol, order_id):
+        exchange_symbol = self.__trans_symbol(symbol)
+        self.client.cancel_order(symbol=exchange_symbol, orderId=order_id)
