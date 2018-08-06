@@ -554,7 +554,7 @@ class Client(object):
         :type symbol: str
         :param interval: -
         :type interval: enum
-        :param limit: - Default 500; max 500.
+        :param limit: - Default 500; max 1000.
         :type limit: int
         :param startTime:
         :type startTime: int

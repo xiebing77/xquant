@@ -39,16 +39,18 @@ class BinanceExchange(Exchange):
         else:
             return None
 
-
     def __get_klines(self, symbol, interval, size, since):
         exchange_symbol = self.__trans_symbol(symbol)
-        klines = self.__client.get_klines(symbol=exchange_symbol, interval=interval, limit=size)
+        klines = self.__client.get_klines(symbol=exchange_symbol, interval=interval, limit=size, startTime=since)
         df = pd.DataFrame(klines, columns=['open_time', 'open','high','low','close','volume','close_time',
             'quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume','ignore'])
         return df
 
     def get_klines_1day(self, symbol, size=300, since=''):
         return self.__get_klines(symbol, KLINE_INTERVAL_1DAY, size, since)
+
+    def get_klines_1min(self, symbol, size=300, since=''):
+        return self.__get_klines(symbol, KLINE_INTERVAL_1MINUTE, size, since)
 
     def get_balances(self, *coins):
         coin_balances = []
@@ -77,10 +79,9 @@ class BinanceExchange(Exchange):
         df = pd.DataFrame(trades)
         df[['price','qty']] = df[['price','qty']].apply(pd.to_numeric)
         df['value'] = df['price'] * df['qty']
-        
+
         df_s = df.groupby('orderId')['qty', 'value'].sum()
         return df_s['qty'], df_s['value']
-
 
     def send_order(self, side, type, symbol, price, amount, client_order_id):
         exchange_symbol = self.__trans_symbol(symbol)
