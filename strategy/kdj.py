@@ -56,4 +56,6 @@ class KDJStrategy(Strategy):
 
         desired_side, desired_position_rate = self.check(symbol)
         position_info = self.engine.get_position(symbol, self.cur_price)
-        self.handle_order(symbol, desired_side, desired_position_rate, position_info)
+        self.handle_order(
+            symbol, self.cur_price, desired_side, desired_position_rate, position_info
+        )
