@@ -2,6 +2,7 @@
 import argparse
 import time
 import db.mongodb as md
+from common.xquant import creat_symbol
 from exchange.binanceExchange import BinanceExchange
 from setup import *
 
@@ -27,11 +28,11 @@ if __name__ == "__main__":
 
     db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
     exchange = BinanceExchange(debug=True)
-    symbol = exchange.create_symbol(base_coin, target_coin)
+    symbol = creat_symbol(base_coin, target_coin)
     size = 500
     tmp_time = start_time
 
     while tmp_time < end_time:
-        
+
         kline = exchange.get_klines_1min(symbol, size=size, since=tmp_time)
 
