@@ -4,9 +4,30 @@
 import time
 import datetime
 import logging
+import pandas as pd
 from engine.realengine import RealEngine
 import common.xquant as xq
 import utils.tools as ts
+
+
+def create_signal(side, pst_rate):
+    """创建交易信号"""
+    return {"side": side, "pst_rate": pst_rate}
+
+
+def decision_signals(signals):
+    """决策交易信号"""
+    logging.info("signals(%r)", signals)
+    sdf = pd.DataFrame(signals)
+    sdf_min = sdf.groupby("side")["pst_rate"].min()
+
+    if xq.SIDE_SELL in sdf_min:
+        return xq.SIDE_SELL, sdf_min[xq.SIDE_SELL]
+
+    if xq.SIDE_BUY in sdf_min:
+        return xq.SIDE_BUY, sdf_min[xq.SIDE_BUY]
+
+    return None, None
 
 
 class Strategy:
@@ -36,58 +57,50 @@ class Strategy:
 
     def risk_control(self, position_info):
         """ 风控 """
-        rc_side = None
-        rc_position_rate = 1
+        rc_signals = []
 
         # 风控第一条：亏损金额超过额度的10%，如额度1000，亏损金额超过100即刻清仓
         loss_limit = self.config["limit"] * 0.1
         if loss_limit + position_info["profit"] <= 0:
-            rc_side = xq.SIDE_SELL
-            rc_position_rate = min(0, rc_position_rate)
+            rc_signals.append(create_signal(xq.SIDE_SELL, 0))
 
-        return rc_side, rc_position_rate
+        return rc_signals
 
-    def handle_order(
-        self, symbol, cur_price, desired_side, desired_position_rate, position_info
-    ):
+    def handle_order(self, symbol, cur_price, position_info, check_signals):
         """
         风控与期望的关系
         风控方向只能是None、sell
         None：说明风控没有触发。以期望方向、仓位率为准
         sell：说明风控被触发。若期望为买或空，则以风控为主；若期望也为卖，则仓位率取少的
         """
-        rc_side, rc_position_rate = self.risk_control(position_info)
-        if rc_side == xq.SIDE_BUY:
+        rc_signals = self.risk_control(position_info)
+        if xq.SIDE_BUY in rc_signals:
             logging.warning("风控方向不能为买")
             return
 
-        if rc_side == xq.SIDE_SELL:
-            if desired_side == xq.SIDE_SELL:
-                desired_position_rate = min(rc_position_rate, desired_position_rate)
-            else:
-                desired_side = xq.SIDE_SELL
-                desired_position_rate = rc_position_rate
+        dcs_side, dcs_pst_rate = decision_signals(rc_signals + check_signals)
+        logging.info(
+            "decision signal side(%s), position rate(%f)", dcs_side, dcs_pst_rate
+        )
 
-        if desired_position_rate > 1 or desired_position_rate < 0:
-            logging.warning("仓位率（%f）超出范围（0 ~ 1）", desired_position_rate)
+        if dcs_pst_rate > 1 or dcs_pst_rate < 0:
+            logging.warning("仓位率（%f）超出范围（0 ~ 1）", dcs_pst_rate)
             return
 
-        if desired_side == xq.SIDE_BUY:
+        if dcs_side == xq.SIDE_BUY:
             buy_base_amount = (
-                self.config["limit"] * desired_position_rate - position_info["cost"]
+                self.config["limit"] * dcs_pst_rate - position_info["cost"]
             )
             self.limit_buy(symbol, ts.reserve_float(buy_base_amount), cur_price)
-        elif desired_side == xq.SIDE_SELL:
+        elif dcs_side == xq.SIDE_SELL:
             if position_info["cost"] == 0:
                 return
             position_rate = position_info["cost"] / self.config["limit"]
-            desired_position_amount = (
-                position_info["amount"] * desired_position_rate / position_rate
-            )
+            dcs_pst_amount = position_info["amount"] * dcs_pst_rate / position_rate
 
             target_coin, _ = xq.get_symbol_coins(symbol)
             sell_target_amount = position_info["amount"] - ts.reserve_float(
-                desired_position_amount, self.config["digits"][target_coin]
+                dcs_pst_amount, self.config["digits"][target_coin]
             )
             self.limit_sell(symbol, sell_target_amount, cur_price)
         else:

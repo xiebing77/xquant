@@ -6,7 +6,7 @@ import pandas as pd
 import common.xquant as xq
 import utils.indicator as ic
 import utils.tools as ts
-from strategy.strategy import Strategy
+from strategy.strategy import Strategy, create_signal
 
 
 class MixedKDJStrategy(Strategy):
@@ -26,15 +26,11 @@ class MixedKDJStrategy(Strategy):
             self.gold_price = cur_price
             self.gold_timestamp = datetime.datetime.now()
 
-        logging.info("gold price: %f;  time: %s", self.gold_price, self.gold_timestamp)
-
     def set_die_fork(self, cur_price):
         """ kdj指标，死叉 """
         if self.die_price <= 0:
             self.die_price = cur_price
             self.die_timestamp = datetime.datetime.now()
-
-        logging.info("die price: %f;  time: %s", self.die_price, self.die_timestamp)
 
     def check(self, klines, position_info, cur_price):
         """ kdj指标，金叉全买入，下降趋势部分卖出，死叉全卖出 """
@@ -49,8 +45,7 @@ class MixedKDJStrategy(Strategy):
         y_j = klines["kdj_j"].values[-2]
         logging.info("yestoday kdj  J(%f), K(%f), D(%f)", y_j, y_k, y_d)
 
-        desired_side = None
-        desired_position_rate = None
+        check_signals = []
         if cur_j - 1 > cur_k > cur_d + 1:  # 开仓
             logging.info("开仓信号: j-1 > k > d+1")
             self.set_gold_fork(cur_price)
@@ -59,42 +54,46 @@ class MixedKDJStrategy(Strategy):
                 # 下降趋势
                 if cur_k < y_k:
                     # j、k 同时下降，最多保留半仓
-                    desired_side = xq.SIDE_SELL
-                    desired_position_rate = 0.5
+                    check_signals.append(create_signal(xq.SIDE_SELL, 0.5))
+
                 else:
                     # j 下落，最多保留8成仓位
-                    desired_side = xq.SIDE_SELL
-                    desired_position_rate = 0.8
+                    check_signals.append(create_signal(xq.SIDE_SELL, 0.8))
             else:
                 # 满仓买入
-                desired_side = xq.SIDE_BUY
-                desired_position_rate = 1
+                check_signals.append(create_signal(xq.SIDE_BUY, 1))
 
         elif cur_j + 1 < cur_k < cur_d - 1:  # 平仓
             logging.info("平仓信号: j+1 < k < d-1")
             self.set_die_fork(cur_price)
 
             # 清仓卖出
-            desired_side = xq.SIDE_SELL
-            desired_position_rate = 0
+            check_signals.append(create_signal(xq.SIDE_SELL, 0))
 
         else:
             logging.info("木有信号: 不买不卖")
 
+        logging.info("gold price: %f;  time: %s", self.gold_price, self.gold_timestamp)
+        logging.info(" die price: %f;  time: %s", self.die_price, self.die_timestamp)
+
         if position_info["amount"] > 0:
-            # today_fall_rate = self.cacl_today_fall_rate(klines)
-            period_fall_rate = ts.cacl_period_fall_rate(
-                klines, position_info["start_time"], cur_price
-            )
-            if period_fall_rate > 0.1:  # 平仓
+            today_fall_rate = ts.cacl_today_fall_rate(klines, cur_price)
+            if today_fall_rate > 0.1:
                 # 清仓卖出
-                desired_side = xq.SIDE_SELL
-                desired_position_rate = 0
-            """
-            elif today_fall_rate > 0.05: # 减仓一半
-                pass
-            """
-        return desired_side, desired_position_rate
+                check_signals.append(create_signal(xq.SIDE_SELL, 0))
+
+            period_start_time = position_info["start_time"]
+            period_fall_rate = ts.cacl_period_fall_rate(
+                klines, period_start_time, cur_price
+            )
+            if period_fall_rate > 0.1:
+                # 清仓卖出
+                check_signals.append(create_signal(xq.SIDE_SELL, 0))
+            elif period_fall_rate > 0.05:
+                # 减仓一半
+                check_signals.append(create_signal(xq.SIDE_SELL, 0.5))
+
+        return check_signals
 
     def on_tick(self):
         """ tick处理接口 """
@@ -108,10 +107,6 @@ class MixedKDJStrategy(Strategy):
         cur_price = pd.to_numeric(klines["close"].values[-1])
         position_info = self.engine.get_position(symbol, cur_price)
 
-        desired_side, desired_position_rate = self.check(
-            klines, position_info, cur_price
-        )
+        check_signals = self.check(klines, position_info, cur_price)
 
-        self.handle_order(
-            symbol, cur_price, desired_side, desired_position_rate, position_info
-        )
+        self.handle_order(symbol, cur_price, position_info, check_signals)

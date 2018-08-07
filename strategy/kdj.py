@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 import common.xquant as xq
 import utils.indicator as ic
-from strategy.strategy import Strategy
+from strategy.strategy import Strategy, create_signal
 
 
 class KDJStrategy(Strategy):
@@ -26,27 +26,24 @@ class KDJStrategy(Strategy):
         cur_j = k1d["kdj_j"].values[-1]
         logging.info(" current kdj  J(%f), K(%f), D(%f)", cur_j, cur_k, cur_d)
 
-        desired_side = None
-        desired_position_rate = None
+        check_signals = []
         offset = 1
         if (cur_j - offset) > cur_k > (cur_d + offset):  # 开仓
             logging.info("开仓信号: j-%f > k > d+%f", offset, offset)
 
             # 满仓买入
-            desired_side = xq.SIDE_BUY
-            desired_position_rate = 1
+            check_signals.append(create_signal(xq.SIDE_BUY, 1))
 
         elif (cur_j + offset) < cur_k < (cur_d - offset):  # 平仓
             logging.info("平仓信号: j+%f < k < d-%f", offset, offset)
 
             # 清仓卖出
-            desired_side = xq.SIDE_SELL
-            desired_position_rate = 0
+            check_signals.append(create_signal(xq.SIDE_SELL, 0))
 
         else:
             logging.info("木有信号: 不买不卖")
 
-        return desired_side, desired_position_rate
+        return check_signals
 
     def on_tick(self):
         """ tick处理接口 """
@@ -54,8 +51,6 @@ class KDJStrategy(Strategy):
         # 之前的挂单全撤掉
         self.engine.cancle_orders(symbol)
 
-        desired_side, desired_position_rate = self.check(symbol)
+        check_signals = self.check(symbol)
         position_info = self.engine.get_position(symbol, self.cur_price)
-        self.handle_order(
-            symbol, self.cur_price, desired_side, desired_position_rate, position_info
-        )
+        self.handle_order(symbol, self.cur_price, position_info, check_signals)
