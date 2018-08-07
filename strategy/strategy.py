@@ -64,15 +64,15 @@ class Strategy:
         if loss_limit + position_info["profit"] <= 0:
             rc_signals.append(create_signal(xq.SIDE_SELL, 0))
 
+        # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
+        pst_price = position_info["price"]
+        if cur_price / pst_price <= 0.9:
+            rc_signals.append(create_signal(xq.SIDE_SELL, 0))
+
         return rc_signals
 
     def handle_order(self, symbol, cur_price, position_info, check_signals):
-        """
-        风控与期望的关系
-        风控方向只能是None、sell
-        None：说明风控没有触发。以期望方向、仓位率为准
-        sell：说明风控被触发。若期望为买或空，则以风控为主；若期望也为卖，则仓位率取少的
-        """
+        """ 处理委托 """
         rc_signals = self.risk_control(position_info)
         if xq.SIDE_BUY in rc_signals:
             logging.warning("风控方向不能为买")
