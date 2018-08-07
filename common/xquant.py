@@ -1,6 +1,8 @@
 #!/usr/bin/python
 """xquant公共定义及公用函数"""
 
+import utils.tools as ts
+
 SIDE_BUY = "BUY"
 SIDE_SELL = "SELL"
 
@@ -23,3 +25,18 @@ def get_symbol_coins(symbol):
     """获取coins"""
     coins = symbol.split("_")
     return tuple(coins)
+
+
+def create_balance(coin, free, frozen):
+    """ 创建余额 """
+    return {"coin": coin, "free": free, "frozen": frozen}
+
+
+def get_balance_free(balance):
+    """ 获取可用数 """
+    return ts.str_to_float(balance["free"])
+
+
+def get_balance_frozen(balance):
+    """ 获取冻结数 """
+    return ts.str_to_float(balance["frozen"])

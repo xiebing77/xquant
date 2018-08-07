@@ -1,17 +1,9 @@
 #!/usr/bin/python
+"""交易所"""
 
 
-class Exchange(object):
-    """docstring for Exchange"""
+class Exchange:
+    """Exchange"""
+
     def __init__(self):
-        super().__init__()
-
-    def create_balance(self, coin, free, frozen):
-        return {'coin': coin, 'free': free, 'frozen': frozen}
-
-    def get_balance_free(self, balance):
-        return balance['free']
-
-    def get_balance_frozen(self, balance):
-        return balance['frozen']
-
+        pass

@@ -102,8 +102,7 @@ class Strategy:
         base_balance = self.engine.get_balances(base_coin)
         logging.info("base   balance:  %s", base_balance)
 
-        free_base_amount = ts.str_to_float(base_balance["free"])
-        buy_base_amount = min(free_base_amount, base_coin_amount)
+        buy_base_amount = min(xq.get_balance_free(base_balance), base_coin_amount)
         logging.info("buy_base_amount: %f", buy_base_amount)
 
         if buy_base_amount <= 0:  #

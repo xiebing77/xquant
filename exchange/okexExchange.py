@@ -1,9 +1,9 @@
 #!/usr/bin/python
 import os
-import common.xquant as xquant
+import pandas as pd
+import common.xquant as xq
 from .exchange import Exchange
 from .okex.OkcoinSpotAPI import OKCoinSpot
-import pandas as pd
 
 api_key = os.environ.get('OKEX_API_KEY')
 secret_key = os.environ.get('OKEX_SECRET_KEY')
@@ -19,13 +19,13 @@ class OkexExchange(Exchange):
         return coin.lower()
 
     def __trans_symbol(self, symbol):
-        target_coin, base_coin = xquant.get_symbol_coins(symbol)
+        target_coin, base_coin = xq.get_symbol_coins(symbol)
         return '%s_%s' % (self.__get_coinkey(target_coin), self.__get_coinkey(base_coin))
 
     def __trans_side(self, side):
-        if side == xquant.SIDE_BUY:
+        if side == xq.SIDE_BUY:
             return 'buy'
-        elif side == xquant.SIDE_SELL:
+        elif side == xq.SIDE_SELL:
             return 'sell'
         else:
             return None
@@ -49,7 +49,7 @@ class OkexExchange(Exchange):
 
         for coin in coins:
             coinKey = self.__get_coinkey(coin)
-            balance = self.create_balance(coin, free[coinKey], frozen[coinKey])
+            balance = xq.create_balance(coin, free[coinKey], frozen[coinKey])
             coin_balances.append(balance)
 
         return tuple(coin_balances)
@@ -62,7 +62,7 @@ class OkexExchange(Exchange):
         if okex_side is None:
             return
       
-        if type != xquant.ORDER_TYPE_LIMIT:
+        if type != xq.ORDER_TYPE_LIMIT:
             return
 
         ret = json.loads(self.client.trade(exchange_symbol, okex_side, price=str(price), amount=str(amount)))
