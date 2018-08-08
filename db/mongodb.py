@@ -44,12 +44,16 @@ class MongoDB(object):
             print(exc.details)
             return None
 
-    def get_kline(self, symbol, query={}, no_id=True):
+    def get_kline(self, symbol, interval, size, since, sort=-1, no_id=True):
         """查询数据库，导出DataFrame类型数据
-        （db_name：数据库名 collection_name：集合名
-         query：查询条件式 no_id：不显示ID,默认为不显示ID）"""
+        （symbol：btc_usdt alike
+         interval(ms)：1min - 60000
+                   1Hour - 3600000
+         since(ms): start time"""
         collection = "kline_%s" % symbol
-        cursor = self.__client[collection].find(query)
+        item = "open_time"
+        query = {item: {"$gte": since, "$mod": [interval, 0]}}
+        cursor = self.__client[collection].find(query).sort(item, sort).limit(size)
         df = pandas.DataFrame(list(cursor))
         if no_id:
             del df['_id']
