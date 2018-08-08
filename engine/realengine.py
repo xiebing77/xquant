@@ -10,6 +10,9 @@ import db.mongodb as md
 from .engine import Engine
 
 
+DB_ORDERS_NAME = "orders"
+
+
 class RealEngine(Engine):
     """实盘引擎"""
 
@@ -51,7 +54,9 @@ class RealEngine(Engine):
         }
         commission_rate = 0.001
 
-        orders = self.__db.get_orders(strategy_id=self.strategy_id, symbol=symbol)
+        orders = self.__db.find(
+            DB_ORDERS_NAME, strategy_id=self.strategy_id, symbol=symbol
+        )
         for order in orders:
             deal_amount = order["deal_amount"]
             deal_value = order["deal_value"]
@@ -89,8 +94,11 @@ class RealEngine(Engine):
 
     def has_open_orders(self, symbol):
         """ 是否有open状态的委托 """
-        db_orders = self.__db.get_orders(
-            strategy_id=self.strategy_id, symbol=symbol, status=xq.ORDER_STATUS_OPEN
+        db_orders = self.__db.find(
+            DB_ORDERS_NAME,
+            strategy_id=self.strategy_id,
+            symbol=symbol,
+            status=xq.ORDER_STATUS_OPEN,
         )
         if db_orders:
             return True
@@ -101,7 +109,9 @@ class RealEngine(Engine):
         if not self.has_open_orders(symbol):
             return
 
-        orders = self.__db.get_orders(symbol=symbol, status=xq.ORDER_STATUS_OPEN)
+        orders = self.__db.find(
+            DB_ORDERS_NAME, symbol=symbol, status=xq.ORDER_STATUS_OPEN
+        )
         if not orders:
             return
 
@@ -131,7 +141,8 @@ class RealEngine(Engine):
                 if self.__exchange.order_status_is_close(symbol, order_id):
                     status = xq.ORDER_STATUS_CLOSE
             logging.debug("deal_amount: %s,  deal_value: %s", deal_amount, deal_value)
-            self.__db.update_order(
+            self.__db.update_one(
+                DB_ORDERS_NAME,
                 _id=order["_id"],
                 deal_amount=deal_amount,
                 deal_value=deal_value,
@@ -141,7 +152,8 @@ class RealEngine(Engine):
 
     def send_order(self, side, typ, symbol, price, amount):
         """ 提交委托 """
-        _id = self.__db.insert_order(
+        _id = self.__db.insert_one(
+            DB_ORDERS_NAME,
             strategy_id=self.strategy_id,
             symbol=symbol,
             side=side,
@@ -157,7 +169,9 @@ class RealEngine(Engine):
 
         order_id = self.__exchange.send_order(side, typ, symbol, price, amount, _id)
 
-        self.__db.update_order(_id=_id, order_id=order_id, status=xq.ORDER_STATUS_OPEN)
+        self.__db.update_one(
+            DB_ORDERS_NAME, _id=_id, order_id=order_id, status=xq.ORDER_STATUS_OPEN
+        )
         return order_id
 
     def cancle_orders(self, symbol):
@@ -168,7 +182,7 @@ class RealEngine(Engine):
         orders = self.__exchange.get_open_orders(symbol)
         for order in orders:
             if order["strategy_id"] == self.strategy_id:
-                self.__db.update_order(
-                    _id=order["_id"], status=xq.ORDER_STATUS_CANCELLING
+                self.__db.update_one(
+                    DB_ORDERS_NAME, _id=order["_id"], status=xq.ORDER_STATUS_CANCELLING
                 )
                 self.__exchange.cancel_order(symbol, order["order_id"])

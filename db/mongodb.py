@@ -18,22 +18,21 @@ class MongoDB:
         self.__client = eval("%s.%s" % (client, db_name))
         self.__client.authenticate(user, password)
 
-    def insert_order(self, **datas):
-        """新增order"""
-        logging.debug("mongodb orders insert : %s", datas)
-        _id = self.__client.orders.insert_one(datas).inserted_id
+    def insert_one(self, collection, **datas):
+        """insert_one"""
+        logging.debug("mongodb %s insert : %s", collection, datas)
+        _id = self.__client[collection].insert_one(datas).inserted_id
         return _id
 
-    def update_order(self, _id, **datas):
-        """根据id修改order"""
-        logging.debug("mongodb orders(_id=%s) update : %s", _id, datas)
-        self.__client.orders.update_one({"_id": ObjectId(_id)}, {"$set": datas})
+    def update_one(self, collection, _id, **datas):
+        """update_one"""
+        logging.debug("mongodb %s(_id=%s) update : %s", collection, _id, datas)
+        self.__client[collection].update_one({"_id": ObjectId(_id)}, {"$set": datas})
 
-    def get_orders(self, **querys):
-        """查询order"""
-        orders = []
-        ret = self.__client.orders.find(querys)
+    def find(self, collection, **querys):
+        """find"""
+        records = []
+        ret = self.__client[collection].find(querys)
         for i in ret:
-            orders.append(i)
-
-        return orders
+            records.append(i)
+        return records
