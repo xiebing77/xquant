@@ -1,6 +1,5 @@
 #!/usr/bin/python
 """mixed kdj strategy"""
-import datetime
 import logging
 import pandas as pd
 import common.xquant as xq
@@ -24,13 +23,13 @@ class MixedKDJStrategy(Strategy):
         """ kdj指标，金叉 """
         if self.gold_price <= 0:
             self.gold_price = cur_price
-            self.gold_timestamp = datetime.datetime.now()
+            self.gold_timestamp = self.engine.now()
 
     def set_die_fork(self, cur_price):
         """ kdj指标，死叉 """
         if self.die_price <= 0:
             self.die_price = cur_price
-            self.die_timestamp = datetime.datetime.now()
+            self.die_timestamp = self.engine.now()
 
     def check(self, klines, position_info, cur_price):
         """ kdj指标，金叉全买入，下降趋势部分卖出，死叉全卖出 """

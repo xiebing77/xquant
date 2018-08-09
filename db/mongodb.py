@@ -18,21 +18,30 @@ class MongoDB:
         self.__client = eval("%s.%s" % (client, db_name))
         self.__client.authenticate(user, password)
 
-    def insert_one(self, collection, **datas):
+    def create_index(self, collection, index):
+        self.__client[collection].create_index(index, unique=True)
+
+    def insert_one(self, collection, record):
         """insert_one"""
-        logging.debug("mongodb %s insert : %s", collection, datas)
-        _id = self.__client[collection].insert_one(datas).inserted_id
+        logging.debug("mongodb %s insert : %s", collection, record)
+        _id = self.__client[collection].insert_one(record).inserted_id
         return _id
 
-    def update_one(self, collection, _id, **datas):
-        """update_one"""
-        logging.debug("mongodb %s(_id=%s) update : %s", collection, _id, datas)
-        self.__client[collection].update_one({"_id": ObjectId(_id)}, {"$set": datas})
+    def insert_many(self, collection, records):
+        """insert_one"""
+        ret = self.__client[collection].insert_many(records)
+        return ret
 
-    def find(self, collection, **querys):
+    def update_one(self, collection, _id, record):
+        """update_one"""
+        logging.debug("mongodb %s(_id=%s) update : %s", collection, _id, record)
+        self.__client[collection].update_one({"_id": ObjectId(_id)}, {"$set": record})
+
+    def find(self, collection, query):
         """find"""
+        #print(query)
         records = []
-        ret = self.__client[collection].find(querys)
+        ret = self.__client[collection].find(query)
         for i in ret:
             records.append(i)
         return records

@@ -1,11 +1,11 @@
 #!/usr/bin/python
 """strategy"""
 
-import time
 import datetime
 import logging
 import pandas as pd
 from engine.realengine import RealEngine
+from engine.backtest import BackTest
 import common.xquant as xq
 import utils.tools as ts
 
@@ -65,7 +65,7 @@ def decision_signals2(signals):
 class Strategy:
     """Strategy"""
 
-    def __init__(self, config, debug):
+    def __init__(self, config, debug, bt_config):
         self.config = config
         self.debug_flag = debug
 
@@ -85,7 +85,11 @@ class Strategy:
 
         logging.info("strategy name: %s;  config: %s", self.__class__.__name__, config)
 
-        self.engine = RealEngine(self.config["exchange"], self.instance_id)
+        print("bt_config: ", bt_config)
+        if bt_config:
+            self.engine = BackTest(self.instance_id, bt_config)
+        else:
+            self.engine = RealEngine(self.config["exchange"], self.instance_id)
 
     def risk_control(self, position_info, cur_price):
         """ 风控 """
@@ -197,22 +201,12 @@ class Strategy:
 
     def run(self):
         """ run """
-        while True:
-            tick_start = datetime.datetime.now()
-            logging.info(
-                "%s tick start......................................", tick_start
-            )
-            if self.debug_flag:
-                self.on_tick()
-            else:
-                try:
-                    self.on_tick()
-                except Exception as ept:
-                    logging.critical(ept)
-            tick_end = datetime.datetime.now()
-            logging.info(
-                "%s tick end...; tick  cost: %s -----------------------\n\n",
-                tick_end,
-                tick_end - tick_start,
-            )
-            time.sleep(self.config["sec"])
+        if self.debug_flag:
+            self.engine.run(self)
+        else:
+            try:
+                self.engine.run(self)
+            except Exception as ept:
+                logging.critical(ept)
+
+
