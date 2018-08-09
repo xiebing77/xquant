@@ -33,11 +33,15 @@ def decision_signals(signals):
 def decision_signals2(signals):
     """决策交易信号"""
     logging.info("signals(%r)", signals)
+    if not signals:
+        return None, None
+
     side = None
     for signal in signals:
         new_side = signal["side"]
         new_rate = signal["pst_rate"]
         new_rmk = signal["rmk"]
+
         if side is None:
             side = new_side
             rate = new_rate
@@ -107,6 +111,9 @@ class Strategy:
             return
 
         dcs_side, dcs_pst_rate = decision_signals2(rc_signals + check_signals)
+
+        if dcs_side is None:
+            return
 
         if dcs_pst_rate > 1 or dcs_pst_rate < 0:
             logging.warning("仓位率（%f）超出范围（0 ~ 1）", dcs_pst_rate)
