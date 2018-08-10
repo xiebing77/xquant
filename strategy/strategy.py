@@ -114,6 +114,9 @@ class Strategy:
             logging.warning("风控方向不能为买")
             return
 
+        if not check_signals and not rc_signals:
+            return
+
         dcs_side, dcs_pst_rate = decision_signals2(rc_signals + check_signals)
 
         if dcs_side is None:
