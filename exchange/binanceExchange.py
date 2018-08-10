@@ -76,8 +76,12 @@ class BinanceExchange(Exchange):
                     balance = xq.create_balance(coin, item['free'], item['locked'])
                     coin_balances.append(balance)
                     break
-
-        return tuple(coin_balances)
+        if len(coin_balances) <= 0:
+            return
+        elif len(coin_balances) == 1:
+            return coin_balances[0]
+        else:
+            return tuple(coin_balances)
 
     def order_status_is_close(self, symbol, order_id):
         """查询委托状态"""

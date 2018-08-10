@@ -52,7 +52,12 @@ class OkexExchange(Exchange):
             balance = xq.create_balance(coin, free[coinKey], frozen[coinKey])
             coin_balances.append(balance)
 
-        return tuple(coin_balances)
+        if len(coin_balances) <= 0:
+            return
+        elif len(coin_balances) == 1:
+            return coin_balances[0]
+        else:
+            return tuple(coin_balances)
  
     def send_order(self, side, type, symbol, price, amount, client_order_id=''):
         exchange_symbol = __trans_symbol(symbol)
