@@ -3,8 +3,8 @@
 
 import logging
 from setup import mongo_user, mongo_pwd, db_name, db_url
+import common.xquant as xq
 import db.mongodb as md
-
 
 class Engine:
     """引擎"""
