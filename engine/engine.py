@@ -6,6 +6,7 @@ from setup import mongo_user, mongo_pwd, db_name, db_url
 import common.xquant as xq
 import db.mongodb as md
 
+
 class Engine:
     """引擎"""
 
@@ -14,7 +15,7 @@ class Engine:
         self.db_orders_name = db_orders_name
         self._db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
-    def _get_position(self, symbol, cur_price):
+    def _get_position(self, symbol, cur_price, limit_base_amount):
         info = {
             "amount": 0,
             "price": 0,
@@ -55,11 +56,17 @@ class Engine:
         elif info["amount"] > 0:
             info["profit"] = cur_price * info["amount"] - info["cost"]
             info["price"] = info["cost"] / info["amount"]
+
         else:
             logging.error("持仓数量不可能小于0")
+
+        info["limit_base_amount"] = limit_base_amount
+        info["total_profit_rate"] = (
+            info["profit"] + info["history_profit"]
+        ) / limit_base_amount
 
         logging.info(
             "symbol(%s); current price(%f); position info(%r)", symbol, cur_price, info
         )
-        #print(info)
+        # print(info)
         return info

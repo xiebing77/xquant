@@ -166,16 +166,17 @@ class Strategy:
         )
         logging.info("buy target coin amount: %f", buy_target_amount)
 
-        base_amount_digits = self.config["digits"][base_coin]
-        limit_buy_price = ts.reserve_float(cur_price * 1.1, base_amount_digits)
-        order_id = self.engine.send_order(
-            xq.SIDE_BUY, xq.ORDER_TYPE_LIMIT, symbol, limit_buy_price, buy_target_amount
+        rate = 1.1
+        order_id = self.engine.send_order_limit(
+            xq.SIDE_BUY,
+            symbol,
+            cur_price,
+            rate,
+            self.config["digits"][base_coin],
+            buy_target_amount,
         )
         logging.info(
-            "current price: %f;  limit buy price: %f;  order_id: %s ",
-            cur_price,
-            limit_buy_price,
-            order_id,
+            "current price: %f;  rate: %f;  order_id: %s ", cur_price, rate, order_id
         )
         return
 
@@ -185,21 +186,18 @@ class Strategy:
             return
         logging.info("sell target coin num: %f", target_coin_amount)
 
+        rate = 0.9
         _, base_coin = xq.get_symbol_coins(symbol)
-        base_amount_digits = self.config["digits"][base_coin]
-        limit_sell_price = ts.reserve_float(cur_price * 0.9, base_amount_digits)
-        order_id = self.engine.send_order(
+        order_id = self.engine.send_order_limit(
             xq.SIDE_SELL,
-            xq.ORDER_TYPE_LIMIT,
             symbol,
-            limit_sell_price,
+            cur_price,
+            rate,
+            self.config["digits"][base_coin],
             target_coin_amount,
         )
         logging.info(
-            "current price: %f;  limit sell price: %f;  order_id: %s",
-            cur_price,
-            limit_sell_price,
-            order_id,
+            "current price: %f;  rate: %f;  order_id: %s", cur_price, rate, order_id
         )
 
     def run(self):
@@ -211,5 +209,3 @@ class Strategy:
                 self.engine.run(self)
             except Exception as ept:
                 logging.critical(ept)
-
-

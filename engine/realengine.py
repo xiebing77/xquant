@@ -3,10 +3,11 @@
 import time
 import datetime
 import logging
-from exchange.binanceExchange import BinanceExchange
-from exchange.okexExchange import OkexExchange
+import utils.tools as ts
 import common.xquant as xq
 from .engine import Engine
+from exchange.binanceExchange import BinanceExchange
+from exchange.okexExchange import OkexExchange
 
 
 DB_ORDERS_NAME = "orders"
@@ -39,10 +40,10 @@ class RealEngine(Engine):
         """ 获取余额 """
         return self.__exchange.get_balances(*coins)
 
-    def get_position(self, symbol, cur_price):
+    def get_position(self, symbol, cur_price, limit_base_amount):
         """ 获取持仓信息 """
         self.sync_orders(symbol)
-        return self._get_position(symbol, cur_price)
+        return self._get_position(symbol, cur_price, limit_base_amount)
 
     def has_open_orders(self, symbol):
         """ 是否有open状态的委托 """
@@ -105,16 +106,17 @@ class RealEngine(Engine):
             )
         return
 
-    def send_order(self, side, typ, symbol, price, amount):
+    def send_order_limit(self, side, symbol, cur_price, rate, base_digits, amount):
         """ 提交委托 """
+        limit_price = ts.reserve_float(cur_price * rate, base_digits)
         _id = self._db.insert_one(
             DB_ORDERS_NAME,
             {
                 "strategy_id": self.strategy_id,
                 "symbol": symbol,
                 "side": side,
-                "type": typ,
-                "pirce": price,
+                "type": xq.ORDER_TYPE_LIMIT,
+                "pirce": limit_price,
                 "amount": amount,
                 "status": xq.ORDER_STATUS_WAIT,
                 "order_id": "",
@@ -124,7 +126,9 @@ class RealEngine(Engine):
             },
         )
 
-        order_id = self.__exchange.send_order(side, typ, symbol, price, amount, _id)
+        order_id = self.__exchange.send_order(
+            side, typ, symbol, limit_price, amount, _id
+        )
 
         self._db.update_one(
             DB_ORDERS_NAME, _id, {"order_id": order_id, "status": xq.ORDER_STATUS_OPEN}
@@ -159,4 +163,3 @@ class RealEngine(Engine):
                 tick_end - tick_start,
             )
             time.sleep(strategy.config["sec"])
-

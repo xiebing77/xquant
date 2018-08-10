@@ -44,7 +44,7 @@ class MongoDB:
 
     def find(self, collection, query):
         """find"""
-        #print(query)
+        # print(query)
         records = []
         ret = self.__client[collection].find(query)
         for i in ret:

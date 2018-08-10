@@ -109,7 +109,9 @@ class MixedKDJStrategy(Strategy):
         klines = self.engine.get_klines_1day(symbol, 300)
 
         cur_price = pd.to_numeric(klines["close"].values[-1])
-        position_info = self.engine.get_position(symbol, cur_price)
+        position_info = self.engine.get_position(
+            symbol, cur_price, self.config["limit"]
+        )
 
         check_signals = self.check(klines, position_info, cur_price)
 
