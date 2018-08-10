@@ -164,14 +164,13 @@ class BackTest(Engine):
 
     def run(self, strategy):
         """ run """
-        print("backtest config: ",self.config)
-        print("backtest config start time: ", self.config["start_time"])
         start_time = datetime.strptime(self.config["start_time"], '%Y-%m-%d %H:%M:%S')
         end_time = datetime.strptime(self.config["end_time"], '%Y-%m-%d %H:%M:%S')
 
         total_tick_start = datetime.now()
         self.tick_time = start_time
         while self.tick_time<=end_time:
+            print("tick_time: ", self.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
             logging.info("tick_time: %s", self.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
             tick_start = datetime.now()
             logging.info(

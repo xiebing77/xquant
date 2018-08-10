@@ -3,6 +3,7 @@ import sys
 sys.path.append('../')
 import argparse
 import time
+from datetime import datetime
 import db.mongodb as md
 from common.xquant import creat_symbol
 from exchange.binanceExchange import BinanceExchange
@@ -50,6 +51,7 @@ if __name__ == "__main__":
     tmp_time = start_time
 
     while tmp_time < end_time:
+        print(datetime.fromtimestamp(tmp_time/1000))
         if (tmp_time + size * interval) > end_time:
             batch = int((end_time - tmp_time)/interval)
         else:
@@ -60,9 +62,12 @@ if __name__ == "__main__":
         elif args.k == "1day":
             klines = exchange.get_klines_1day(symbol, size=batch, since=tmp_time)
 
-        print("klines len: ", len(klines))
-        print("klines: ", klines)
-        print("records: ", klines.to_dict('records'))
+        #klen = len(klines)
+        #print("klines len: ", klen)
+        #print(klines)
+        #print("klines[0]: ", klines.ix[0])
+        #print("klines[-1]: ", klines.ix[klen-1])
+        #print("records: ", klines.to_dict('records'))
         db.insert_many(collection, klines.to_dict('records'))
         tmp_time += batch * interval
 

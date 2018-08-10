@@ -2,6 +2,7 @@
 """mongodb"""
 import logging
 from pymongo import MongoClient
+from pymongo.errors import BulkWriteError
 from bson import ObjectId
 
 
@@ -28,9 +29,13 @@ class MongoDB:
         return _id
 
     def insert_many(self, collection, records):
-        """insert_one"""
-        ret = self.__client[collection].insert_many(records)
-        return ret
+        """insert_many"""
+        try:
+            ret = self.__client[collection].insert_many(records)
+            return ret
+        except BulkWriteError as exc:
+            print(exc.details)
+            return None
 
     def update_one(self, collection, _id, record):
         """update_one"""
