@@ -128,7 +128,7 @@ class RealEngine(Engine):
         )
 
         order_id = self.__exchange.send_order(
-            side, typ, symbol, limit_price, amount, _id
+            side, xq.ORDER_TYPE_LIMIT, symbol, limit_price, amount, _id
         )
 
         self._db.update_one(
