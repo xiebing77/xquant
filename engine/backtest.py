@@ -34,9 +34,6 @@ class BackTest(Engine):
         self.config = config
         super().__init__(strategy_id, DB_ORDERS_NAME)
 
-        for symbol in symbols:
-            self.__db.create_index(DB_KLINES_1MIN + symbol, DB_KLINES_INDEX)
-
         self.tick_time = None
 
     def now(self):
@@ -165,6 +162,7 @@ class BackTest(Engine):
         _id = self._db.insert_one(
             DB_ORDERS_NAME,
             {
+                "create_time": self.now().timestamp(),
                 "strategy_id": self.strategy_id,
                 "symbol": symbol,
                 "side": side,
@@ -198,7 +196,7 @@ class BackTest(Engine):
             tick_start = datetime.now()
             strategy.on_tick()
             tick_end = datetime.now()
-            logging.info("tick  cost: %s \n\n",tick_end - tick_start)
+            logging.info("tick  cost: %s \n\n", tick_end - tick_start)
 
             self.tick_time += timedelta(seconds=strategy.config["sec"])
         total_tick_end = datetime.now()

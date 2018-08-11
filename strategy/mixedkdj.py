@@ -47,33 +47,37 @@ class MixedKDJStrategy(Strategy):
         check_signals = []
         offset = 1
         if cur_j - offset > cur_k > cur_d + offset:  # 开仓
-            info = "j-%f > k > d+%f" % (offset, offset)
-            logging.info("开仓信号: %s", info)
             self.set_gold_fork(cur_price)
 
             if cur_j < y_j:
                 # 下降趋势
                 if cur_k < y_k:
                     # j、k 同时下降，最多保留半仓
-                    check_signals.append(create_signal(xq.SIDE_SELL, 0.5, "j、k 同时下降"))
+                    check_signals.append(
+                        create_signal(xq.SIDE_SELL, 0.5, "减仓：j、k 同时下降")
+                    )
 
                 else:
                     # j 下落，最多保留8成仓位
-                    check_signals.append(create_signal(xq.SIDE_SELL, 0.8, "j 下落"))
+                    check_signals.append(create_signal(xq.SIDE_SELL, 0.8, "减仓：j 下落"))
             else:
                 # 满仓买入
-                check_signals.append(create_signal(xq.SIDE_BUY, 1, info))
+                check_signals.append(
+                    create_signal(
+                        xq.SIDE_BUY, 1, "开仓：j-%g > k > d+%g" % (offset, offset)
+                    )
+                )
 
         elif cur_j + offset < cur_k < cur_d - offset:  # 平仓
-            info = "j+%f < k < d-%f" % (offset, offset)
-            logging.info("平仓信号: %s", info)
             self.set_die_fork(cur_price)
 
             # 清仓卖出
-            check_signals.append(create_signal(xq.SIDE_SELL, 0, info))
+            check_signals.append(
+                create_signal(xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset))
+            )
 
         else:
-            logging.info("木有信号: 不买不卖")
+            pass
 
         logging.info("gold price: %f;  time: %s", self.gold_price, self.gold_timestamp)
         logging.info(" die price: %f;  time: %s", self.die_price, self.die_timestamp)
@@ -82,7 +86,9 @@ class MixedKDJStrategy(Strategy):
             today_fall_rate = ts.cacl_today_fall_rate(klines, cur_price)
             if today_fall_rate > 0.1:
                 # 清仓卖出
-                check_signals.append(create_signal(xq.SIDE_SELL, 0, "当前价距离当天最高价回落10%"))
+                check_signals.append(
+                    create_signal(xq.SIDE_SELL, 0, "平仓：当前价距离当天最高价回落10%")
+                )
 
             period_start_time = position_info["start_time"]
             period_fall_rate = ts.cacl_period_fall_rate(
@@ -90,11 +96,13 @@ class MixedKDJStrategy(Strategy):
             )
             if period_fall_rate > 0.1:
                 # 清仓卖出
-                check_signals.append(create_signal(xq.SIDE_SELL, 0, "当前价距离周期内最高价回落10%"))
+                check_signals.append(
+                    create_signal(xq.SIDE_SELL, 0, "平仓：当前价距离周期内最高价回落10%")
+                )
             elif period_fall_rate > 0.05:
                 # 减仓一半
                 check_signals.append(
-                    create_signal(xq.SIDE_SELL, 0.5, "当前价距离周期内最高价回落5%")
+                    create_signal(xq.SIDE_SELL, 0.5, "减仓：当前价距离周期内最高价回落5%")
                 )
 
         return check_signals

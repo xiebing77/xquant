@@ -29,21 +29,19 @@ class KDJStrategy(Strategy):
         check_signals = []
         offset = 1
         if (cur_j - offset) > cur_k > (cur_d + offset):  # 开仓
-            info = "j-%f > k > d+%f" % (offset, offset)
-            logging.info("开仓信号: %s", info)
-
             # 满仓买入
-            check_signals.append(create_signal(xq.SIDE_BUY, 1, info))
+            check_signals.append(
+                create_signal(xq.SIDE_BUY, 1, "开仓：j-%g > k > d+%g" % (offset, offset))
+            )
 
         elif (cur_j + offset) < cur_k < (cur_d - offset):  # 平仓
-            info = "j+%f < k < d-%f" % (offset, offset)
-            logging.info("平仓信号: %s", info)
-
             # 清仓卖出
-            check_signals.append(create_signal(xq.SIDE_SELL, 0, info))
+            check_signals.append(
+                create_signal(xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset))
+            )
 
         else:
-            logging.info("木有信号: 不买不卖")
+            pass
 
         return check_signals
 

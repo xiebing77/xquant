@@ -112,6 +112,7 @@ class RealEngine(Engine):
         _id = self._db.insert_one(
             DB_ORDERS_NAME,
             {
+                "create_time": self.now().timestamp(),
                 "strategy_id": self.strategy_id,
                 "symbol": symbol,
                 "side": side,

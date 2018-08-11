@@ -3,6 +3,7 @@
 
 import datetime
 import logging
+import uuid
 import pandas as pd
 from engine.realengine import RealEngine
 from engine.backtest import BackTest
@@ -56,7 +57,7 @@ def decision_signals2(signals):
                 rate = new_rate
                 rmk = new_rmk
     logging.info(
-        "decision signal side(%s), position rate(%f), rmk(%s)", side, rate, rmk
+        "decision signal side(%s), position rate(%g), rmk(%s)", side, rate, rmk
     )
 
     return side, rate
@@ -69,13 +70,12 @@ class Strategy:
         self.config = config
         self.debug_flag = debug
 
-        self.instance_id = (
-            self.__class__.__name__
-            + "_"
-            + self.config["symbol"]
-            + "_"
-            + self.config["id"]
-        )
+        self.instance_id = self.__class__.__name__ + "_" + self.config["symbol"] + "_"
+        print("bt_config: ", bt_config)
+        if bt_config:
+            self.instance_id += str(uuid.uuid1())  # 每次回测都是一个独立的实例
+        else:
+            self.instance_id += self.config["id"]  # 实盘则暂时由config配置
 
         logfilename = (
             self.instance_id + "_" + datetime.datetime.now().strftime("%Y%m%d") + ".log"
@@ -85,7 +85,6 @@ class Strategy:
 
         logging.info("strategy name: %s;  config: %s", self.__class__.__name__, config)
 
-        print("bt_config: ", bt_config)
         if bt_config:
             self.engine = BackTest(self.instance_id, bt_config)
         else:
@@ -98,12 +97,12 @@ class Strategy:
         # 风控第一条：亏损金额超过额度的10%，如额度1000，亏损金额超过100即刻清仓
         loss_limit = self.config["limit"] * 0.1
         if loss_limit + position_info["profit"] <= 0:
-            rc_signals.append(create_signal(xq.SIDE_SELL, 0, "亏损金额超过额度的10%"))
+            rc_signals.append(create_signal(xq.SIDE_SELL, 0, "风控平仓：亏损金额超过额度的10%"))
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
         if pst_price > 0 and cur_price / pst_price <= 0.9:
-            rc_signals.append(create_signal(xq.SIDE_SELL, 0, "当前价低于持仓均价的90%"))
+            rc_signals.append(create_signal(xq.SIDE_SELL, 0, "风控平仓：当前价低于持仓均价的90%"))
 
         return rc_signals
 
@@ -123,7 +122,7 @@ class Strategy:
             return
 
         if dcs_pst_rate > 1 or dcs_pst_rate < 0:
-            logging.warning("仓位率（%f）超出范围（0 ~ 1）", dcs_pst_rate)
+            logging.warning("仓位率（%g）超出范围（0 ~ 1）", dcs_pst_rate)
             return
 
         if dcs_side == xq.SIDE_BUY:
@@ -155,7 +154,7 @@ class Strategy:
         logging.info("base   balance:  %s", base_balance)
 
         buy_base_amount = min(xq.get_balance_free(base_balance), base_coin_amount)
-        logging.info("buy_base_amount: %f", buy_base_amount)
+        logging.info("buy_base_amount: %g", buy_base_amount)
 
         if buy_base_amount <= 0:  #
             return
@@ -164,7 +163,7 @@ class Strategy:
         buy_target_amount = ts.reserve_float(
             buy_base_amount / cur_price, target_amount_digits
         )
-        logging.info("buy target coin amount: %f", buy_target_amount)
+        logging.info("buy target coin amount: %g", buy_target_amount)
 
         rate = 1.1
         order_id = self.engine.send_order_limit(
@@ -176,7 +175,7 @@ class Strategy:
             buy_target_amount,
         )
         logging.info(
-            "current price: %f;  rate: %f;  order_id: %s ", cur_price, rate, order_id
+            "current price: %g;  rate: %g;  order_id: %s ", cur_price, rate, order_id
         )
         return
 
@@ -184,7 +183,7 @@ class Strategy:
         """ 限价卖 """
         if target_coin_amount <= 0:
             return
-        logging.info("sell target coin num: %f", target_coin_amount)
+        logging.info("sell target coin num: %g", target_coin_amount)
 
         rate = 0.9
         _, base_coin = xq.get_symbol_coins(symbol)
@@ -197,7 +196,7 @@ class Strategy:
             target_coin_amount,
         )
         logging.info(
-            "current price: %f;  rate: %f;  order_id: %s", cur_price, rate, order_id
+            "current price: %g;  rate: %g;  order_id: %s", cur_price, rate, order_id
         )
 
     def run(self):

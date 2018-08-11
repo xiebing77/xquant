@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """运行环境引擎"""
-
+from datetime import datetime
 import logging
 from setup import mongo_user, mongo_pwd, db_name, db_url
 import common.xquant as xq
@@ -35,7 +35,7 @@ class Engine:
 
             if order["side"] == xq.SIDE_BUY:
                 if info["amount"] == 0:
-                    info["start_time"] = md.get_datetime_by_id(order["_id"])
+                    info["start_time"] = datetime.fromtimestamp(order["create_time"])
 
                 info["amount"] += deal_amount
                 info["cost"] += deal_value * (1 + commission_rate)
@@ -66,7 +66,19 @@ class Engine:
         ) / limit_base_amount
 
         logging.info(
-            "symbol(%s); current price(%f); position info(%r)", symbol, cur_price, info
+            "symbol( %s ); current price( %g ); position(amount: %g,  price: %g,  cost: %g,  profit: %g,  history_profit: %g,  limit: %g,  total_profit_rate: %g%s )",
+            symbol,
+            cur_price,
+            info["amount"],
+            info["price"],
+            info["cost"],
+            info["profit"],
+            info["history_profit"],
+            info["limit_base_amount"],
+            info["total_profit_rate"],
+            ",  start_time: %s" % info["start_time"].strftime("%Y-%m-%d %H:%M:%S")
+            if info["start_time"]
+            else "",
         )
         # print(info)
         return info
