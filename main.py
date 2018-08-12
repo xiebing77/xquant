@@ -15,17 +15,12 @@ if __name__ == "__main__":
     #print(sys.argv)
     module_name = sys.argv[1].replace('/', '.')
     class_name = sys.argv[2]
-    config = json.loads(sys.argv[3])
-    if len(sys.argv)>=5:
-        debug = bool(sys.argv[4])
+    strategy_config = json.loads(sys.argv[3])
+    engine_config = json.loads(sys.argv[4])
+    if len(sys.argv)>=6:
+        debug = bool(sys.argv[5])
     else:
         debug = False
-
-
-    if len(sys.argv)>=6:
-        bt_config = json.loads(sys.argv[5])
-    else:
-        bt_config = None
     
-    obj = createInstance(module_name, class_name, config, debug, bt_config)
+    obj = createInstance(module_name, class_name, strategy_config, engine_config, debug)
     obj.run()

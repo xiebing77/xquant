@@ -10,8 +10,9 @@ import db.mongodb as md
 class Engine:
     """引擎"""
 
-    def __init__(self, strategy_id, db_orders_name):
+    def __init__(self, strategy_id, config, db_orders_name):
         self.strategy_id = strategy_id
+        self.config = config
         self.db_orders_name = db_orders_name
         self._db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 

@@ -16,9 +16,10 @@ DB_ORDERS_NAME = "orders"
 class RealEngine(Engine):
     """实盘引擎"""
 
-    def __init__(self, exchange, strategy_id):
-        super().__init__(strategy_id, DB_ORDERS_NAME)
+    def __init__(self, strategy_id, config):
+        super().__init__(strategy_id, config, DB_ORDERS_NAME)
 
+        exchange = config["exchange"]
         if exchange == "binance":
             self.__exchange = BinanceExchange(debug=True)
 

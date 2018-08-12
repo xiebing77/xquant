@@ -66,16 +66,15 @@ def decision_signals2(signals):
 class Strategy:
     """Strategy"""
 
-    def __init__(self, config, debug, bt_config):
-        self.config = config
+    def __init__(self, strategy_config, engine_config, debug):
+        self.config = strategy_config
         self.debug_flag = debug
 
         self.instance_id = self.__class__.__name__ + "_" + self.config["symbol"] + "_"
-        #print("bt_config: ", bt_config)
-        if bt_config:
-            self.instance_id += str(uuid.uuid1())  # 每次回测都是一个独立的实例
+        if engine_config["select"] == "real":
+            self.instance_id += engine_config["real"]["instance_id"]  # 实盘则暂时由config配置
         else:
-            self.instance_id += self.config["id"]  # 实盘则暂时由config配置
+            self.instance_id += str(uuid.uuid1())  # 每次回测都是一个独立的实例
 
         logfilename = (
             self.instance_id + "_" + datetime.datetime.now().strftime("%Y%m%d") + ".log"
@@ -83,12 +82,12 @@ class Strategy:
         print(logfilename)
         logging.basicConfig(level=logging.NOTSET, filename=logfilename)
 
-        logging.info("strategy name: %s;  config: %s", self.__class__.__name__, config)
+        logging.info("strategy name: %s;  config: %s", self.__class__.__name__, self.config)
 
-        if bt_config:
-            self.engine = BackTest(self.instance_id, bt_config)
+        if engine_config["select"] == "real":
+            self.engine = RealEngine(self.instance_id, engine_config["real"])
         else:
-            self.engine = RealEngine(self.config["exchange"], self.instance_id)
+            self.engine = BackTest(self.instance_id, engine_config["backtest"])
 
     def risk_control(self, position_info, cur_price):
         """ 风控 """

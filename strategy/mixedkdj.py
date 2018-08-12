@@ -11,8 +11,8 @@ from strategy.strategy import Strategy, create_signal
 class MixedKDJStrategy(Strategy):
     """docstring for KDJ"""
 
-    def __init__(self, config, debug, bt_config=None):
-        super().__init__(config, debug, bt_config)
+    def __init__(self, strategy_config, engine_config, debug):
+        super().__init__(strategy_config, engine_config, debug)
 
         self.gold_price = 0
         self.gold_timestamp = None

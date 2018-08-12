@@ -32,8 +32,7 @@ class BackTest(Engine):
     """回测引擎"""
 
     def __init__(self, strategy_id, config, *symbols):
-        self.config = config
-        super().__init__(strategy_id, DB_ORDERS_NAME)
+        super().__init__(strategy_id, config, DB_ORDERS_NAME)
 
         self.tick_time = None
 
