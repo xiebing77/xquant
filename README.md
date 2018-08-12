@@ -16,7 +16,8 @@ main.py
 目前支持mongodb
 ### exchange
 交易所</br>
-目前支持binance、okex（调试未完成）
+目前完全支持binance</br>
+部分支持okex（调试未完成）
 ### engine
 交易环境</br>
 目前已经支持实盘、历史回测</br>
