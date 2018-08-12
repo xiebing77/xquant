@@ -75,7 +75,7 @@ class Engine:
         else:
             logging.error("持仓数量不可能小于0")
 
-        info["limit_base_amount"] = limit_base_amount
+        info["limit_base_amount"] = limit_base_amount["value"]
 
         logging.info(
             "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  total_profit_rate: %g)",
@@ -85,7 +85,7 @@ class Engine:
             "  profit rate: %g," % (info["profit"] / info["cost"]) if info["cost"] else "",
             "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S") if info["start_time"] else "",
             info["history_profit"],
-            (info["profit"] + info["history_profit"]) / limit_base_amount,
+            (info["profit"] + info["history_profit"]) / info["limit_base_amount"],
         )
         # print(info)
         return info

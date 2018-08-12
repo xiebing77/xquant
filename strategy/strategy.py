@@ -95,7 +95,16 @@ class Strategy:
         rc_signals = []
 
         # 风控第一条：亏损金额超过额度的10%，如额度1000，亏损金额超过100即刻清仓
-        loss_limit = self.config["limit"] * 0.1
+        limit_mode = self.config["limit"]["mode"]
+        limit_value = self.config["limit"]["value"]
+        if limit_mode == 0:
+            pass
+        elif limit_mode == 1:
+            limit_value += position_info["history_profit"]
+        else:
+            logging("请选择额度模式，默认是0")
+
+        loss_limit = limit_value * 0.1
         if loss_limit + position_info["profit"] <= 0:
             rc_signals.append(create_signal(xq.SIDE_SELL, 0, "风控平仓：亏损金额超过额度的10%"))
 
@@ -125,15 +134,24 @@ class Strategy:
             logging.warning("仓位率（%g）超出范围（0 ~ 1）", dcs_pst_rate)
             return
 
+        limit_mode = self.config["limit"]["mode"]
+        limit_value = self.config["limit"]["value"]
+        if limit_mode == 0:
+            pass
+        elif limit_mode == 1:
+            limit_value += position_info["history_profit"]
+        else:
+            logging("请选择额度模式，默认是0")
+
         if dcs_side == xq.SIDE_BUY:
             buy_base_amount = (
-                self.config["limit"] * dcs_pst_rate - position_info["cost"]
+                limit_value * dcs_pst_rate - position_info["cost"]
             )
             self.limit_buy(symbol, ts.reserve_float(buy_base_amount), cur_price)
         elif dcs_side == xq.SIDE_SELL:
             if position_info["cost"] == 0:
                 return
-            position_rate = position_info["cost"] / self.config["limit"]
+            position_rate = position_info["cost"] / limit_value
             dcs_pst_amount = position_info["amount"] * dcs_pst_rate / position_rate
 
             target_coin, _ = xq.get_symbol_coins(symbol)

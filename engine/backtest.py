@@ -193,6 +193,7 @@ class BackTest(Engine):
 
         total_tick_start = datetime.now()
         self.tick_time = start_time
+        tick_count = 0
         while self.tick_time < end_time:
             logging.info("tick_time: %s", self.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
             tick_start = datetime.now()
@@ -200,10 +201,11 @@ class BackTest(Engine):
             tick_end = datetime.now()
             logging.info("tick  cost: %s \n\n", tick_end - tick_start)
 
+            tick_count += 1
             self.tick_time += timedelta(seconds=strategy.config["sec"])
             progress = (self.tick_time-start_time).total_seconds() / (end_time-start_time).total_seconds()
-            sys.stdout.write(" tick: %s,  cost: %s,  progress: %d%% \r" % (self.tick_time.strftime("%Y-%m-%d %H:%M:%S"), tick_end-total_tick_start, progress*100))
+            sys.stdout.write("  tick: %s,  cost: %s,  progress: %d%% \r" % (self.tick_time.strftime("%Y-%m-%d %H:%M:%S"), tick_end-total_tick_start, progress*100))
             sys.stdout.flush()
 
         total_tick_end = datetime.now()
-        print("\n total cost: ", total_tick_end - total_tick_start)
+        print("\n  total tick count: %d cost: %s" % (tick_count, total_tick_end - total_tick_start))
