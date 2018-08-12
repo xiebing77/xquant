@@ -17,12 +17,15 @@ class Engine:
 
     def _get_position(self, symbol, cur_price, limit_base_amount):
         info = {
-            "amount": 0,
-            "price": 0,
-            "cost": 0,
-            "profit": 0,
-            "history_profit": 0,
-            "start_time": None,
+            "amount": 0,     # 数量
+            "price": 0,      # 纯价格，不包含佣金
+            "cost_price": 0, # 分摊佣金后的成本价
+            "value": 0,      # 金额，等于数量*纯价格
+            "commission": 0, # 佣金
+            "cost": 0,       # 成本，等于金额+佣金
+            "profit": 0,     # 当前利润
+            "history_profit": 0, # 历史利润
+            "start_time": None,  # 本周期第一笔买入时间
         }
         commission_rate = 0.001
 
@@ -32,22 +35,33 @@ class Engine:
         for order in orders:
             deal_amount = order["deal_amount"]
             deal_value = order["deal_value"]
+            commission = deal_value * commission_rate
 
             if order["side"] == xq.SIDE_BUY:
                 if info["amount"] == 0:
                     info["start_time"] = datetime.fromtimestamp(order["create_time"])
 
                 info["amount"] += deal_amount
-                info["cost"] += deal_value * (1 + commission_rate)
+
+                info["value"] += deal_value
+
+                info["cost"] += deal_value 
+                info["cost"] += commission
+
             elif order["side"] == xq.SIDE_SELL:
                 info["amount"] -= deal_amount
-                info["cost"] -= deal_value * (1 + commission_rate)
+                
+                info["value"] -= deal_value
+
+                info["cost"] -= deal_value 
+                info["cost"] += commission
             else:
                 logging.error("错误的委托方向")
                 continue
 
             if info["amount"] == 0:
                 info["history_profit"] -= info["cost"]
+                info["value"] = 0
                 info["cost"] = 0
                 info["start_time"] = None
 
@@ -55,30 +69,23 @@ class Engine:
             pass
         elif info["amount"] > 0:
             info["profit"] = cur_price * info["amount"] - info["cost"]
-            info["price"] = info["cost"] / info["amount"]
+            info["price"] = info["value"] / info["amount"]
+            info["cost_price"] = info["cost"] / info["amount"]
 
         else:
             logging.error("持仓数量不可能小于0")
 
         info["limit_base_amount"] = limit_base_amount
-        info["total_profit_rate"] = (
-            info["profit"] + info["history_profit"]
-        ) / limit_base_amount
 
         logging.info(
-            "symbol( %s ); current price( %g ); position(amount: %g,  price: %g,  cost: %g,  profit: %g,  history_profit: %g,  limit: %g,  total_profit_rate: %g%s )",
+            "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  total_profit_rate: %g)",
             symbol,
             cur_price,
-            info["amount"],
-            info["price"],
-            info["cost"],
-            info["profit"],
+            "amount: %g,  price: %g, cost price: %g,  cost: %g,  limit: %g,  profit: %g," % (info["amount"],info["price"],info["cost_price"],info["cost"],info["limit_base_amount"],info["profit"]) if info["amount"] else "",
+            "  profit rate: %g," % (info["profit"] / info["cost"]) if info["cost"] else "",
+            "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S") if info["start_time"] else "",
             info["history_profit"],
-            info["limit_base_amount"],
-            info["total_profit_rate"],
-            ",  start_time: %s" % info["start_time"].strftime("%Y-%m-%d %H:%M:%S")
-            if info["start_time"]
-            else "",
+            (info["profit"] + info["history_profit"]) / limit_base_amount,
         )
         # print(info)
         return info
