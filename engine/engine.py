@@ -18,9 +18,9 @@ class Engine:
     def _get_position(self, symbol, cur_price, limit_base_amount):
         info = {
             "amount": 0,     # 数量
-            "price": 0,      # 纯价格，不包含佣金
+            "price": 0,      # 平均价格，不包含佣金
             "cost_price": 0, # 分摊佣金后的成本价
-            "value": 0,      # 金额，等于数量*纯价格
+            "value": 0,      # 剩余金额，用于计算均价
             "commission": 0, # 佣金
             "cost": 0,       # 成本，等于金额+佣金
             "profit": 0,     # 当前利润

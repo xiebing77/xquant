@@ -3,8 +3,8 @@ import sys
 import json
 
 def createInstance(module_name, class_name, *args, **kwargs):
-    print("args  :", args)
-    print("kwargs:", kwargs)
+    #print("args  :", args)
+    #print("kwargs:", kwargs)
     module_meta = __import__(module_name, globals(), locals(), [class_name])
     class_meta = getattr(module_meta, class_name)
     obj = class_meta(*args, **kwargs)
@@ -12,7 +12,7 @@ def createInstance(module_name, class_name, *args, **kwargs):
 
 if __name__ == "__main__":
 
-    print(sys.argv)
+    #print(sys.argv)
     module_name = sys.argv[1].replace('/', '.')
     class_name = sys.argv[2]
     config = json.loads(sys.argv[3])

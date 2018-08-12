@@ -71,7 +71,7 @@ class Strategy:
         self.debug_flag = debug
 
         self.instance_id = self.__class__.__name__ + "_" + self.config["symbol"] + "_"
-        print("bt_config: ", bt_config)
+        #print("bt_config: ", bt_config)
         if bt_config:
             self.instance_id += str(uuid.uuid1())  # 每次回测都是一个独立的实例
         else:

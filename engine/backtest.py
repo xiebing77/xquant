@@ -1,5 +1,6 @@
 #!/usr/bin/python
 """回测环境"""
+import sys
 from datetime import datetime, timedelta, time
 import uuid
 import logging
@@ -185,13 +186,14 @@ class BackTest(Engine):
 
     def run(self, strategy):
         """ run """
+        print("backtest time range: [ %s , %s )" %(self.config["start_time"], self.config["end_time"]))
+
         start_time = datetime.strptime(self.config["start_time"], "%Y-%m-%d %H:%M:%S")
         end_time = datetime.strptime(self.config["end_time"], "%Y-%m-%d %H:%M:%S")
 
         total_tick_start = datetime.now()
         self.tick_time = start_time
-        while self.tick_time <= end_time:
-            print("tick_time: ", self.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
+        while self.tick_time < end_time:
             logging.info("tick_time: %s", self.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
             tick_start = datetime.now()
             strategy.on_tick()
@@ -199,5 +201,9 @@ class BackTest(Engine):
             logging.info("tick  cost: %s \n\n", tick_end - tick_start)
 
             self.tick_time += timedelta(seconds=strategy.config["sec"])
+            progress = (self.tick_time-start_time).total_seconds() / (end_time-start_time).total_seconds()
+            sys.stdout.write(" tick: %s,  cost: %s,  progress: %d%% \r" % (self.tick_time.strftime("%Y-%m-%d %H:%M:%S"), tick_end-total_tick_start, progress*100))
+            sys.stdout.flush()
+
         total_tick_end = datetime.now()
-        print("total cost: ", total_tick_end - total_tick_start)
+        print("\n total cost: ", total_tick_end - total_tick_start)
