@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 import common.xquant as xq
 import utils.indicator as ic
-from strategy.strategy import Strategy, create_signal
+from strategy.strategy import Strategy
 
 
 class KDJStrategy(Strategy):
@@ -31,13 +31,13 @@ class KDJStrategy(Strategy):
         if (cur_j - offset) > cur_k > (cur_d + offset):  # 开仓
             # 满仓买入
             check_signals.append(
-                create_signal(xq.SIDE_BUY, 1, "开仓：j-%g > k > d+%g" % (offset, offset))
+                xq.create_signal(xq.SIDE_BUY, 1, "开仓：j-%g > k > d+%g" % (offset, offset))
             )
 
         elif (cur_j + offset) < cur_k < (cur_d - offset):  # 平仓
             # 清仓卖出
             check_signals.append(
-                create_signal(xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset))
+                xq.create_signal(xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset))
             )
 
         else:
@@ -52,7 +52,5 @@ class KDJStrategy(Strategy):
         self.engine.cancle_orders(symbol)
 
         check_signals = self.check(symbol)
-        position_info = self.engine.get_position(
-            symbol, self.cur_price, self.config["limit"]
-        )
-        self.handle_order(symbol, self.cur_price, position_info, check_signals)
+        position_info = self.engine.get_position(symbol, self.cur_price)
+        self.engine.handle_order(symbol, self.cur_price, position_info, check_signals)

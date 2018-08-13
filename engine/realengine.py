@@ -19,7 +19,7 @@ class RealEngine(Engine):
     def __init__(self, strategy_id, config):
         super().__init__(strategy_id, config, DB_ORDERS_NAME)
 
-        exchange = config["exchange"]
+        exchange = config["real"]["exchange"]
         if exchange == "binance":
             self.__exchange = BinanceExchange(debug=True)
 
@@ -41,10 +41,10 @@ class RealEngine(Engine):
         """ 获取余额 """
         return self.__exchange.get_balances(*coins)
 
-    def get_position(self, symbol, cur_price, limit_base_amount):
+    def get_position(self, symbol, cur_price):
         """ 获取持仓信息 """
         self.sync_orders(symbol)
-        return self._get_position(symbol, cur_price, limit_base_amount)
+        return self._get_position(symbol, cur_price)
 
     def has_open_orders(self, symbol):
         """ 是否有open状态的委托 """

@@ -40,3 +40,49 @@ def get_balance_free(balance):
 def get_balance_frozen(balance):
     """ 获取冻结数 """
     return ts.str_to_float(balance["frozen"])
+
+def create_signal(side, pst_rate, rmk):
+    """创建交易信号"""
+    return {"side": side, "pst_rate": pst_rate, "rmk": rmk}
+
+
+def decision_signals(signals):
+    """决策交易信号"""
+    sdf = pd.DataFrame(signals)
+    sdf_min = sdf.groupby("side")["pst_rate"].min()
+
+    if xq.SIDE_SELL in sdf_min:
+        return xq.SIDE_SELL, sdf_min[xq.SIDE_SELL]
+
+    if xq.SIDE_BUY in sdf_min:
+        return xq.SIDE_BUY, sdf_min[xq.SIDE_BUY]
+
+    return None, None
+
+
+def decision_signals2(signals):
+    """决策交易信号"""
+    if not signals:
+        return None, None
+
+    side = None
+    for signal in signals:
+        new_side = signal["side"]
+        new_rate = signal["pst_rate"]
+        new_rmk = signal["rmk"]
+
+        if side is None:
+            side = new_side
+            rate = new_rate
+            rmk = new_rmk
+        elif side is new_side:
+            if rate > new_rate:
+                rate = new_rate
+                rmk = new_rmk
+        else:
+            if side is xq.SIDE_BUY:
+                side = new_side
+                rate = new_rate
+                rmk = new_rmk
+
+    return side, rate, rmk

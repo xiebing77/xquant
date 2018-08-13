@@ -54,16 +54,16 @@ class MixedKDJStrategy(Strategy):
                 if cur_k < y_k:
                     # j、k 同时下降，最多保留半仓
                     check_signals.append(
-                        create_signal(xq.SIDE_SELL, 0.5, "减仓：j、k 同时下降")
+                        xq.create_signal(xq.SIDE_SELL, 0.5, "减仓：j、k 同时下降")
                     )
 
                 else:
                     # j 下落，最多保留8成仓位
-                    check_signals.append(create_signal(xq.SIDE_SELL, 0.8, "减仓：j 下落"))
+                    check_signals.append(xq.create_signal(xq.SIDE_SELL, 0.8, "减仓：j 下落"))
             else:
                 # 满仓买入
                 check_signals.append(
-                    create_signal(
+                    xq.create_signal(
                         xq.SIDE_BUY, 1, "开仓：j-%g > k > d+%g" % (offset, offset)
                     )
                 )
@@ -73,7 +73,7 @@ class MixedKDJStrategy(Strategy):
 
             # 清仓卖出
             check_signals.append(
-                create_signal(xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset))
+                xq.create_signal(xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset))
             )
 
         else:
@@ -87,7 +87,7 @@ class MixedKDJStrategy(Strategy):
             if today_fall_rate > 0.1:
                 # 清仓卖出
                 check_signals.append(
-                    create_signal(xq.SIDE_SELL, 0, "平仓：当前价距离当天最高价回落10%")
+                    xq.create_signal(xq.SIDE_SELL, 0, "平仓：当前价距离当天最高价回落10%")
                 )
 
             period_start_time = position_info["start_time"]
@@ -97,12 +97,12 @@ class MixedKDJStrategy(Strategy):
             if period_fall_rate > 0.1:
                 # 清仓卖出
                 check_signals.append(
-                    create_signal(xq.SIDE_SELL, 0, "平仓：当前价距离周期内最高价回落10%")
+                    xq.create_signal(xq.SIDE_SELL, 0, "平仓：当前价距离周期内最高价回落10%")
                 )
             elif period_fall_rate > 0.05:
                 # 减仓一半
                 check_signals.append(
-                    create_signal(xq.SIDE_SELL, 0.5, "减仓：当前价距离周期内最高价回落5%")
+                    xq.create_signal(xq.SIDE_SELL, 0.5, "减仓：当前价距离周期内最高价回落5%")
                 )
 
         return check_signals
@@ -117,10 +117,8 @@ class MixedKDJStrategy(Strategy):
         klines = self.engine.get_klines_1day(symbol, 300)
 
         cur_price = pd.to_numeric(klines["close"].values[-1])
-        position_info = self.engine.get_position(
-            symbol, cur_price, self.config["limit"]
-        )
+        position_info = self.engine.get_position(symbol, cur_price)
 
         check_signals = self.check(klines, position_info, cur_price)
 
-        self.handle_order(symbol, cur_price, position_info, check_signals)
+        self.engine.handle_order(symbol, cur_price, position_info, check_signals)

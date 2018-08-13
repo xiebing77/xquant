@@ -151,9 +151,9 @@ class BackTest(Engine):
         else:
             return tuple(coin_balances)
 
-    def get_position(self, symbol, cur_price, limit_base_amount):
+    def get_position(self, symbol, cur_price):
         """ 获取持仓信息 """
-        return self._get_position(symbol, cur_price, limit_base_amount)
+        return self._get_position(symbol, cur_price)
 
     def send_order_limit(self, side, symbol, cur_price, rate, base_digits, amount):
         """ 提交委托，回测默认以当前价全部成交 """
@@ -185,10 +185,10 @@ class BackTest(Engine):
 
     def run(self, strategy):
         """ run """
-        print("backtest time range: [ %s , %s )" %(self.config["start_time"], self.config["end_time"]))
+        print("backtest time range: [ %s , %s )" %(self.config["backtest"]["start_time"], self.config["backtest"]["end_time"]))
 
-        start_time = datetime.strptime(self.config["start_time"], "%Y-%m-%d %H:%M:%S")
-        end_time = datetime.strptime(self.config["end_time"], "%Y-%m-%d %H:%M:%S")
+        start_time = datetime.strptime(self.config["backtest"]["start_time"], "%Y-%m-%d %H:%M:%S")
+        end_time = datetime.strptime(self.config["backtest"]["end_time"], "%Y-%m-%d %H:%M:%S")
 
         total_tick_start = datetime.now()
         self.tick_time = start_time
