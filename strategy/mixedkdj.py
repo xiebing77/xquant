@@ -73,7 +73,9 @@ class MixedKDJStrategy(Strategy):
 
             # 清仓卖出
             check_signals.append(
-                xq.create_signal(xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset))
+                xq.create_signal(
+                    xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset)
+                )
             )
 
         else:

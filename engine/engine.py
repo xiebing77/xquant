@@ -19,17 +19,16 @@ class Engine:
 
     def _get_position(self, symbol, cur_price):
         info = {
-            "amount": 0,     # 数量
-            "price": 0,      # 平均价格，不包含佣金
-            "cost_price": 0, # 分摊佣金后的成本价
-            "value": 0,      # 剩余金额，用于计算均价
-            "commission": 0, # 佣金
-            "cost": 0,       # 成本，等于金额+佣金
-            "profit": 0,     # 当前利润
-            "history_profit": 0, # 历史利润
+            "amount": 0,  # 数量
+            "price": 0,  # 平均价格，不包含佣金
+            "cost_price": 0,  # 分摊佣金后的成本价
+            "value": 0,  # 剩余金额，用于计算均价
+            "commission": 0,  # 佣金
+            "cost": 0,  # 成本，等于金额+佣金
+            "profit": 0,  # 当前利润
+            "history_profit": 0,  # 历史利润
             "start_time": None,  # 本周期第一笔买入时间
         }
-        commission_rate = 0.001
 
         orders = self._db.find(
             self.db_orders_name, {"strategy_id": self.strategy_id, "symbol": symbol}
@@ -37,7 +36,7 @@ class Engine:
         for order in orders:
             deal_amount = order["deal_amount"]
             deal_value = order["deal_value"]
-            commission = deal_value * commission_rate
+            commission = deal_value * self.config["commission_rate"]
 
             if order["side"] == xq.SIDE_BUY:
                 if info["amount"] == 0:
@@ -47,15 +46,15 @@ class Engine:
 
                 info["value"] += deal_value
 
-                info["cost"] += deal_value 
+                info["cost"] += deal_value
                 info["cost"] += commission
 
             elif order["side"] == xq.SIDE_SELL:
                 info["amount"] -= deal_amount
-                
+
                 info["value"] -= deal_value
 
-                info["cost"] -= deal_value 
+                info["cost"] -= deal_value
                 info["cost"] += commission
             else:
                 logging.error("错误的委托方向")
@@ -83,9 +82,23 @@ class Engine:
             "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  total_profit_rate: %g)",
             symbol,
             cur_price,
-            "amount: %g,  price: %g, cost price: %g,  cost: %g,  limit: %g,  profit: %g," % (info["amount"],info["price"],info["cost_price"],info["cost"],info["limit_base_amount"],info["profit"]) if info["amount"] else "",
-            "  profit rate: %g," % (info["profit"] / info["cost"]) if info["cost"] else "",
-            "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S") if info["start_time"] else "",
+            "amount: %g,  price: %g, cost price: %g,  cost: %g,  limit: %g,  profit: %g,"
+            % (
+                info["amount"],
+                info["price"],
+                info["cost_price"],
+                info["cost"],
+                info["limit_base_amount"],
+                info["profit"],
+            )
+            if info["amount"]
+            else "",
+            "  profit rate: %g," % (info["profit"] / info["cost"])
+            if info["cost"]
+            else "",
+            "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S")
+            if info["start_time"]
+            else "",
             info["history_profit"],
             (info["profit"] + info["history_profit"]) / info["limit_base_amount"],
         )
@@ -131,7 +144,10 @@ class Engine:
         logging.info("signals(%r)", signals)
         dcs_side, dcs_pst_rate, dcs_rmk = xq.decision_signals2(signals)
         logging.info(
-            "decision signal side(%s), position rate(%g), rmk(%s)", dcs_side, dcs_pst_rate, dcs_rmk
+            "decision signal side(%s), position rate(%g), rmk(%s)",
+            dcs_side,
+            dcs_pst_rate,
+            dcs_rmk,
         )
 
         if dcs_side is None:
@@ -151,9 +167,7 @@ class Engine:
             logging("请选择额度模式，默认是0")
 
         if dcs_side == xq.SIDE_BUY:
-            buy_base_amount = (
-                limit_value * dcs_pst_rate - position_info["cost"]
-            )
+            buy_base_amount = limit_value * dcs_pst_rate - position_info["cost"]
             self.limit_buy(symbol, ts.reserve_float(buy_base_amount), cur_price)
         elif dcs_side == xq.SIDE_SELL:
             if position_info["cost"] == 0:
@@ -186,7 +200,8 @@ class Engine:
 
         target_amount_digits = self.config["digits"][target_coin]
         buy_target_amount = ts.reserve_float(
-            buy_base_amount / cur_price, target_amount_digits
+            buy_base_amount / (cur_price * (1 + self.config["commission_rate"])),
+            target_amount_digits,
         )
         logging.info("buy target coin amount: %g", buy_target_amount)
 

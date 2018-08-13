@@ -31,13 +31,17 @@ class KDJStrategy(Strategy):
         if (cur_j - offset) > cur_k > (cur_d + offset):  # 开仓
             # 满仓买入
             check_signals.append(
-                xq.create_signal(xq.SIDE_BUY, 1, "开仓：j-%g > k > d+%g" % (offset, offset))
+                xq.create_signal(
+                    xq.SIDE_BUY, 1, "开仓：j-%g > k > d+%g" % (offset, offset)
+                )
             )
 
         elif (cur_j + offset) < cur_k < (cur_d - offset):  # 平仓
             # 清仓卖出
             check_signals.append(
-                xq.create_signal(xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset))
+                xq.create_signal(
+                    xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset)
+                )
             )
 
         else:

@@ -29,7 +29,9 @@ class Strategy:
         print(logfilename)
         logging.basicConfig(level=logging.NOTSET, filename=logfilename)
 
-        logging.info("strategy name: %s;  config: %s", self.__class__.__name__, self.config)
+        logging.info(
+            "strategy name: %s;  config: %s", self.__class__.__name__, self.config
+        )
 
         if engine_config["select"] == "real":
             self.engine = RealEngine(self.instance_id, engine_config)

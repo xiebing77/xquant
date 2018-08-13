@@ -19,7 +19,7 @@ class RealEngine(Engine):
     def __init__(self, strategy_id, config):
         super().__init__(strategy_id, config, DB_ORDERS_NAME)
 
-        exchange = config["real"]["exchange"]
+        exchange = config["exchange"]
         if exchange == "binance":
             self.__exchange = BinanceExchange(debug=True)
 

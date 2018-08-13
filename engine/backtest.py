@@ -185,10 +185,20 @@ class BackTest(Engine):
 
     def run(self, strategy):
         """ run """
-        print("backtest time range: [ %s , %s )" %(self.config["backtest"]["start_time"], self.config["backtest"]["end_time"]))
+        print(
+            "backtest time range: [ %s , %s )"
+            % (
+                self.config["backtest"]["start_time"],
+                self.config["backtest"]["end_time"],
+            )
+        )
 
-        start_time = datetime.strptime(self.config["backtest"]["start_time"], "%Y-%m-%d %H:%M:%S")
-        end_time = datetime.strptime(self.config["backtest"]["end_time"], "%Y-%m-%d %H:%M:%S")
+        start_time = datetime.strptime(
+            self.config["backtest"]["start_time"], "%Y-%m-%d %H:%M:%S"
+        )
+        end_time = datetime.strptime(
+            self.config["backtest"]["end_time"], "%Y-%m-%d %H:%M:%S"
+        )
 
         total_tick_start = datetime.now()
         self.tick_time = start_time
@@ -202,9 +212,21 @@ class BackTest(Engine):
 
             tick_count += 1
             self.tick_time += timedelta(seconds=strategy.config["sec"])
-            progress = (self.tick_time-start_time).total_seconds() / (end_time-start_time).total_seconds()
-            sys.stdout.write("  tick: %s,  cost: %s,  progress: %d%% \r" % (self.tick_time.strftime("%Y-%m-%d %H:%M:%S"), tick_end-total_tick_start, progress*100))
+            progress = (self.tick_time - start_time).total_seconds() / (
+                end_time - start_time
+            ).total_seconds()
+            sys.stdout.write(
+                "  tick: %s,  cost: %s,  progress: %d%% \r"
+                % (
+                    self.tick_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    tick_end - total_tick_start,
+                    progress * 100,
+                )
+            )
             sys.stdout.flush()
 
         total_tick_end = datetime.now()
-        print("\n  total tick count: %d cost: %s" % (tick_count, total_tick_end - total_tick_start))
+        print(
+            "\n  total tick count: %d cost: %s"
+            % (tick_count, total_tick_end - total_tick_start)
+        )
