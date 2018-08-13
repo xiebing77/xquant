@@ -11,8 +11,8 @@ from strategy.strategy import Strategy, create_signal
 class MixedKDJStrategy(Strategy):
     """docstring for KDJ"""
 
-    def __init__(self, strategy_config, engine_config, debug):
-        super().__init__(strategy_config, engine_config, debug)
+    def __init__(self, strategy_config, engine):
+        super().__init__(strategy_config, engine)
 
         self.gold_price = 0
         self.gold_timestamp = None
@@ -73,9 +73,7 @@ class MixedKDJStrategy(Strategy):
 
             # 清仓卖出
             check_signals.append(
-                xq.create_signal(
-                    xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset)
-                )
+                xq.create_signal(xq.SIDE_SELL, 0, "平仓：j+%g < k < d-%g" % (offset, offset))
             )
 
         else:

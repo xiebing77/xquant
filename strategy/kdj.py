@@ -10,8 +10,8 @@ from strategy.strategy import Strategy
 class KDJStrategy(Strategy):
     """ simple KDJ stragegy"""
 
-    def __init__(self, strategy_config, engine_config, debug):
-        super().__init__(strategy_config, engine_config, debug)
+    def __init__(self, strategy_config, engine):
+        super().__init__(strategy_config, engine)
         self.cur_price = 0
 
     def check(self, symbol):

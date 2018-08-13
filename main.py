@@ -1,6 +1,11 @@
 #!/usr/bin/python3
 import sys
 import json
+import datetime
+import logging
+import uuid
+from engine.realengine import RealEngine
+from engine.backtest import BackTest
 
 def createInstance(module_name, class_name, *args, **kwargs):
     #print("args  :", args)
@@ -21,6 +26,36 @@ if __name__ == "__main__":
         debug = bool(sys.argv[5])
     else:
         debug = False
-    
-    obj = createInstance(module_name, class_name, strategy_config, engine_config, debug)
-    obj.run()
+
+
+    instance_id = class_name + "_" + strategy_config["symbol"] + "_"
+    if engine_config["select"] == "real":
+        instance_id += engine_config["real"]["instance_id"]  # 实盘则暂时由config配置
+    else:
+        instance_id += str(uuid.uuid1())  # 每次回测都是一个独立的实例
+
+    logfilename = (
+        instance_id + "_" + datetime.datetime.now().strftime("%Y%m%d") + ".log"
+    )
+    print(logfilename)
+    logging.basicConfig(level=logging.NOTSET, filename=logfilename)
+
+    logging.info("strategy name: %s;  config: %s", class_name, strategy_config)
+    logging.info("engine config: %s", engine_config)
+
+    if engine_config["select"] == "real":
+        engine = RealEngine(instance_id, engine_config)
+    else:
+        engine = BackTest(instance_id, engine_config)
+
+    strategy = createInstance(module_name, class_name, strategy_config, engine)
+
+    if debug:
+        engine.run(strategy)
+    else:
+        try:
+            engine.run(strategy)
+        except Exception as ept:
+            logging.critical(ept)
+
+
