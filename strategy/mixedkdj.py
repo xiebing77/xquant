@@ -5,7 +5,7 @@ import pandas as pd
 import common.xquant as xq
 import utils.indicator as ic
 import utils.tools as ts
-from strategy.strategy import Strategy, create_signal
+from strategy.strategy import Strategy
 
 
 class MixedKDJStrategy(Strategy):
