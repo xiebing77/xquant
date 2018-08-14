@@ -28,15 +28,14 @@ if __name__ == "__main__":
         debug = False
 
 
-    instance_id = class_name + "_" + strategy_config["symbol"] + "_"
     if engine_config["select"] == "real":
-        instance_id += engine_config["real"]["instance_id"]  # 实盘则暂时由config配置
+        instance_id = engine_config["real"]["instance_id"]  # 实盘则暂时由config配置
+        logfilename = instance_id +  ".log"
     else:
-        instance_id += str(uuid.uuid1())  # 每次回测都是一个独立的实例
+        instance_id = str(uuid.uuid1())  # 每次回测都是一个独立的实例
+        logfilename = "backtest_" + instance_id +  ".log"
 
-    logfilename = (
-        instance_id + "_" + datetime.datetime.now().strftime("%Y%m%d") + ".log"
-    )
+
     print(logfilename)
     logging.basicConfig(level=logging.NOTSET, filename=logfilename)
 

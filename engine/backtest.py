@@ -31,8 +31,8 @@ def get_open_time(dt):
 class BackTest(Engine):
     """回测引擎"""
 
-    def __init__(self, strategy_id, config, *symbols):
-        super().__init__(strategy_id, config, DB_ORDERS_NAME)
+    def __init__(self, instance_id, config, *symbols):
+        super().__init__(instance_id, config, DB_ORDERS_NAME)
 
         self.tick_time = None
 
@@ -163,7 +163,7 @@ class BackTest(Engine):
             DB_ORDERS_NAME,
             {
                 "create_time": self.now().timestamp(),
-                "strategy_id": self.strategy_id,
+                "instance_id": self.instance_id,
                 "symbol": symbol,
                 "side": side,
                 "type": xq.ORDER_TYPE_LIMIT,

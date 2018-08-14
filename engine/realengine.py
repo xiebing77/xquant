@@ -16,8 +16,8 @@ DB_ORDERS_NAME = "orders"
 class RealEngine(Engine):
     """实盘引擎"""
 
-    def __init__(self, strategy_id, config):
-        super().__init__(strategy_id, config, DB_ORDERS_NAME)
+    def __init__(self, instance_id, config):
+        super().__init__(instance_id, config, DB_ORDERS_NAME)
 
         exchange = config["exchange"]
         if exchange == "binance":
@@ -51,7 +51,7 @@ class RealEngine(Engine):
         db_orders = self._db.find(
             DB_ORDERS_NAME,
             {
-                "strategy_id": self.strategy_id,
+                "instance_id": self.instance_id,
                 "symbol": symbol,
                 "status": xq.ORDER_STATUS_OPEN,
             },
@@ -114,7 +114,7 @@ class RealEngine(Engine):
             DB_ORDERS_NAME,
             {
                 "create_time": self.now().timestamp(),
-                "strategy_id": self.strategy_id,
+                "instance_id": self.instance_id,
                 "symbol": symbol,
                 "side": side,
                 "type": xq.ORDER_TYPE_LIMIT,
@@ -144,7 +144,7 @@ class RealEngine(Engine):
 
         orders = self.__exchange.get_open_orders(symbol)
         for order in orders:
-            if order["strategy_id"] == self.strategy_id:
+            if order["instance_id"] == self.instance_id:
                 self._db.update_one(
                     DB_ORDERS_NAME, order["_id"], {"status": xq.ORDER_STATUS_CANCELLING}
                 )

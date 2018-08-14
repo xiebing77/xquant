@@ -11,8 +11,8 @@ import db.mongodb as md
 class Engine:
     """引擎"""
 
-    def __init__(self, strategy_id, config, db_orders_name):
-        self.strategy_id = strategy_id
+    def __init__(self, instance_id, config, db_orders_name):
+        self.instance_id = instance_id
         self.config = config
         self.db_orders_name = db_orders_name
         self._db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
@@ -31,7 +31,7 @@ class Engine:
         }
 
         orders = self._db.find(
-            self.db_orders_name, {"strategy_id": self.strategy_id, "symbol": symbol}
+            self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol}
         )
         for order in orders:
             deal_amount = order["deal_amount"]
