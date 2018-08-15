@@ -155,9 +155,8 @@ class BackTest(Engine):
         """ 获取持仓信息 """
         return self._get_position(symbol, cur_price)
 
-    def send_order_limit(self, side, symbol, cur_price, rate, base_digits, amount):
+    def send_order_limit(self, side, symbol, cur_price, limit_price, amount):
         """ 提交委托，回测默认以当前价全部成交 """
-        limit_price = ts.reserve_float(cur_price * rate, base_digits)
         order_id = uuid.uuid1()
         _id = self._db.insert_one(
             DB_ORDERS_NAME,

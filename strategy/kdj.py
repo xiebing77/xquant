@@ -56,5 +56,4 @@ class KDJStrategy(Strategy):
         self.engine.cancle_orders(symbol)
 
         check_signals = self.check(symbol)
-        position_info = self.engine.get_position(symbol, self.cur_price)
-        self.engine.handle_order(symbol, self.cur_price, position_info, check_signals)
+        self.engine.handle_order(symbol, self.cur_price, check_signals)

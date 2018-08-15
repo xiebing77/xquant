@@ -19,20 +19,23 @@ class MixedKDJStrategy(Strategy):
         self.die_price = 0
         self.die_timestamp = None
 
-    def set_gold_fork(self, cur_price):
+    def set_gold_fork(self):
         """ kdj指标，金叉 """
         if self.gold_price <= 0:
-            self.gold_price = cur_price
+            self.gold_price = self.cur_price
             self.gold_timestamp = self.engine.now()
 
-    def set_die_fork(self, cur_price):
+    def set_die_fork(self):
         """ kdj指标，死叉 """
         if self.die_price <= 0:
-            self.die_price = cur_price
+            self.die_price = self.cur_price
             self.die_timestamp = self.engine.now()
 
-    def check(self, klines, position_info, cur_price):
+    def check(self, symbol):
         """ kdj指标，金叉全买入，下降趋势部分卖出，死叉全卖出 """
+        klines = self.engine.get_klines_1day(symbol, 300)
+        self.cur_price = pd.to_numeric(klines["close"].values[-1])
+
         ic.calc_kdj(klines)
         cur_k = klines["kdj_k"].values[-1]
         cur_d = klines["kdj_d"].values[-1]
@@ -47,7 +50,7 @@ class MixedKDJStrategy(Strategy):
         check_signals = []
         offset = 1
         if cur_j - offset > cur_k > cur_d + offset:  # 开仓
-            self.set_gold_fork(cur_price)
+            self.set_gold_fork()
 
             if cur_j < y_j:
                 # 下降趋势
@@ -69,7 +72,7 @@ class MixedKDJStrategy(Strategy):
                 )
 
         elif cur_j + offset < cur_k < cur_d - offset:  # 平仓
-            self.set_die_fork(cur_price)
+            self.set_die_fork()
 
             # 清仓卖出
             check_signals.append(
@@ -82,29 +85,6 @@ class MixedKDJStrategy(Strategy):
         logging.info("gold price: %f;  time: %s", self.gold_price, self.gold_timestamp)
         logging.info(" die price: %f;  time: %s", self.die_price, self.die_timestamp)
 
-        if position_info["amount"] > 0:
-            today_fall_rate = ts.cacl_today_fall_rate(klines, cur_price)
-            if today_fall_rate > 0.1:
-                # 清仓卖出
-                check_signals.append(
-                    xq.create_signal(xq.SIDE_SELL, 0, "平仓：当前价距离当天最高价回落10%")
-                )
-
-            period_start_time = position_info["start_time"]
-            period_fall_rate = ts.cacl_period_fall_rate(
-                klines, period_start_time, cur_price
-            )
-            if period_fall_rate > 0.1:
-                # 清仓卖出
-                check_signals.append(
-                    xq.create_signal(xq.SIDE_SELL, 0, "平仓：当前价距离周期内最高价回落10%")
-                )
-            elif period_fall_rate > 0.05:
-                # 减仓一半
-                check_signals.append(
-                    xq.create_signal(xq.SIDE_SELL, 0.5, "减仓：当前价距离周期内最高价回落5%")
-                )
-
         return check_signals
 
     def on_tick(self):
@@ -113,12 +93,5 @@ class MixedKDJStrategy(Strategy):
         # 之前的挂单全撤掉
         self.engine.cancle_orders(symbol)
 
-        #
-        klines = self.engine.get_klines_1day(symbol, 300)
-
-        cur_price = pd.to_numeric(klines["close"].values[-1])
-        position_info = self.engine.get_position(symbol, cur_price)
-
-        check_signals = self.check(klines, position_info, cur_price)
-
-        self.engine.handle_order(symbol, cur_price, position_info, check_signals)
+        check_signals = self.check(symbol)
+        self.engine.handle_order(symbol, self.cur_price, check_signals)

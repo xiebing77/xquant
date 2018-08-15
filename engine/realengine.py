@@ -107,9 +107,8 @@ class RealEngine(Engine):
             )
         return
 
-    def send_order_limit(self, side, symbol, cur_price, rate, base_digits, amount):
+    def send_order_limit(self, side, symbol, cur_price, limit_price, amount):
         """ 提交委托 """
-        limit_price = ts.reserve_float(cur_price * rate, base_digits)
         _id = self._db.insert_one(
             DB_ORDERS_NAME,
             {
