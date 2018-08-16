@@ -28,8 +28,11 @@ class Engine:
             "commission": 0,  # 佣金
             "profit": 0,  # 当前利润
             "history_profit": 0,  # 历史利润
+            "history_commission": 0,  # 历史佣金
             "start_time": None,  # 本周期第一笔买入时间
+            "pst_rate": 0,  # 本次交易完成后要达到的持仓率
         }
+        target_coin, base_coin = xq.get_symbol_coins(symbol)
 
         orders = self._db.find(
             self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol}
@@ -55,8 +58,11 @@ class Engine:
                 logging.error("错误的委托方向")
                 continue
 
+            info["amount"] = ts.reserve_float(info["amount"], self.config["digits"][target_coin])
+
             if info["amount"] == 0:
-                info["history_profit"] -= (info["value"] + info["commission"])
+                info["history_profit"] -= info["value"] + info["commission"]
+                info["history_commission"] += info["commission"]
                 info["value"] = 0
                 info["commission"] = 0
                 info["start_time"] = None
@@ -64,7 +70,9 @@ class Engine:
         if info["amount"] == 0:
             pass
         elif info["amount"] > 0:
-            info["profit"] = cur_price * info["amount"] - info["value"] - info["commission"]
+            info["profit"] = (
+                cur_price * info["amount"] - info["value"] - info["commission"]
+            )
             info["price"] = info["value"] / info["amount"]
             info["cost_price"] = (info["value"] + info["commission"]) / info["amount"]
 
@@ -72,9 +80,11 @@ class Engine:
             logging.error("持仓数量不可能小于0")
 
         info["limit_base_amount"] = self.config["limit"]["value"]
+        if orders:
+            info["pst_rate"] = orders[-1]["pst_rate"]
 
         logging.info(
-            "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  total_profit_rate: %g)",
+            "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  history_commission: %g,  total_profit_rate: %g)",
             symbol,
             cur_price,
             "amount: %g,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g,"
@@ -89,13 +99,15 @@ class Engine:
             )
             if info["amount"]
             else "",
-            "  profit rate: %g," % (info["profit"] / (info["value"] + info["commission"]))
+            "  profit rate: %g,"
+            % (info["profit"] / (info["value"] + info["commission"]))
             if info["value"]
             else "",
             "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S")
             if info["start_time"]
             else "",
             info["history_profit"],
+            info["history_commission"],
             (info["profit"] + info["history_profit"]) / info["limit_base_amount"],
         )
         # print(info)
@@ -153,7 +165,6 @@ class Engine:
             )
     '''
 
-
     def handle_order(self, symbol, cur_price, check_signals):
         """ 处理委托 """
         position_info = self.get_position(symbol, cur_price)
@@ -192,16 +203,16 @@ class Engine:
         else:
             logging("请选择额度模式，默认是0")
 
-        if symbol not in self.cur_pst:
-            self.cur_pst[symbol] = {"rate":0, "amount":0}
-
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         if dcs_side == xq.SIDE_BUY:
-            logging.info("cur_pst %s: %s", symbol, self.cur_pst[symbol])
-            if self.cur_pst[symbol]["rate"] >= dcs_pst_rate:
+            if position_info["pst_rate"] >= dcs_pst_rate:
                 return
 
-            buy_base_amount = limit_value * dcs_pst_rate - position_info["value"] - position_info["commission"]
+            buy_base_amount = (
+                limit_value * dcs_pst_rate
+                - position_info["value"]
+                - position_info["commission"]
+            )
             if buy_base_amount <= 0:
                 return
 
@@ -220,35 +231,46 @@ class Engine:
             logging.info("buy target coin amount: %g", buy_target_amount)
 
             rate = 1.1
-            limit_price = ts.reserve_float(cur_price * rate, self.config["digits"][base_coin])
+            limit_price = ts.reserve_float(
+                cur_price * rate, self.config["digits"][base_coin]
+            )
             order_id = self.send_order_limit(
                 xq.SIDE_BUY,
                 symbol,
+                dcs_pst_rate,
                 cur_price,
                 limit_price,
                 buy_target_amount,
             )
             logging.info(
-                "current price: %g;  rate: %g;  order_id: %s ", cur_price, rate, order_id
+                "current price: %g;  rate: %g;  order_id: %s ",
+                cur_price,
+                rate,
+                order_id,
             )
 
-            self.cur_pst[symbol]["rate"] = dcs_pst_rate
-            self.cur_pst[symbol]["amount"]+=buy_target_amount
-
         elif dcs_side == xq.SIDE_SELL:
-            if self.cur_pst[symbol]["rate"] <= dcs_pst_rate:
+            if position_info["pst_rate"] <= dcs_pst_rate:
                 return
 
-            sell_target_amount = self.cur_pst[symbol]["amount"] * (self.cur_pst[symbol]["rate"] - dcs_pst_rate) / self.cur_pst[symbol]["rate"]
+            sell_target_amount = ts.reserve_float(
+                position_info["amount"]
+                * (position_info["pst_rate"] - dcs_pst_rate)
+                / position_info["pst_rate"],
+                self.config["digits"][target_coin],
+            )
             logging.info("sell_target_amount     : %g" % sell_target_amount)
             if sell_target_amount <= 0:
                 return
 
             rate = 0.9
-            limit_price = ts.reserve_float(cur_price * rate, self.config["digits"][base_coin])
+            limit_price = ts.reserve_float(
+                cur_price * rate, self.config["digits"][base_coin]
+            )
             order_id = self.send_order_limit(
                 xq.SIDE_SELL,
                 symbol,
+                dcs_pst_rate,
                 cur_price,
                 limit_price,
                 sell_target_amount,
@@ -257,7 +279,5 @@ class Engine:
                 "current price: %g;  rate: %g;  order_id: %s", cur_price, rate, order_id
             )
 
-            self.cur_pst[symbol]["rate"] = dcs_pst_rate
-            self.cur_pst[symbol]["amount"]-=sell_target_amount
         else:
             return

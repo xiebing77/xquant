@@ -121,20 +121,20 @@ class BackTest(Engine):
                     "high": k1ms["high"].max(),
                     "low": k1ms["low"].min(),
                     "volume": k1ms["volume"].sum(),
-                    #"quote_asset_volume": 0,
-                    #"number_of_trades": 0,
-                    #"taker_buy_base_asset_volume": 0,
-                    #"taker_buy_quote_asset_volume": 0,
-                    #"ignore": "0",
+                    # "quote_asset_volume": 0,
+                    # "number_of_trades": 0,
+                    # "taker_buy_base_asset_volume": 0,
+                    # "taker_buy_quote_asset_volume": 0,
+                    # "ignore": "0",
                 }
             )
 
         k1ds_df = pd.DataFrame(k1ds)
-        #del k1ds_df["quote_asset_volume"]
-        #del k1ds_df["taker_buy_base_asset_volume"]
-        #del k1ds_df["taker_buy_quote_asset_volume"]
-        #del k1ds_df["number_of_trades"]
-        #del k1ds_df["ignore"]
+        # del k1ds_df["quote_asset_volume"]
+        # del k1ds_df["taker_buy_base_asset_volume"]
+        # del k1ds_df["taker_buy_quote_asset_volume"]
+        # del k1ds_df["number_of_trades"]
+        # del k1ds_df["ignore"]
         return k1ds_df
 
     def get_balances(self, *coins):
@@ -155,9 +155,10 @@ class BackTest(Engine):
         """ 获取持仓信息 """
         return self._get_position(symbol, cur_price)
 
-    def send_order_limit(self, side, symbol, cur_price, limit_price, amount):
+    def send_order_limit(self, side, symbol, pst_rate, cur_price, limit_price, amount):
         """ 提交委托，回测默认以当前价全部成交 """
-        order_id = uuid.uuid1()
+        #order_id = uuid.uuid1()
+        order_id = ""
         _id = self._db.insert_one(
             DB_ORDERS_NAME,
             {
@@ -165,6 +166,7 @@ class BackTest(Engine):
                 "instance_id": self.instance_id,
                 "symbol": symbol,
                 "side": side,
+                "pst_rate": pst_rate,
                 "type": xq.ORDER_TYPE_LIMIT,
                 "pirce": limit_price,
                 "amount": amount,

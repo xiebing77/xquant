@@ -107,7 +107,7 @@ class RealEngine(Engine):
             )
         return
 
-    def send_order_limit(self, side, symbol, cur_price, limit_price, amount):
+    def send_order_limit(self, side, symbol, pst_rate, cur_price, limit_price, amount):
         """ 提交委托 """
         _id = self._db.insert_one(
             DB_ORDERS_NAME,
@@ -116,6 +116,7 @@ class RealEngine(Engine):
                 "instance_id": self.instance_id,
                 "symbol": symbol,
                 "side": side,
+                "pst_rate": pst_rate,
                 "type": xq.ORDER_TYPE_LIMIT,
                 "pirce": limit_price,
                 "amount": amount,

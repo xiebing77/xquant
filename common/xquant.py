@@ -80,7 +80,7 @@ def decision_signals2(signals):
                 rate = new_rate
                 rmk = new_rmk
         else:
-            if side is xq.SIDE_BUY:
+            if side is SIDE_BUY:
                 side = new_side
                 rate = new_rate
                 rmk = new_rmk
