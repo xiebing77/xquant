@@ -103,7 +103,7 @@ class BinanceExchange(Exchange):
         return df_s['qty'], df_s['value']
 
 
-    def send_order(self, side, type, symbol, price, amount, client_order_id):
+    def send_order(self, side, type, symbol, price, amount, client_order_id=None):
         """提交委托"""
         exchange_symbol = self.__trans_symbol(symbol)
 

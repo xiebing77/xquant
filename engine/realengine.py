@@ -109,6 +109,7 @@ class RealEngine(Engine):
 
     def send_order_limit(self, side, symbol, pst_rate, cur_price, limit_price, amount):
         """ 提交委托 """
+        """
         _id = self._db.insert_one(
             DB_ORDERS_NAME,
             {
@@ -135,6 +136,31 @@ class RealEngine(Engine):
         self._db.update_one(
             DB_ORDERS_NAME, _id, {"order_id": order_id, "status": xq.ORDER_STATUS_OPEN}
         )
+        """
+        # 暂时简单处理
+        order_id = self.__exchange.send_order(
+            side, xq.ORDER_TYPE_LIMIT, symbol, limit_price, amount
+        )
+
+        _id = self._db.insert_one(
+            DB_ORDERS_NAME,
+            {
+                "create_time": self.now().timestamp(),
+                "instance_id": self.instance_id,
+                "symbol": symbol,
+                "side": side,
+                "pst_rate": pst_rate,
+                "type": xq.ORDER_TYPE_LIMIT,
+                "pirce": limit_price,
+                "amount": amount,
+                "status": xq.ORDER_STATUS_OPEN,
+                "order_id": order_id,
+                "cancle_amount": 0,
+                "deal_amount": 0,
+                "deal_value": 0,
+            },
+        )
+
         return order_id
 
     def cancle_orders(self, symbol):
