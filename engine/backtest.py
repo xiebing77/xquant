@@ -157,7 +157,7 @@ class BackTest(Engine):
 
     def send_order_limit(self, side, symbol, pst_rate, cur_price, limit_price, amount):
         """ 提交委托，回测默认以当前价全部成交 """
-        #order_id = uuid.uuid1()
+        # order_id = uuid.uuid1()
         order_id = ""
         _id = self._db.insert_one(
             DB_ORDERS_NAME,
@@ -183,6 +183,50 @@ class BackTest(Engine):
     def cancle_orders(self, symbol):
         """ 撤掉本策略的所有挂单委托 """
         pass
+
+    def analyze(self, symbol):
+        orders = self._db.find(
+            self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol}
+        )
+
+        amount = 0
+        value = 0
+        commission = 0
+        target_coin, base_coin = xq.get_symbol_coins(symbol)
+        print(
+            "        create_time  side  pst_rate   cur_price  deal_amount  deal_value      amount       value  commission      profit  profit_rate"
+        )
+        for order in orders:
+            cur_price = order["deal_value"] / order["deal_amount"]
+            if order["side"] == xq.SIDE_BUY:
+                amount += order["deal_amount"]
+                value += order["deal_value"]
+            else:
+                amount -= order["deal_amount"]
+                value -= order["deal_value"]
+
+            commission += order["deal_value"] * self.config["commission_rate"]
+
+            amount = ts.reserve_float(amount, self.config["digits"][target_coin])
+            profit = cur_price * amount - value - commission
+            profit_rate = profit / self.config["limit"]["value"]
+
+            print(
+                "%s  %4s  %8g  %10g  %11g  %10g  %10g  %10g  %10g  %10g  %11g%%"
+                % (
+                    datetime.fromtimestamp(order["create_time"]),
+                    order["side"],
+                    order["pst_rate"],
+                    cur_price,
+                    order["deal_amount"],
+                    order["deal_value"],
+                    amount,
+                    value,
+                    commission,
+                    profit,
+                    round(profit_rate * 100, 2),
+                )
+            )
 
     def run(self, strategy):
         """ run """
@@ -231,3 +275,5 @@ class BackTest(Engine):
             "\n  total tick count: %d cost: %s"
             % (tick_count, total_tick_end - total_tick_start)
         )
+
+        self.analyze(strategy.config["symbol"])
