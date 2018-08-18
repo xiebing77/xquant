@@ -41,6 +41,7 @@ def get_balance_frozen(balance):
     """ 获取冻结数 """
     return ts.str_to_float(balance["frozen"])
 
+
 def create_signal(side, pst_rate, rmk):
     """创建交易信号"""
     return {"side": side, "pst_rate": pst_rate, "rmk": rmk}
@@ -79,6 +80,8 @@ def decision_signals2(signals):
             if rate > new_rate:
                 rate = new_rate
                 rmk = new_rmk
+            elif rate == new_rate:
+                rmk += ", " + new_rmk
         else:
             if side is SIDE_BUY:
                 side = new_side

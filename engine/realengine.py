@@ -107,7 +107,9 @@ class RealEngine(Engine):
             )
         return
 
-    def send_order_limit(self, side, symbol, pst_rate, cur_price, limit_price, amount):
+    def send_order_limit(
+        self, side, symbol, pst_rate, cur_price, limit_price, amount, rmk
+    ):
         """ 提交委托 """
         """
         _id = self._db.insert_one(
@@ -158,6 +160,7 @@ class RealEngine(Engine):
                 "cancle_amount": 0,
                 "deal_amount": 0,
                 "deal_value": 0,
+                "rmk": rmk,
             },
         )
 

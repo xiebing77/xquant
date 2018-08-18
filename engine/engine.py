@@ -17,7 +17,7 @@ class Engine:
         self.db_orders_name = db_orders_name
         self._db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
-        self.cur_pst = {}
+        self.rick_time = None
 
     def _get_position(self, symbol, cur_price):
         info = {
@@ -58,7 +58,9 @@ class Engine:
                 logging.error("错误的委托方向")
                 continue
 
-            info["amount"] = ts.reserve_float(info["amount"], self.config["digits"][target_coin])
+            info["amount"] = ts.reserve_float(
+                info["amount"], self.config["digits"][target_coin]
+            )
 
             if info["amount"] == 0:
                 info["history_profit"] -= info["value"] + info["commission"]
@@ -190,6 +192,18 @@ class Engine:
         if dcs_side is None:
             return
 
+        """风控触发后，当前交易日禁止买"""
+        """
+        if self.rick_time:
+            if self.now() < ts.get_next_open_time(self.rick_time):
+                if dcs_side != xq.SIDE_SELL:
+                    return
+            else:
+                self.rick_time = None
+        if rc_signals and not self.rick_time:
+            self.rick_time = self.now()
+        """
+
         if dcs_pst_rate > 1 or dcs_pst_rate < 0:
             logging.warning("仓位率（%g）超出范围（0 ~ 1）", dcs_pst_rate)
             return
@@ -241,6 +255,7 @@ class Engine:
                 cur_price,
                 limit_price,
                 buy_target_amount,
+                dcs_rmk,
             )
             logging.info(
                 "current price: %g;  rate: %g;  order_id: %s ",
@@ -274,6 +289,7 @@ class Engine:
                 cur_price,
                 limit_price,
                 sell_target_amount,
+                dcs_rmk,
             )
             logging.info(
                 "current price: %g;  rate: %g;  order_id: %s", cur_price, rate, order_id
@@ -281,3 +297,51 @@ class Engine:
 
         else:
             return
+
+    def analyze(self, symbol):
+        orders = self._db.find(
+            self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol}
+        )
+
+        i = 1
+        amount = 0
+        value = 0
+        commission = 0
+        target_coin, base_coin = xq.get_symbol_coins(symbol)
+        print(
+            "  id          create_time  side  pst_rate   cur_price  deal_amount  deal_value      amount       value  commission      profit  profit_rate  rmk"
+        )
+        for order in orders:
+            cur_price = order["deal_value"] / order["deal_amount"]
+            if order["side"] == xq.SIDE_BUY:
+                amount += order["deal_amount"]
+                value += order["deal_value"]
+            else:
+                amount -= order["deal_amount"]
+                value -= order["deal_value"]
+
+            commission += order["deal_value"] * self.config["commission_rate"]
+
+            amount = ts.reserve_float(amount, self.config["digits"][target_coin])
+            profit = cur_price * amount - value - commission
+            profit_rate = profit / self.config["limit"]["value"]
+
+            print(
+                "%4d  %s  %4s  %8g  %10g  %11g  %10g  %10g  %10g  %10g  %10g  %10.2g%%  %s"
+                % (
+                    i,
+                    datetime.fromtimestamp(order["create_time"]),
+                    order["side"],
+                    order["pst_rate"],
+                    cur_price,
+                    order["deal_amount"],
+                    order["deal_value"],
+                    amount,
+                    value,
+                    commission,
+                    profit,
+                    round(profit_rate * 100, 2),
+                    order["rmk"],
+                )
+            )
+            i += 1
