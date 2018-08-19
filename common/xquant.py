@@ -42,9 +42,9 @@ def get_balance_frozen(balance):
     return ts.str_to_float(balance["frozen"])
 
 
-def create_signal(side, pst_rate, rmk):
+def create_signal(side, pst_rate, rmk, can_buy_after=None):
     """创建交易信号"""
-    return {"side": side, "pst_rate": pst_rate, "rmk": rmk}
+    return {"side": side, "pst_rate": pst_rate, "rmk": rmk, "can_buy_after": can_buy_after}
 
 
 def decision_signals(signals):
@@ -64,28 +64,38 @@ def decision_signals(signals):
 def decision_signals2(signals):
     """决策交易信号"""
     if not signals:
-        return None, None
+        return None, None, None, None
 
     side = None
     for signal in signals:
         new_side = signal["side"]
         new_rate = signal["pst_rate"]
         new_rmk = signal["rmk"]
+        new_cba = signal["can_buy_after"]
 
         if side is None:
             side = new_side
             rate = new_rate
             rmk = new_rmk
+            cba = new_cba
         elif side is new_side:
             if rate > new_rate:
                 rate = new_rate
                 rmk = new_rmk
             elif rate == new_rate:
                 rmk += ", " + new_rmk
+                if new_cba:
+                    if cba:
+                        if new_cba > cba:
+                            cba = new_cba
+                    else:
+                        cba = new_cba
+
         else:
             if side is SIDE_BUY:
                 side = new_side
                 rate = new_rate
                 rmk = new_rmk
+                cba = new_cba
 
-    return side, rate, rmk
+    return side, rate, rmk, cba

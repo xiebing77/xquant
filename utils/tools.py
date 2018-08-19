@@ -50,6 +50,13 @@ def get_next_open_time(dt):
         open_time = datetime.combine(dt.date() + timedelta(days=1), time(8, 0, 0))
     return open_time
 
+def get_next_open_timedelta(dt):
+    if dt.hour < 8:
+        ts = time(8, 0, 0) - dt.time()
+    else:
+        ts = datetime.combine(dt.date() + timedelta(days=1), time(8, 0, 0)) - dt
+    return ts
+
 
 def cacl_today_fall_rate(klines, cur_price):
     """ 计算当天最高价的回落比例 """

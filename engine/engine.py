@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """运行环境引擎"""
-from datetime import datetime
+from datetime import datetime,timedelta
 import logging
 import utils.tools as ts
 from setup import mongo_user, mongo_pwd, db_name, db_url
@@ -17,7 +17,7 @@ class Engine:
         self.db_orders_name = db_orders_name
         self._db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
-        self.rick_time = None
+        self.can_buy_time = None
 
     def _get_position(self, symbol, cur_price):
         info = {
@@ -58,9 +58,7 @@ class Engine:
                 logging.error("错误的委托方向")
                 continue
 
-            info["amount"] = ts.reserve_float(
-                info["amount"], self.config["digits"][target_coin]
-            )
+            info["amount"] = ts.reserve_float(info["amount"], self.config["digits"][target_coin])
 
             if info["amount"] == 0:
                 info["history_profit"] -= info["value"] + info["commission"]
@@ -131,7 +129,7 @@ class Engine:
 
         loss_limit = limit_value * 0.1
         if loss_limit + position_info["profit"] <= 0:
-            rc_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "风控平仓：亏损金额超过额度的10%"))
+            rc_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "风控平仓：亏损金额超过额度的10%", ts.get_next_open_timedelta(self.now())))
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
@@ -176,33 +174,35 @@ class Engine:
             logging.warning("风控方向不能为买")
             return
 
-        if not check_signals and not rc_signals:
+        signals = rc_signals + check_signals
+        if not signals:
             return
 
-        signals = rc_signals + check_signals
         logging.info("signals(%r)", signals)
-        dcs_side, dcs_pst_rate, dcs_rmk = xq.decision_signals2(signals)
+        dcs_side, dcs_pst_rate, dcs_rmk, dcs_cba = xq.decision_signals2(signals)
         logging.info(
-            "decision signal side(%s), position rate(%g), rmk(%s)",
+            "decision signal side(%s), position rate(%g), rmk(%s), can buy after(%s)",
             dcs_side,
             dcs_pst_rate,
             dcs_rmk,
+            dcs_cba,
         )
 
         if dcs_side is None:
             return
 
-        """风控触发后，当前交易日禁止买"""
-        """
-        if self.rick_time:
-            if self.now() < ts.get_next_open_time(self.rick_time):
+        if self.can_buy_time:
+            if self.now() < self.can_buy_time:
+                # 时间范围之内，只能卖，不能买
                 if dcs_side != xq.SIDE_SELL:
                     return
             else:
-                self.rick_time = None
-        if rc_signals and not self.rick_time:
-            self.rick_time = self.now()
-        """
+                # 时间范围之外，恢复
+                self.can_buy_time = None
+
+        if dcs_cba:
+            if not self.can_buy_time or (self.can_buy_time and self.can_buy_time < self.now() + dcs_cba):
+                self.can_buy_time = self.now() + dcs_cba
 
         if dcs_pst_rate > 1 or dcs_pst_rate < 0:
             logging.warning("仓位率（%g）超出范围（0 ~ 1）", dcs_pst_rate)
@@ -327,7 +327,7 @@ class Engine:
             profit_rate = profit / self.config["limit"]["value"]
 
             print(
-                "%4d  %s  %4s  %8g  %10g  %11g  %10g  %10g  %10g  %10g  %10g  %10.2g%%  %s"
+                "%4d  %s  %4s  %8g  %10g  %11g  %10g  %10g  %10g  %10g  %10g  %10.2f%%  %s"
                 % (
                     i,
                     datetime.fromtimestamp(order["create_time"]),
