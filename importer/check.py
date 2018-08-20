@@ -49,28 +49,31 @@ if __name__ == "__main__":
     while tick_time < end_time:
         ts = int(tick_time.timestamp()*1000)
         #print(ts, " ~ ", klines[i]["open_time"])
-        if ts ==klines[i]["open_time"]:
+        if ts == klines[i]["open_time"]:
             #print(tick_time, " match  ok")
-            pass
+            i += 1
         else:
+            #print(ts, " ~ ", klines[i]["open_time"])
             kline = db.find(collection, {"open_time": ts})
             if kline:
                 if not miss_start:
                     print("有乱序")
-                break
+                    break
             else:
                 miss_count += 1
                 if not miss_start:
                     miss_start = ts
 
+                if ts > klines[i]["open_time"]:
+                    print(ts, " ~ ", klines[i]["open_time"], " ~ ", i, " ~ ", datetime.fromtimestamp(klines[i]["open_time"]/1000))
+                    i += 1
+
         tick_time += td
-        i += 1
 
     if not miss_start:
         exit(1)
 
-    print("miss start: %d, count: %d " % (miss_start, miss_count))
-
+    print("miss start: %s, count: %d " % (miss_start, miss_count))
 
     if args.k == "1min":
         interval = 60 * 1000
