@@ -5,6 +5,7 @@ import argparse
 from datetime import datetime,timedelta
 import db.mongodb as md
 from setup import *
+from exchange.binanceExchange import BinanceExchange
 # import pandas as pd
 
 if __name__ == "__main__":
@@ -35,23 +36,60 @@ if __name__ == "__main__":
     else:
         exit(1)
 
+    exchange = BinanceExchange(debug=True)
     db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
     klines = db.find(collection,{"open_time": {
         "$gte":int(start_time.timestamp())*1000,
         "$lt": int(end_time.timestamp())*1000}})
 
     i = 0
+    miss_start = None
+    miss_count = 0
+
     while tick_time < end_time:
         ts = int(tick_time.timestamp()*1000)
         #print(ts, " ~ ", klines[i]["open_time"])
         if ts ==klines[i]["open_time"]:
-            print(tick_time, " match  ok")
+            #print(tick_time, " match  ok")
+            pass
         else:
             kline = db.find(collection, {"open_time": ts})
             if kline:
-                print(tick_time, " find ok")
+                if not miss_start:
+                    print("有乱序")
+                break
             else:
-                print(tick_time, " find  miss")
+                miss_count += 1
+                if not miss_start:
+                    miss_start = ts
 
         tick_time += td
         i += 1
+
+    if not miss_start:
+        exit(1)
+
+    print("miss start: %d, count: %d " % (miss_start, miss_count))
+
+
+    if args.k == "1min":
+        interval = 60 * 1000
+        klines = exchange.get_klines_1min(args.s, size=miss_count, since=miss_start)
+    elif args.k == "1day":
+        interval = 24 * 60 * 60 * 1000
+        klines = exchange.get_klines_1day(args.s, size=miss_count, since=miss_starts)
+
+    records = klines.to_dict('records')
+    tmp_ts = miss_start
+    for record in records:
+        if record["open_time"] != tmp_ts:
+            print("从交易所获取的k线不符合预期")
+            print("tmp_ts: %d  miss" % tmp_ts)
+            print(klines)
+            exit(1)
+        tmp_ts += interval
+
+    db.insert_many(collection, records)
+    print("补齐了一段缺失数据，请重复执行")
+
+
