@@ -17,6 +17,8 @@ class Engine:
         self.db_orders_name = db_orders_name
         self._db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
+        self._db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
+
         self.can_buy_time = None
 
     def _get_position(self, symbol, cur_price):
