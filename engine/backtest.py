@@ -36,6 +36,8 @@ class BackTest(Engine):
 
         self.tick_time = None
 
+        self.k1ms_cache = None
+
     def now(self):
         return self.tick_time
 
@@ -52,6 +54,12 @@ class BackTest(Engine):
         # print("1min e_time:",e_time)
         # print("1min s_time timestamp: ",s_time.timestamp())
         # print("1min e_time timestamp: ",e_time.timestamp())
+
+        k1ms = self.__get_klines_1min_cache(symbol, s_time, e_time)
+        return pd.DataFrame(k1ms)
+
+    def __get_klines_1min(self, symbol, s_time, e_time):
+        """ 获取分钟k线 """
         k1ms = self._db.find(
             DB_KLINES_1MIN + symbol,
             {
@@ -61,11 +69,130 @@ class BackTest(Engine):
                 }
             },
         )
+        return k1ms
+
+    def __get_klines_1min_cache(self, symbol, s_time, e_time):
+        """ 获取分钟k线 """
+        if self.k1ms_cache:
+            if self.k1ms_cache[0]["open_time"] == s_time.timestamp() * 1000:
+                s_time = datetime.fromtimestamp(self.k1ms_cache[-1]["open_time"]/1000) + timedelta(minutes=1)
+            else:
+                self.k1ms_cache = None
+
+        k1ms = self._db.find(
+            DB_KLINES_1MIN + symbol,
+            {
+                "open_time": {
+                    "$gte": s_time.timestamp() * 1000,
+                    "$lt": e_time.timestamp() * 1000,
+                }
+            },
+        )
+
+        if self.k1ms_cache:
+            self.k1ms_cache += k1ms
+        else:
+            self.k1ms_cache = k1ms
+        return self.k1ms_cache
+
+    def __get_klines_1min_cache2(self, symbol, s_time, e_time):
+        """ 获取分钟k线 """
+        if not self.k1ms_cache or (self.k1ms_cache and self.k1ms_cache[0]["open_time"] != s_time.timestamp() * 1000):
+            self.k1ms_cache_cursor = int((e_time-s_time).total_seconds()/60)
+            #print("self.k1ms_cache_cursor:", self.k1ms_cache_cursor)
+
+            next_day_time = s_time + timedelta(days=1)
+            self.k1ms_cache = self._db.find(
+                DB_KLINES_1MIN + symbol,
+                {
+                    "open_time": {
+                        "$gte": s_time.timestamp() * 1000,
+                        "$lt": next_day_time.timestamp() * 1000,
+                    }
+                },
+            )
+            # print("next_day_time: ",next_day_time)
+            # size = len(self.k1ms_cache)
+            # print("k1ms_cache size: ", size)
+
+            """
+            open_time = self.k1ms_cache[0]["open_time"]
+            if open_time != s_time.timestamp() * 1000:
+                print("miss open_time:%s, s_time:%s,%s"%(open_time,s_time,s_time.timestamp() * 1000))
+
+            for k1m in self.k1ms_cache[1:]:
+                if k1m["open_time"] <= open_time:
+                    print("k1ms_cache: ", self.k1ms_cache)
+                    break
+                else:
+                    open_time = k1m["open_time"]
+            """
+
+            """
+            td = timedelta(minutes=1)
+            i = 0
+            tick_time = s_time
+            while tick_time < next_day_time:
+                ts = int(tick_time.timestamp()*1000)
+                #print(ts, " ~ ", klines[i]["open_time"])
+                if ts ==self.k1ms_cache[i]["open_time"]:
+                    #print(tick_time, " match  ok")
+                    pass
+                else:
+                    k1ms_cache_df = pd.DataFrame(self.k1ms_cache)
+                    #k1ms_cache_df["open_time"] = datetime.fromtimestamp(k1ms_cache_df["open_time"]/1000)
+                    print(k1ms_cache_df)
+
+                tick_time += td
+                i += 1
+            """
+
+        size = len(self.k1ms_cache)
+        #print("k1ms_cache size: ", size)
+        if size == 60*24:
+            k1ms = self.k1ms_cache[:int((e_time-s_time).total_seconds()/60)]
+            #print("xxx k1ms size: ", len(k1ms))
+        else:
+            while self.k1ms_cache_cursor < size:
+                k1m = self.k1ms_cache[self.k1ms_cache_cursor]
+                if k1m["open_time"] >= e_time.timestamp()*1000:
+                    break
+                self.k1ms_cache_cursor += 1
+            k1ms = self.k1ms_cache[:self.k1ms_cache_cursor]
+
         # print(k1ms[-1])
         # print("k1ms len: ", len(k1ms))
         # print("k1ms[-1][open_time]: ", datetime.fromtimestamp(k1ms[-1]["open_time"]/1000))
         # print("k1ms[-1][close_time]: ", datetime.fromtimestamp(k1ms[-1]["close_time"]/1000))
-        return pd.DataFrame(k1ms)
+        return k1ms
+
+    def __create_klines_1day_from_1min(self, symbol, s_time, e_time):
+        """ 取出tick当天开盘到tick时间的分钟k线，生成日k线 """
+        k1ms = self.__get_klines_1min_cache(symbol, s_time, e_time)
+        if len(k1ms) == 0:
+            return None
+
+        high = k1ms[0]["high"]
+        low = k1ms[0]["low"]
+        volume = k1ms[0]["volume"]
+        for k1m in k1ms[1:]:
+            if high < k1m["high"]:
+                high = k1m["high"]
+            if low > k1m["low"]:
+                low = k1m["low"]
+            volume += k1m["volume"]
+
+        k1d = {
+            "_id": "",
+            "open_time": k1ms[0]["open_time"],
+            "open": k1ms[0]["open"],
+            "close_time": k1ms[-1]["close_time"],
+            "close": k1ms[-1]["close"],
+            "high": high,
+            "low": low,
+            "volume": volume,
+        }
+        return k1d
 
     def get_klines_1day(self, symbol, size, since=None):
         """ 获取日k线 """
@@ -100,34 +227,9 @@ class BackTest(Engine):
         # print("k1ds[-1][open_time]: ", datetime.fromtimestamp(k1ds[-1]["open_time"]/1000))
         # print("k1ds[-1][close_time]: ", datetime.fromtimestamp(k1ds[-1]["close_time"]/1000))
 
-        # 取出tick当天开盘到tick时间的分支k线，生成今天日k线
-        # print("tick_time  hour   : ", self.tick_time.hour)
-        tick_open_seconds = (self.tick_time - tick_open_time).seconds
-        # print("tick_open_seconds     : ", tick_open_seconds)
-        k1ms_size = tick_open_seconds // 60
-        # print("k1ms_size: ", k1ms_size)
-        k1ms = self.get_klines_1min(symbol, k1ms_size, tick_open_time)
-        # print("k1ms len ", len(k1ms))
-        if len(k1ms) > 0:
-            k1ms["volume"] = k1ms["volume"].apply(pd.to_numeric)
-            # print('k1ms["volume"] dtype:', k1ms["volume"].dtype)
-            k1ds.append(
-                {
-                    "_id": "",
-                    "open_time": k1ms["open_time"].values[0],
-                    "open": k1ms["open"].values[0],
-                    "close_time": k1ms["close_time"].values[-1],
-                    "close": k1ms["close"].values[-1],
-                    "high": k1ms["high"].max(),
-                    "low": k1ms["low"].min(),
-                    "volume": k1ms["volume"].sum(),
-                    # "quote_asset_volume": 0,
-                    # "number_of_trades": 0,
-                    # "taker_buy_base_asset_volume": 0,
-                    # "taker_buy_quote_asset_volume": 0,
-                    # "ignore": "0",
-                }
-            )
+        k1d = self.__create_klines_1day_from_1min(symbol, tick_open_time, self.tick_time)
+        if k1d:
+            k1ds.append(k1d)
 
         k1ds_df = pd.DataFrame(k1ds)
         # del k1ds_df["quote_asset_volume"]
@@ -136,6 +238,7 @@ class BackTest(Engine):
         # del k1ds_df["number_of_trades"]
         # del k1ds_df["ignore"]
         return k1ds_df
+
 
     def get_balances(self, *coins):
         """ 获取账户余额，回测默认1个亿，哈哈 """
