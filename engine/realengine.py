@@ -76,6 +76,10 @@ class RealEngine(Engine):
             order_id = order["order_id"]
             order_amount = order["amount"]
 
+            if order_id not in df_amount.index:
+                """ 没有成交信息 """
+                continue
+
             deal_amount = df_amount[order_id]
             deal_value = df_value[order_id]
 
