@@ -8,7 +8,7 @@ import db.mongodb as md
 from common.xquant import creat_symbol
 from exchange.binanceExchange import BinanceExchange
 from setup import *
-# import pandas as pd
+import pandas as pd
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Binance Importer')
@@ -62,13 +62,15 @@ if __name__ == "__main__":
         elif args.k == "1day":
             klines = exchange.get_klines_1day(symbol, size=batch, since=tmp_time)
 
+        klines_df = pd.DataFrame(klines, exchange.get_kline_column_names())
+
         #klen = len(klines)
         #print("klines len: ", klen)
         #print(klines)
         #print("klines[0]: ", klines.ix[0])
         #print("klines[-1]: ", klines.ix[klen-1])
         #print("records: ", klines.to_dict('records'))
-        db.insert_many(collection, klines.to_dict('records'))
+        db.insert_many(collection, klines_df.to_dict('records'))
         tmp_time += batch * interval
 
     # df = db.get_kline(no_id=False)

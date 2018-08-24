@@ -1,6 +1,7 @@
 #!/usr/bin/python
 """mixed kdj strategy"""
 import logging
+from datetime import timedelta,datetime
 import pandas as pd
 import common.xquant as xq
 import utils.indicator as ic
@@ -17,18 +18,30 @@ class MixedKDJStrategy(Strategy):
     def check(self, symbol):
         """ kdj指标，金叉全买入，下降趋势部分卖出，死叉全卖出 """
         klines = self.engine.get_klines_1day(symbol, 300)
-        self.cur_price = pd.to_numeric(klines["close"].values[-1])
+        self.cur_price = float(klines[-1][4])
 
-        ic.calc_kdj(klines)
-        cur_k = klines["kdj_k"].values[-1]
-        cur_d = klines["kdj_d"].values[-1]
-        cur_j = klines["kdj_j"].values[-1]
-        logging.info(" current kdj  J(%f), K(%f), D(%f)", cur_j, cur_k, cur_d)
+        kdj_arr = ic.np_kdj(klines)
+        cur_k = kdj_arr[-1][1]
+        cur_d = kdj_arr[-1][2]
+        cur_j = kdj_arr[-1][3]
 
-        y_k = klines["kdj_k"].values[-2]
-        y_d = klines["kdj_d"].values[-2]
-        y_j = klines["kdj_j"].values[-2]
-        logging.info("yestoday kdj  J(%f), K(%f), D(%f)", y_j, y_k, y_d)
+        y_k = kdj_arr[-2][1]
+        y_d = kdj_arr[-2][2]
+        y_j = kdj_arr[-2][3]
+
+        """
+        k, d, j = ic.pd_kdj(klines, self.engine.get_kline_column_names())
+        cur_k = k.values[-1]
+        cur_d = d.values[-1]
+        cur_j = j.values[-1]
+
+        y_k = k.values[-2]
+        y_d = d.values[-2]
+        y_j = j.values[-2]
+        """
+
+        logging.info(" current kdj   J(%f),  K(%f),  D(%f)", cur_j, cur_k, cur_d)
+        logging.info("yestoday kdj   J(%f),  K(%f),  D(%f)", y_j, y_k, y_d)
 
         check_signals = []
         offset = 1

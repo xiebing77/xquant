@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import os
-import pandas as pd
 import common.xquant as xq
 from .exchange import Exchange
 from .okex.OkcoinSpotAPI import OKCoinSpot
@@ -30,12 +29,14 @@ class OkexExchange(Exchange):
         else:
             return None
 
+    @staticmethod
+    def get_kline_column_names():
+        return ['open_time', 'open','high','low','close','volume','close_time']
+
     def __get_klines(self, symbol, interval, size, since):
         exchange_symbol = __trans_symbol(symbol)
-
         klines = self.client.get_kline(symbol=exchange_symbol, interval=interval, size=size)
-        df = pd.DataFrame(klines, columns=['open_time', 'open','high','low','close','volume','close_time'])
-        return df
+        return klines
 
     def get_klines_1day(self, symbol, size=300, since=''):
         return self.__get_klines(symbol, '1day', size, since)

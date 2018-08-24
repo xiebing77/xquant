@@ -6,7 +6,7 @@ from datetime import datetime,timedelta
 import db.mongodb as md
 from setup import *
 from exchange.binanceExchange import BinanceExchange
-# import pandas as pd
+import pandas as pd
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='klines print or check')
@@ -82,13 +82,15 @@ if __name__ == "__main__":
         interval = 24 * 60 * 60 * 1000
         klines = exchange.get_klines_1day(args.s, size=miss_count, since=miss_starts)
 
-    records = klines.to_dict('records')
+    klines_df = pd.DataFrame(klines, exchange.get_kline_column_names())
+
+    records = klines_df.to_dict('records')
     tmp_ts = miss_start
     for record in records:
         if record["open_time"] != tmp_ts:
             print("从交易所获取的k线不符合预期")
             print("tmp_ts: %d  miss" % tmp_ts)
-            print(klines)
+            print(klines_df)
             exit(1)
         tmp_ts += interval
 

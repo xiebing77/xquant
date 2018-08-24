@@ -16,14 +16,26 @@ class KDJStrategy(Strategy):
 
     def check(self, symbol):
         """ kdj指标，金叉全买入，死叉全卖出 """
-        k1d = self.engine.get_klines_1day(symbol, 300)
+        klines = self.engine.get_klines_1day(symbol, 300)
+        self.cur_price = float(klines[-1][4])
 
+        kdj_arr = ic.np_kdj(klines)
+        cur_k = kdj_arr[-1][1]
+        cur_d = kdj_arr[-1][2]
+        cur_j = kdj_arr[-1][3]
+
+        y_k = kdj_arr[-2][1]
+        y_d = kdj_arr[-2][2]
+        y_j = kdj_arr[-2][3]
+
+        """
         self.cur_price = pd.to_numeric(k1d["close"].values[-1])
-
         ic.calc_kdj(k1d)
         cur_k = k1d["kdj_k"].values[-1]
         cur_d = k1d["kdj_d"].values[-1]
         cur_j = k1d["kdj_j"].values[-1]
+        """
+
         logging.info(" current kdj  J(%f), K(%f), D(%f)", cur_j, cur_k, cur_d)
 
         check_signals = []

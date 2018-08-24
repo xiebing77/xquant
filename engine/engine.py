@@ -6,6 +6,8 @@ import utils.tools as ts
 from setup import mongo_user, mongo_pwd, db_name, db_url
 import common.xquant as xq
 import db.mongodb as md
+from exchange.binanceExchange import BinanceExchange
+from exchange.okexExchange import OkexExchange
 
 
 class Engine:
@@ -20,6 +22,15 @@ class Engine:
         self._db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
 
         self.can_buy_time = None
+
+        exchange = config["exchange"]
+        if exchange == "binance":
+            self.kline_column_names = BinanceExchange.get_kline_column_names()
+        elif exchange == "okex":
+            self.kline_column_names = OkexExchange.get_kline_column_names()
+
+    def get_kline_column_names(self):
+        return self.kline_column_names
 
     def _get_position(self, symbol, cur_price):
         info = {

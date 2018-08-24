@@ -1,7 +1,6 @@
 #!/usr/bin/python
 """小工具函数"""
 import math
-import time
 from datetime import datetime, timedelta, time
 import logging
 import pandas as pd
@@ -52,7 +51,7 @@ def get_next_open_time(dt):
 
 def get_next_open_timedelta(dt):
     if dt.hour < 8:
-        ts = time(8, 0, 0) - dt.time()
+        ts = datetime.combine(dt.date(), time(8, 0, 0)) - dt
     else:
         ts = datetime.combine(dt.date() + timedelta(days=1), time(8, 0, 0)) - dt
     return ts
@@ -73,7 +72,7 @@ def cacl_period_fall_rate(klines, start_time, cur_price):
     if start_time is None:
         return
 
-    start_timestamp = time.mktime(start_time.timetuple())
+    start_timestamp = start_time.timestamp()
     period_df = klines[
         klines["open_time"].map(lambda x: int(x)) > start_timestamp * 1000
     ]

@@ -72,6 +72,7 @@ class BackTest(Engine):
                     "$lt": e_time.timestamp() * 1000,
                 }
             },
+            {"_id":0},
         )
         return k1ms
 
@@ -85,15 +86,7 @@ class BackTest(Engine):
             else:
                 self.k1ms_cache = None
 
-        k1ms = self._db.find(
-            DB_KLINES_1MIN + symbol,
-            {
-                "open_time": {
-                    "$gte": s_time.timestamp() * 1000,
-                    "$lt": e_time.timestamp() * 1000,
-                }
-            },
-        )
+        k1ms = self.__get_klines_1min(symbol, s_time, e_time)
 
         if self.k1ms_cache:
             self.k1ms_cache += k1ms
@@ -181,26 +174,25 @@ class BackTest(Engine):
         if len(k1ms) == 0:
             return []
 
-        high = k1ms[0]["high"]
-        low = k1ms[0]["low"]
-        volume = k1ms[0]["volume"]
+        high = float(k1ms[0]["high"])
+        low = float(k1ms[0]["low"])
+        volume = float(k1ms[0]["volume"])
         for k1m in k1ms[1:]:
-            if high < k1m["high"]:
-                high = k1m["high"]
-            if low > k1m["low"]:
-                low = k1m["low"]
-            volume += k1m["volume"]
-
+            if high < float(k1m["high"]):
+                high = float(k1m["high"])
+            if low > float(k1m["low"]):
+                low = float(k1m["low"])
+            volume += float(k1m["volume"])
         k1d = {
-            "_id": "",
             "open_time": k1ms[0]["open_time"],
             "open": k1ms[0]["open"],
-            "close_time": k1ms[-1]["close_time"],
-            "close": k1ms[-1]["close"],
             "high": high,
             "low": low,
+            "close": k1ms[-1]["close"],
             "volume": volume,
+            "close_time": k1ms[-1]["close_time"],
         }
+
         return [k1d]
 
     def get_klines_1day(self, symbol, size, since=None):
@@ -224,8 +216,9 @@ class BackTest(Engine):
             symbol, tick_open_time, self.tick_time
         )
 
-        k1ds_df = pd.DataFrame(k1ds+k1d)
-        return k1ds_df
+        klines = k1ds + k1d
+        return [[(kline[column_name] if (column_name in kline) else "0") for column_name in self.get_kline_column_names()] for kline in klines]
+
 
     def __get_klines_1day(self, symbol, s_time, e_time):
         """ 获取分钟k线 """
@@ -237,6 +230,7 @@ class BackTest(Engine):
                     "$lt": e_time.timestamp() * 1000,
                 }
             },
+            {"_id":0},
         )
 
     def __get_klines_1day_cache(self, symbol, s_time, e_time):

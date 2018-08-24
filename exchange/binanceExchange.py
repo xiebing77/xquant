@@ -2,7 +2,6 @@
 """binance适配对接"""
 import os
 import logging
-import pandas as pd
 import common.xquant as xq
 from .exchange import Exchange
 from .binance.client import Client
@@ -44,6 +43,11 @@ class BinanceExchange(Exchange):
         else:
             return None
 
+    @staticmethod
+    def get_kline_column_names():
+        return ['open_time', 'open','high','low','close','volume','close_time',
+            'quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume','ignore']
+
     def __get_klines(self, symbol, interval, size, since):
         """获取k线"""
         exchange_symbol = self.__trans_symbol(symbol)
@@ -52,9 +56,7 @@ class BinanceExchange(Exchange):
         else:
             klines = self.__client.get_klines(symbol=exchange_symbol, interval=interval, limit=size, startTime=since)
 
-        df = pd.DataFrame(klines, columns=['open_time', 'open','high','low','close','volume','close_time',
-            'quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume','ignore'])
-        return df
+        return klines
 
     def get_klines_1day(self, symbol, size=300, since=None):
         """获取日k线"""

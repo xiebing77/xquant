@@ -45,11 +45,16 @@ class MongoDB:
         logging.debug("mongodb %s(_id=%s) update : %s", collection, _id, record)
         self.__client[collection].update_one({"_id": ObjectId(_id)}, {"$set": record})
 
-    def find(self, collection, query):
+    def find(self, collection, query, projection=None):
         """find"""
-        # print(query)
+        #print(query)
+        #print(projection)
+        if projection:
+            ret = self.__client[collection].find(query, projection=projection)
+        else:
+            ret = self.__client[collection].find(query)
+
         records = []
-        ret = self.__client[collection].find(query)
         for i in ret:
             records.append(i)
         return records
