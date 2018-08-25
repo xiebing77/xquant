@@ -4,6 +4,41 @@ import numpy as np
 import pandas as pd
 
 
+def py_kdj(klines, period=9,):
+    M1 = 3
+    M2 = 3
+
+    kdj_arr = []
+
+    kline = klines[0]
+    close = float(kline[4])
+    high = float(kline[2])
+    low = float(kline[3])
+    rsv = (close - low) / (high - low) * 100
+    kdj_arr.append(list((rsv, rsv, rsv, rsv)))
+
+    highs = [high]
+    lows = [low]
+    for kline in klines[1:]:
+        if len(highs) >= period:
+            highs.pop(0)
+            lows.pop(0)
+
+        highs.append(float(kline[2]))
+        lows.append(float(kline[3]))
+        close = float(kline[4])
+        min_low = min(lows)
+        rsv = (close - min_low) / (max(highs) - min_low) * 100
+
+        k = 1 / M1 * rsv + (M1 - 1) / M1 * kdj_arr[-1][1]
+        d = 1 / M2 * k + (M2 - 1) / M2 * kdj_arr[-1][2]
+        j = 3 * k - 2 * d
+        kdj_arr.append(list((rsv, k, d, j)))
+
+    #print(kdjarr)
+    return kdj_arr
+
+
 def np_kdj(klines, N=9):
     M1 = 3
     M2 = 3
