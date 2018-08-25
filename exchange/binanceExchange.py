@@ -2,6 +2,7 @@
 """binance适配对接"""
 import os
 import logging
+import pandas as pd
 import common.xquant as xq
 from .exchange import Exchange
 from .binance.client import Client

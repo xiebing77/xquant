@@ -216,6 +216,7 @@ class Engine:
         if dcs_cba:
             if not self.can_buy_time or (self.can_buy_time and self.can_buy_time < self.now() + dcs_cba):
                 self.can_buy_time = self.now() + dcs_cba
+                logging.info("can buy time: %s", self.can_buy_time)
 
         if dcs_pst_rate > 1 or dcs_pst_rate < 0:
             logging.warning("仓位率（%g）超出范围（0 ~ 1）", dcs_pst_rate)
@@ -251,65 +252,45 @@ class Engine:
             if buy_base_amount <= 0:  #
                 return
 
-            buy_target_amount = ts.reserve_float(
+            target_amount = ts.reserve_float(
                 buy_base_amount / (cur_price * (1 + self.config["commission_rate"])),
                 self.config["digits"][target_coin],
             )
-            logging.info("buy target coin amount: %g", buy_target_amount)
 
             rate = 1.1
-            limit_price = ts.reserve_float(
-                cur_price * rate, self.config["digits"][base_coin]
-            )
-            order_id = self.send_order_limit(
-                xq.SIDE_BUY,
-                symbol,
-                dcs_pst_rate,
-                cur_price,
-                limit_price,
-                buy_target_amount,
-                dcs_rmk,
-            )
-            logging.info(
-                "current price: %g;  rate: %g;  order_id: %s ",
-                cur_price,
-                rate,
-                order_id,
-            )
 
         elif dcs_side == xq.SIDE_SELL:
             if position_info["pst_rate"] <= dcs_pst_rate:
                 return
 
-            sell_target_amount = ts.reserve_float(
+            target_amount = ts.reserve_float(
                 position_info["amount"]
                 * (position_info["pst_rate"] - dcs_pst_rate)
                 / position_info["pst_rate"],
                 self.config["digits"][target_coin],
             )
-            logging.info("sell_target_amount     : %g" % sell_target_amount)
-            if sell_target_amount <= 0:
-                return
 
             rate = 0.9
-            limit_price = ts.reserve_float(
-                cur_price * rate, self.config["digits"][base_coin]
-            )
-            order_id = self.send_order_limit(
-                xq.SIDE_SELL,
-                symbol,
-                dcs_pst_rate,
-                cur_price,
-                limit_price,
-                sell_target_amount,
-                dcs_rmk,
-            )
-            logging.info(
-                "current price: %g;  rate: %g;  order_id: %s", cur_price, rate, order_id
-            )
-
         else:
             return
+
+        logging.info("%s target amount: %g" % (dcs_side, target_amount))
+        if target_amount <= 0:
+            return
+        limit_price = ts.reserve_float(cur_price * rate, self.config["digits"][base_coin])
+        order_id = self.send_order_limit(
+            dcs_side,
+            symbol,
+            dcs_pst_rate,
+            cur_price,
+            limit_price,
+            target_amount,
+            "%s, timedelta: %s, can buy after: %s" % (dcs_rmk, dcs_cba, self.can_buy_time) if (dcs_cba or self.can_buy_time) else "%s" % (dcs_rmk),
+        )
+        logging.info(
+            "current price: %g;  rate: %g;  order_id: %s", cur_price, rate, order_id
+        )
+
 
     def analyze(self, symbol):
         orders = self._db.find(
