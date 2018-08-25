@@ -32,7 +32,7 @@ class Engine:
     def get_kline_column_names(self):
         return self.kline_column_names
 
-    def _get_position(self, symbol, cur_price):
+    def _get_position(self, symbol, orders, cur_price):
         info = {
             "amount": 0,  # 数量
             "price": 0,  # 平均价格，不包含佣金
@@ -47,9 +47,6 @@ class Engine:
         }
         target_coin, base_coin = xq.get_symbol_coins(symbol)
 
-        orders = self._db.find(
-            self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol}
-        )
         for order in orders:
             deal_amount = order["deal_amount"]
             deal_value = order["deal_value"]
@@ -292,10 +289,7 @@ class Engine:
         )
 
 
-    def analyze(self, symbol):
-        orders = self._db.find(
-            self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol}
-        )
+    def analyze(self, symbol, orders):
 
         i = 1
         amount = 0

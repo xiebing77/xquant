@@ -42,6 +42,8 @@ class BackTest(Engine):
         self.k1ds_cache_s_time = None
         self.k1ds_cache_e_time = None
 
+        self.orders = []
+
     def now(self):
         return self.tick_time
 
@@ -304,7 +306,7 @@ class BackTest(Engine):
 
     def get_position(self, symbol, cur_price):
         """ 获取持仓信息 """
-        return self._get_position(symbol, cur_price)
+        return self._get_position(symbol, self.orders, cur_price)
 
     def send_order_limit(
         self, side, symbol, pst_rate, cur_price, limit_price, amount, rmk
@@ -312,25 +314,22 @@ class BackTest(Engine):
         """ 提交委托，回测默认以当前价全部成交 """
         # order_id = uuid.uuid1()
         order_id = ""
-        _id = self._db.insert_one(
-            DB_ORDERS_NAME,
-            {
-                "create_time": self.now().timestamp(),
-                "instance_id": self.instance_id,
-                "symbol": symbol,
-                "side": side,
-                "pst_rate": pst_rate,
-                "type": xq.ORDER_TYPE_LIMIT,
-                "pirce": limit_price,
-                "amount": amount,
-                "status": xq.ORDER_STATUS_CLOSE,
-                "order_id": order_id,
-                "cancle_amount": 0,
-                "deal_amount": amount,
-                "deal_value": amount * cur_price,
-                "rmk": rmk,
-            },
-        )
+        self.orders.append({
+            "create_time": self.now().timestamp(),
+            "instance_id": self.instance_id,
+            "symbol": symbol,
+            "side": side,
+            "pst_rate": pst_rate,
+            "type": xq.ORDER_TYPE_LIMIT,
+            "pirce": limit_price,
+            "amount": amount,
+            "status": xq.ORDER_STATUS_CLOSE,
+            "order_id": order_id,
+            "cancle_amount": 0,
+            "deal_amount": amount,
+            "deal_value": amount * cur_price,
+            "rmk": rmk,
+        })
 
         return order_id
 
@@ -386,4 +385,4 @@ class BackTest(Engine):
             % (tick_count, total_tick_end - total_tick_start)
         )
 
-        self.analyze(strategy.config["symbol"])
+        self.analyze(strategy.config["symbol"], self.orders)

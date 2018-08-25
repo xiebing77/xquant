@@ -44,7 +44,10 @@ class RealEngine(Engine):
     def get_position(self, symbol, cur_price):
         """ 获取持仓信息 """
         self.sync_orders(symbol)
-        return self._get_position(symbol, cur_price)
+
+        orders = self._db.find(self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol})
+
+        return self._get_position(symbol, orders, cur_price)
 
     def has_open_orders(self, symbol):
         """ 是否有open状态的委托 """
