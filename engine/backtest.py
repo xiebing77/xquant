@@ -113,7 +113,7 @@ class BackTest(Engine):
 
         e_timestamp = e_time.timestamp() * 1000
         while tmp_len > 0:
-            if self.k1ms_cache[tmp_len]["open_time"] >= e_timestamp:
+            if self.k1ms_cache[tmp_len]["open_time"] <= e_timestamp:
                 break
             tmp_len -= 1
         return self.k1ms_cache[:tmp_len]
