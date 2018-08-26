@@ -108,6 +108,9 @@ class BackTest(Engine):
             self.k1ms_cache_s_time = s_time
 
         tmp_len = int((e_time - s_time).total_seconds() / 60)
+        if tmp_len >= len(self.k1ms_cache):
+            return self.k1ms_cache
+
         e_timestamp = e_time.timestamp() * 1000
         while tmp_len > 0:
             if self.k1ms_cache[tmp_len]["open_time"] >= e_timestamp:

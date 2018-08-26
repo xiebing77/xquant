@@ -19,7 +19,7 @@ class KDJStrategy(Strategy):
         klines = self.engine.get_klines_1day(symbol, 300)
         self.cur_price = float(klines[-1][4])
 
-        kdj_arr = ic.np_kdj(klines)
+        kdj_arr = ic.py_kdj(klines)
         cur_k = kdj_arr[-1][1]
         cur_d = kdj_arr[-1][2]
         cur_j = kdj_arr[-1][3]
