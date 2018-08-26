@@ -4,7 +4,6 @@ import sys
 from datetime import datetime, timedelta, time
 import uuid
 import logging
-import pandas as pd
 import utils.tools as ts
 import common.xquant as xq
 import db.mongodb as md
@@ -37,6 +36,7 @@ class BackTest(Engine):
         self.tick_time = None
 
         self.k1ms_cache = None
+        self.k1ms_cache_s_time = None
 
         self.k1ds_cache = None
         self.k1ds_cache_s_time = None
@@ -62,7 +62,7 @@ class BackTest(Engine):
         # print("1min e_time timestamp: ",e_time.timestamp())
 
         k1ms = self.__get_klines_1min_cache(symbol, s_time, e_time)
-        return pd.DataFrame(k1ms)
+        return k1ms
 
     def __get_klines_1min(self, symbol, s_time, e_time):
         """ 获取分钟k线 """
@@ -96,105 +96,79 @@ class BackTest(Engine):
             self.k1ms_cache = k1ms
         return self.k1ms_cache
 
-    def __get_klines_1min_cache2(self, symbol, s_time, e_time):
+    def __get_klines_1min_cache1(self, symbol, s_time, e_time):
         """ 获取分钟k线 """
         if not self.k1ms_cache or (
             self.k1ms_cache
-            and self.k1ms_cache[0]["open_time"] != s_time.timestamp() * 1000
+            and self.k1ms_cache_s_time != s_time
         ):
-            self.k1ms_cache_cursor = int((e_time - s_time).total_seconds() / 60)
-            # print("self.k1ms_cache_cursor:", self.k1ms_cache_cursor)
-
+            # 把整天的分钟k线都取下来
             next_day_time = s_time + timedelta(days=1)
-            self.k1ms_cache = self._db.find(
-                DB_KLINES_1MIN + symbol,
-                {
-                    "open_time": {
-                        "$gte": s_time.timestamp() * 1000,
-                        "$lt": next_day_time.timestamp() * 1000,
-                    }
-                },
-            )
-            # print("next_day_time: ",next_day_time)
-            # size = len(self.k1ms_cache)
-            # print("k1ms_cache size: ", size)
+            self.k1ms_cache = self.__get_klines_1min(symbol, s_time, next_day_time)
+            self.k1ms_cache_s_time = s_time
 
-            """
-            open_time = self.k1ms_cache[0]["open_time"]
-            if open_time != s_time.timestamp() * 1000:
-                print("miss open_time:%s, s_time:%s,%s"%(open_time,s_time,s_time.timestamp() * 1000))
+        tmp_len = int((e_time - s_time).total_seconds() / 60)
+        e_timestamp = e_time.timestamp() * 1000
+        while tmp_len > 0:
+            if self.k1ms_cache[tmp_len]["open_time"] >= e_timestamp:
+                break
+            tmp_len -= 1
+        return self.k1ms_cache[:tmp_len]
 
-            for k1m in self.k1ms_cache[1:]:
-                if k1m["open_time"] <= open_time:
-                    print("k1ms_cache: ", self.k1ms_cache)
-                    break
-                else:
-                    open_time = k1m["open_time"]
-            """
-
-            """
-            td = timedelta(minutes=1)
-            i = 0
-            tick_time = s_time
-            while tick_time < next_day_time:
-                ts = int(tick_time.timestamp()*1000)
-                #print(ts, " ~ ", klines[i]["open_time"])
-                if ts ==self.k1ms_cache[i]["open_time"]:
-                    #print(tick_time, " match  ok")
-                    pass
-                else:
-                    k1ms_cache_df = pd.DataFrame(self.k1ms_cache)
-                    #k1ms_cache_df["open_time"] = datetime.fromtimestamp(k1ms_cache_df["open_time"]/1000)
-                    print(k1ms_cache_df)
-
-                tick_time += td
-                i += 1
-            """
-
-        size = len(self.k1ms_cache)
-        # print("k1ms_cache size: ", size)
-        if size == 60 * 24:
-            k1ms = self.k1ms_cache[: int((e_time - s_time).total_seconds() / 60)]
-            # print("xxx k1ms size: ", len(k1ms))
-        else:
-            while self.k1ms_cache_cursor < size:
-                k1m = self.k1ms_cache[self.k1ms_cache_cursor]
-                if k1m["open_time"] >= e_time.timestamp() * 1000:
-                    break
-                self.k1ms_cache_cursor += 1
-            k1ms = self.k1ms_cache[: self.k1ms_cache_cursor]
-
-        # print(k1ms[-1])
-        # print("k1ms len: ", len(k1ms))
-        # print("k1ms[-1][open_time]: ", datetime.fromtimestamp(k1ms[-1]["open_time"]/1000))
-        # print("k1ms[-1][close_time]: ", datetime.fromtimestamp(k1ms[-1]["close_time"]/1000))
-        return k1ms
+    def __get_info_Klines(self, klines):
+        high = float(klines[0]["high"])
+        low = float(klines[0]["low"])
+        volume = float(klines[0]["volume"])
+        for kline in klines[1:]:
+            if high < float(kline["high"]):
+                high = float(kline["high"])
+            if low > float(kline["low"]):
+                low = float(kline["low"])
+            volume += float(kline["volume"])
+        return high, low, volume
 
     def __create_klines_1day_from_1min(self, symbol, s_time, e_time):
         """ 取出tick当天开盘到tick时间的分钟k线，生成日k线 """
-        k1ms = self.__get_klines_1min_cache(symbol, s_time, e_time)
+        k1ms = self.__get_klines_1min_cache1(symbol, s_time, e_time)
         if len(k1ms) == 0:
             return []
 
-        high = float(k1ms[0]["high"])
-        low = float(k1ms[0]["low"])
-        volume = float(k1ms[0]["volume"])
-        for k1m in k1ms[1:]:
-            if high < float(k1m["high"]):
-                high = float(k1m["high"])
-            if low > float(k1m["low"]):
-                low = float(k1m["low"])
-            volume += float(k1m["volume"])
+        last_k1m = k1ms[-1]
+        max_high = float(last_k1m["high"])
+        min_low = float(last_k1m["low"])
+        total_volume = float(last_k1m["volume"])
+
+        index = len(k1ms) - 2
+        while index >= 0:
+            k1m = k1ms[index]
+            if "max_high" in k1m:
+                if max_high < float(k1m["max_high"]):
+                    max_high = float(k1m["max_high"])
+                if min_low > float(k1m["min_low"]):
+                    min_low = float(k1m["min_low"])
+                total_volume += float(k1m["total_volume"])
+                break
+            else:
+                if max_high < float(k1m["high"]):
+                    max_high = float(k1m["high"])
+                if min_low > float(k1m["low"]):
+                    min_low = float(k1m["low"])
+                total_volume += float(k1m["volume"])
+            index -= 1
+
+        last_k1m["max_high"] = max_high
+        last_k1m["min_low"] = min_low
+        last_k1m["total_volume"] = total_volume
+
         k1d = {
             "open_time": k1ms[0]["open_time"],
             "open": k1ms[0]["open"],
-            "high": high,
-            "low": low,
+            "high": max_high,
+            "low": min_low,
             "close": k1ms[-1]["close"],
-            "volume": volume,
+            "volume": total_volume,
             "close_time": k1ms[-1]["close_time"],
         }
-
         return [k1d]
 
     def get_klines_1day(self, symbol, size, since=None):
