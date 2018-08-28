@@ -17,7 +17,8 @@ class MongoDB:
     def __init__(self, user, password, db_name, db_url):
         client = MongoClient(db_url)
         self.__client = eval("%s.%s" % (client, db_name))
-        self.__client.authenticate(user, password)
+        if user:
+            self.__client.authenticate(user, password)
 
     def create_index(self, collection, index):
         self.__client[collection].create_index(index, unique=True)
