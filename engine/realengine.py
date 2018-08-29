@@ -186,14 +186,22 @@ class RealEngine(Engine):
                 )
                 self.__exchange.cancel_order(symbol, order["order_id"])
 
-    def run(self, strategy):
+    def run(self, strategy, debug):
         """ run """
         while True:
             tick_start = datetime.datetime.now()
             logging.info(
                 "%s tick start......................................", tick_start
             )
-            strategy.on_tick()
+
+            if debug:
+                strategy.on_tick()
+            else:
+                try:
+                    strategy.on_tick()
+                except Exception as ept:
+                    logging.critical(ept)
+
             tick_end = datetime.datetime.now()
             logging.info(
                 "%s tick end...; tick  cost: %s -----------------------\n\n",

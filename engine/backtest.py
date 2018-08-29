@@ -314,7 +314,7 @@ class BackTest(Engine):
         """ 撤掉本策略的所有挂单委托 """
         pass
 
-    def run(self, strategy):
+    def run(self, strategy, debug):
         """ run """
         print(
             "backtest time range: [ %s , %s )"
@@ -337,7 +337,15 @@ class BackTest(Engine):
         while self.tick_time < end_time:
             logging.info("tick_time: %s", self.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
             tick_start = datetime.now()
-            strategy.on_tick()
+
+            if debug:
+                strategy.on_tick()
+            else:
+                try:
+                    strategy.on_tick()
+                except Exception as ept:
+                    logging.critical(ept)
+
             tick_end = datetime.now()
             logging.info("tick  cost: %s \n\n", tick_end - tick_start)
 

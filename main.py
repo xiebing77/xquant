@@ -69,10 +69,4 @@ if __name__ == "__main__":
 
     strategy = createInstance(module_name, class_name, strategy_config, engine)
 
-    if debug:
-        engine.run(strategy)
-    else:
-        try:
-            engine.run(strategy)
-        except Exception as ept:
-            logging.critical(ept)
+    engine.run(strategy, debug)
