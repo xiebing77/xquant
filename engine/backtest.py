@@ -181,8 +181,8 @@ class BackTest(Engine):
         tick_open_time = get_open_time(self.tick_time)
         # print("tick_open_time: ", tick_open_time)
 
-        # 取出今天之前的日k线
         if since is None:
+            # 取出今天之前的日k线
             e_time = tick_open_time
             s_time = e_time - timedelta(days=size - 1)
         else:
@@ -370,4 +370,7 @@ class BackTest(Engine):
             % (tick_count, total_tick_end - total_tick_start)
         )
 
-        self.analyze(strategy.config["symbol"], self.orders)
+        symbol = strategy.config["symbol"]
+        self.analyze(symbol, self.orders)
+        k1ds = self.get_klines_1day(symbol, 100)
+        self.display(strategy.config["symbol"], self.orders, k1ds)

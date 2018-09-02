@@ -1,5 +1,8 @@
 #!/usr/bin/python
 """运行环境引擎"""
+import matplotlib.pyplot as plt
+import matplotlib.dates as dts
+import mpl_finance as mpf
 from datetime import datetime,timedelta
 import logging
 import utils.tools as ts
@@ -314,6 +317,9 @@ class Engine:
             profit = cur_price * amount - value - commission
             profit_rate = profit / self.config["limit"]["value"]
 
+            order["profit_rate"] = round(profit_rate * 100, 2)
+            order["trade_time"] = datetime.fromtimestamp(order["create_time"])
+
             print(
                 "%4d  %s  %4s  %8g  %10g  %11g  %10g  %10g  %10g  %10g  %10g  %10.2f%%  %s"
                 % (
@@ -328,8 +334,33 @@ class Engine:
                     value,
                     commission,
                     profit,
-                    round(profit_rate * 100, 2),
+                    order["profit_rate"],
                     order["rmk"],
                 )
             )
             i += 1
+
+    def display(self, symbol, orders, k1ds):
+
+        fig, axes = plt.subplots(3,1, sharex=True)
+        fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
+
+        quotes = []
+        for k1d in k1ds:
+            d = datetime.fromtimestamp(k1d[0]/1000)
+            quote = (dts.date2num(d), float(k1d[1]), float(k1d[4]), float(k1d[2]), float(k1d[3]))
+            quotes.append(quote)
+
+        #mpf.candlestick_ochl(axes[3], quotes, width=0.6, colorup="red", colordown="green")
+        mpf.candlestick_ochl(axes[0],quotes,width=0.2,colorup='g',colordown='r')
+        axes[0].autoscale_view()
+        axes[0].xaxis_date()
+
+        axes[0].plot([order["trade_time"] for order in orders],[ (order["deal_value"] / order["deal_amount"]) for order in orders],"o--")
+
+        axes[1].plot([order["trade_time"] for order in orders],[ order["profit_rate"] for order in orders],"ko--")
+
+        axes[2].plot([order["trade_time"] for order in orders],[ order["pst_rate"] for order in orders])
+
+        plt.show()
+
