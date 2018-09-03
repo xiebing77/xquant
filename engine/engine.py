@@ -352,15 +352,41 @@ class Engine:
             quotes.append(quote)
 
         #mpf.candlestick_ochl(axes[3], quotes, width=0.6, colorup="red", colordown="green")
-        mpf.candlestick_ochl(axes[0],quotes,width=0.2,colorup='g',colordown='r')
+        mpf.candlestick_ochl(axes[0], quotes, width=0.2, colorup='g', colordown='r')
+        axes[0].set_ylabel('price')
+        axes[0].grid(True)
         axes[0].autoscale_view()
         axes[0].xaxis_date()
 
         axes[0].plot([order["trade_time"] for order in orders],[ (order["deal_value"] / order["deal_amount"]) for order in orders],"o--")
 
+        axes[1].set_ylabel('profit rate')
+        axes[1].grid(True)
         axes[1].plot([order["trade_time"] for order in orders],[ order["profit_rate"] for order in orders],"ko--")
 
-        axes[2].plot([order["trade_time"] for order in orders],[ order["pst_rate"] for order in orders])
+        axes[2].set_ylabel('position rate')
+        axes[2].grid(True)
+        axes[2].plot([order["trade_time"] for order in orders],[ order["pst_rate"] for order in orders], "k-", drawstyle="steps-post")
+
+        """
+        trade_times = []
+        pst_rates = []
+        for i, order in enumerate(orders):
+            #补充
+            if i > 0 and orders[i-1]["pst_rate"] > 0:
+                tmp_trade_date = orders[i-1]["trade_time"].date() + timedelta(days=1)
+                while tmp_trade_date < order["trade_time"].date():
+                    trade_times.append(tmp_trade_date)
+                    pst_rates.append(orders[i-1]["pst_rate"])
+                    print("add %s, %s" % (tmp_trade_date, orders[i-1]["pst_rate"]))
+                    tmp_trade_date += timedelta(days=1)
+
+            # 添加
+            trade_times.append(order["trade_time"])
+            pst_rates.append(order["pst_rate"])
+            print("%s, %s" % (order["trade_time"], order["pst_rate"]))
+        plt.bar(trade_times, pst_rates, width= 0.3) # 
+        """
 
         plt.show()
 
