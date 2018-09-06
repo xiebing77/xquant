@@ -96,12 +96,37 @@ def pd_kdj(klines, columns, period=9, ksgn="close"):
     return k, d, j
 
 
-def calc_macd(klines, fastperiod=12, slowperiod=26, signalperiod=9):
-    """macd"""
-    fast_ema = klines["close"].ewm(span=fastperiod).mean()
-    slow_ema = klines["close"].ewm(span=slowperiod).mean()
+def py_macd(klines, closeindex, fastperiod=12, slowperiod=26, signalperiod=9):
+    arr = []
 
-    klines["12ema"] = fast_ema
-    klines["26ema"] = slow_ema
-    klines["macd dif"] = fast_ema - slow_ema
-    klines["macd dea"] = klines["macd dif"].ewm(span=signalperiod).mean()
+    close = float(klines[0][closeindex])
+    arr.append(list((close, close, 0, 0, close)))
+
+    for kline in klines[1:]:
+        close = float(kline[closeindex])
+
+        fast_ema = close * (2/(fastperiod+1)) + arr[-1][0] * ((fastperiod-1)/(fastperiod+1))
+        slow_ema = close * (2/(slowperiod+1)) + arr[-1][1] * ((slowperiod-1)/(slowperiod+1))
+
+        dif = fast_ema - slow_ema
+        dea = dif * (2/(signalperiod+1)) + arr[-1][3] * ((signalperiod-1)/(signalperiod+1))
+
+        arr.append(list((fast_ema, slow_ema, dif, dea, close)))
+
+    #print(arr)
+    return arr
+
+
+def pd_macd(klines, columns, fastperiod=12, slowperiod=26, signalperiod=9):
+    """macd"""
+    klines_df = pd.DataFrame(klines, columns=columns)
+
+    fast_ema = klines_df["close"].ewm(span=fastperiod, adjust=False).mean()
+    slow_ema = klines_df["close"].ewm(span=slowperiod, adjust=False).mean()
+
+    klines_df["12ema"] = fast_ema
+    klines_df["26ema"] = slow_ema
+    klines_df["macd dif"] = fast_ema - slow_ema
+    klines_df["macd dea"] = klines_df["macd dif"].ewm(span=signalperiod, adjust=False).mean()
+
+    #print(klines_df)
