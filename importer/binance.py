@@ -62,7 +62,7 @@ if __name__ == "__main__":
         elif args.k == "1day":
             klines = exchange.get_klines_1day(symbol, size=batch, since=tmp_time)
 
-        klines_df = pd.DataFrame(klines, exchange.get_kline_column_names())
+        klines_df = pd.DataFrame(klines, columns=exchange.get_kline_column_names())
 
         #klen = len(klines)
         #print("klines len: ", klen)
