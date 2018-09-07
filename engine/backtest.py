@@ -372,5 +372,5 @@ class BackTest(Engine):
 
         symbol = strategy.config["symbol"]
         self.analyze(symbol, self.orders)
-        k1ds = self.get_klines_1day(symbol, 100)
+        k1ds = self.get_klines_1day(symbol, (end_time - start_time).total_seconds()/(24*60*60))
         self.display(strategy.config["symbol"], self.orders, k1ds)

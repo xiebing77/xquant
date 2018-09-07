@@ -5,7 +5,6 @@ import argparse
 from datetime import datetime, timedelta
 import db.mongodb as md
 from setup import *
-from exchange.binanceExchange import BinanceExchange
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='klines print or check')
@@ -37,7 +36,6 @@ if __name__ == "__main__":
     else:
         exit(1)
 
-    exchange = BinanceExchange(debug=True)
     db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
     target_len = int((int(end_time.timestamp()) - int(start_time.timestamp())) / period)
     print("Target length:", target_len)
