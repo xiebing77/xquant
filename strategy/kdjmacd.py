@@ -58,24 +58,6 @@ class KDJMACDStrategy(Strategy):
                         )
                     )
 
-            elif cur_j < y_j - offset:
-                # 下降趋势
-                if cur_k < y_k - offset:
-                    # j、k 同时下降，最多保留半仓
-                    check_signals.append(
-                        xq.create_signal(xq.SIDE_SELL, 0.5, "减仓：j、k 同时下降; macd(%g, %g, %g)" % (dif, dea, dif-dea))
-                    )
-
-                elif cur_k > y_k + offset:
-                    # j 下落，最多保留8成仓位
-                    if dif - dea < 0:            
-                        check_signals.append(xq.create_signal(xq.SIDE_SELL, 0.8, "减仓：j 下落; macd(%g, %g, %g)" % (dif, dea, dif-dea)))
-                    #pass
-                else:
-                    pass
-            else:
-                pass
-
         elif cur_j + offset < cur_k < cur_d - offset:
 
             # 清仓卖出
