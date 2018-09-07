@@ -11,12 +11,8 @@ mongodb3.6
 1. 创建db容器
 > docker run -d -v <宿主目录>:/db_data --name xquant-db mongo
 2. 进入db容器
-> docker exec -i -t xquant-db /bin/bash
-3. 容器内加载历史k线
-> cd db_data  
-  mongorestore -d binance -c kline_1day_btc_usdt kline_1day_btc_usdt.bson  
-  mongorestore -d binance -c kline_btc_usdt kline_btc_usdt.bson
-4. 退出db容器
+> docker exec -i -t xquant-db /bin/bash  
+3. 退出db容器
 > exit
 
 #### xquant容器
@@ -32,9 +28,13 @@ mongodb3.6
 
 ##### 后台
 
-
-dd1e3f6e2749是xquant镜像id
-
+## 数据
+### 导出
+mongodump -d binance -c kline_1day_btc_usdt  
+mongodump -d binance -c kline_btc_usdt
+### 导入
+mongorestore -d binance -c kline_1day_btc_usdt kline_1day_btc_usdt.bson  
+mongorestore -d binance -c kline_btc_usdt kline_btc_usdt.bson
 ## 程序入口
 main.py
 ### 使用方式
