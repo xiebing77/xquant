@@ -29,6 +29,8 @@ mongodb3.6
 ##### 后台
 
 ## 数据
+### 登录
+mongo mongodb://<user>:<password>@localhost/binance
 ### 导出
 mongodump -d binance -c kline_1day_btc_usdt  
 mongodump -d binance -c kline_btc_usdt
