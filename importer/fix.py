@@ -57,7 +57,7 @@ if __name__ == "__main__":
         collection = "kline_1day_%s" % args.s
         tick_time = start_time + timedelta(hours=8)
         td = timedelta(days=1)
-        period = 60 * 24
+        period = 60 * 60 * 24
     else:
         exit(1)
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     print(len(klines))
 
     for kline in klines:
-        rest = kline['open_time'] % (60 * 1000)
+        rest = kline['open_time'] % (period * 1000)
         if rest:
             print(kline)
             kline['open_time'] -= rest
@@ -80,7 +80,7 @@ if __name__ == "__main__":
             print(kline)
             db.update_one(collection, kline['_id'], kline)
 
-        rest = (kline['close_time'] + 1) % (60 * 1000)
+        rest = (kline['close_time'] + 1) % (period * 1000)
         if rest:
             print(kline)
             kline['close_time'] = kline['open_time'] + 59999

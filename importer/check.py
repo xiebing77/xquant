@@ -33,7 +33,7 @@ if __name__ == "__main__":
         collection = "kline_1day_%s" % args.s
         tick_time = start_time + timedelta(hours=8)
         td = timedelta(days=1)
-        period = 60 * 24
+        period = 60 * 60 * 24
     else:
         exit(1)
 
