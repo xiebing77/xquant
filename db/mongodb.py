@@ -28,9 +28,13 @@ class MongoDB:
 
     def insert_one(self, collection, record):
         """insert_one"""
-        logging.debug("mongodb %s insert : %s", collection, record)
-        _id = self.__client[collection].insert_one(record).inserted_id
-        return _id
+        try:
+            logging.debug("mongodb %s insert : %s", collection, record)
+            _id = self.__client[collection].insert_one(record).inserted_id
+            return _id
+        except Exception as exc:
+            print(exc)
+            return None
 
     def insert_many(self, collection, records):
         """insert_many"""
@@ -59,3 +63,30 @@ class MongoDB:
         for i in ret:
             records.append(i)
         return records
+
+    def find_sort(self, collection, query, sort_field, sort_dir, projection=None):
+        """find and sort
+            sort_dir: 1. ASCENDING,
+                     -1. DESCENDING
+        """
+        #print(query)
+        #print(projection)
+        if projection:
+            ret = self.__client[collection].find(query, projection=projection).sort(sort_field, sort_dir)
+        else:
+            ret = self.__client[collection].find(query).sort(sort_field, sort_dir)
+
+        records = []
+        for i in ret:
+            records.append(i)
+        return records
+
+    def count(self, collection, query, projection=None):
+        """count"""
+        #print(query)
+        #print(projection)
+        if projection:
+            ret = self.__client[collection].find(query, projection=projection).count()
+        else:
+            ret = self.__client[collection].find(query).count()
+        return ret
