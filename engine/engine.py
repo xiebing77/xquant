@@ -297,32 +297,63 @@ class Engine:
 
         i = 1
         amount = 0
-        value = 0
-        commission = 0
+        buy_value = 0
+        sell_value = 0
+        buy_commission = 0
+        sell_commission = 0
+
+        total_commission = 0
+        total_profit = 0
+        total_profit_rate = 0
+
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         print(
-            "  id          create_time  side  pst_rate   cur_price  deal_amount  deal_value      amount       value  commission      profit  profit_rate  rmk"
+            "  id          create_time  side  pst_rate   cur_price  deal_amount  deal_value      amount      profit  profit_rate  total_profit  total_profit_rate  total_commission  rmk"
         )
         for order in orders:
             cur_price = order["deal_value"] / order["deal_amount"]
+
+            deal_value = order["deal_value"]
+            commission = deal_value * self.config["commission_rate"]
+            total_commission += commission
+
             if order["side"] == xq.SIDE_BUY:
                 amount += order["deal_amount"]
-                value += order["deal_value"]
+                buy_value += deal_value
+                buy_commission += commission
             else:
                 amount -= order["deal_amount"]
-                value -= order["deal_value"]
-
-            commission += order["deal_value"] * self.config["commission_rate"]
+                sell_value += deal_value
+                sell_commission += commission
 
             amount = ts.reserve_float(amount, self.config["digits"][target_coin])
-            profit = cur_price * amount - value - commission
-            profit_rate = profit / self.config["limit"]["value"]
 
+            buy_cost = buy_value + buy_commission
+            pst_value = cur_price * amount
+            profit = pst_value + sell_value - sell_commission - buy_cost
+            profit_rate = profit / buy_cost
             order["profit_rate"] = round(profit_rate * 100, 2)
+
+            tmp_total_profit = total_profit + profit
+            tmp_total_profit_rate = tmp_total_profit / self.config["limit"]["value"]
+            order["total_profit_rate"] = round(tmp_total_profit_rate * 100, 2)
             order["trade_time"] = datetime.fromtimestamp(order["create_time"])
 
+            if amount == 0:
+                total_profit += profit
+
+                buy_value = 0
+                sell_value = 0
+                buy_commission = 0
+                sell_commission = 0
+            elif amount > 0:
+                pass
+            else:
+                pass
+
+
             print(
-                "%4d  %s  %4s  %8g  %10g  %11g  %10g  %10g  %10g  %10g  %10g  %10.2f%%  %s"
+                "%4d  %s  %4s  %8g  %10g  %11g  %10g  %10g  %10g  %10.2f%%  %12g  %16.2f%%  %16g  %s"
                 % (
                     i,
                     datetime.fromtimestamp(order["create_time"]),
@@ -332,10 +363,11 @@ class Engine:
                     order["deal_amount"],
                     order["deal_value"],
                     amount,
-                    value,
-                    commission,
                     profit,
                     order["profit_rate"],
+                    tmp_total_profit,
+                    order["total_profit_rate"],
+                    total_commission,
                     order["rmk"],
                 )
             )
@@ -371,9 +403,9 @@ class Engine:
 
         ax1.plot([order["trade_time"] for order in orders],[ (order["deal_value"] / order["deal_amount"]) for order in orders],"o--")
 
-        ax2.set_ylabel('profit rate')
+        ax2.set_ylabel('total profit rate')
         ax2.grid(True)
-        ax2.plot([order["trade_time"] for order in orders],[ order["profit_rate"] for order in orders],"ko--")
+        ax2.plot([order["trade_time"] for order in orders],[ order["total_profit_rate"] for order in orders],"ko--")
 
         ax3.set_ylabel('position rate')
         ax3.grid(True)
