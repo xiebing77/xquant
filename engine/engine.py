@@ -2,6 +2,7 @@
 """运行环境引擎"""
 import matplotlib.pyplot as plt
 import matplotlib.dates as dts
+from matplotlib import gridspec
 import mpl_finance as mpf
 from datetime import datetime,timedelta
 import logging
@@ -342,8 +343,19 @@ class Engine:
 
     def display(self, symbol, orders, k1ds):
 
+        gs = gridspec.GridSpec(9, 1)
+        gs.update(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
+        ax1 = plt.subplot(gs[0:-4, :])
+        ax2 = plt.subplot(gs[-4:-1, :])
+        ax3 = plt.subplot(gs[-1, :])
+
+        """
         fig, axes = plt.subplots(3,1, sharex=True)
         fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
+        ax1 = axes[0]
+        ax2 = axes[1]
+        ax3 = axes[2]
+        """
 
         quotes = []
         for k1d in k1ds:
@@ -351,22 +363,21 @@ class Engine:
             quote = (dts.date2num(d), float(k1d[1]), float(k1d[4]), float(k1d[2]), float(k1d[3]))
             quotes.append(quote)
 
-        #mpf.candlestick_ochl(axes[3], quotes, width=0.6, colorup="red", colordown="green")
-        mpf.candlestick_ochl(axes[0], quotes, width=0.2, colorup='g', colordown='r')
-        axes[0].set_ylabel('price')
-        axes[0].grid(True)
-        axes[0].autoscale_view()
-        axes[0].xaxis_date()
+        mpf.candlestick_ochl(ax1, quotes, width=0.2, colorup='g', colordown='r')
+        ax1.set_ylabel('price')
+        ax1.grid(True)
+        ax1.autoscale_view()
+        ax1.xaxis_date()
 
-        axes[0].plot([order["trade_time"] for order in orders],[ (order["deal_value"] / order["deal_amount"]) for order in orders],"o--")
+        ax1.plot([order["trade_time"] for order in orders],[ (order["deal_value"] / order["deal_amount"]) for order in orders],"o--")
 
-        axes[1].set_ylabel('profit rate')
-        axes[1].grid(True)
-        axes[1].plot([order["trade_time"] for order in orders],[ order["profit_rate"] for order in orders],"ko--")
+        ax2.set_ylabel('profit rate')
+        ax2.grid(True)
+        ax2.plot([order["trade_time"] for order in orders],[ order["profit_rate"] for order in orders],"ko--")
 
-        axes[2].set_ylabel('position rate')
-        axes[2].grid(True)
-        axes[2].plot([order["trade_time"] for order in orders],[ order["pst_rate"] for order in orders], "k-", drawstyle="steps-post")
+        ax3.set_ylabel('position rate')
+        ax3.grid(True)
+        ax3.plot([order["trade_time"] for order in orders],[ order["pst_rate"] for order in orders], "k-", drawstyle="steps-post")
 
         """
         trade_times = []
