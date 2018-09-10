@@ -46,6 +46,14 @@ def create_signal(side, pst_rate, rmk, can_buy_after=None):
     """创建交易信号"""
     return {"side": side, "pst_rate": pst_rate, "rmk": rmk, "can_buy_after": can_buy_after}
 
+def create_buy_signal(pst_rate, rmk, can_buy_after=None):
+    """创建买信号"""
+    return create_signal(SIDE_BUY, pst_rate, rmk, can_buy_after)
+
+def create_sell_signal(pst_rate, rmk, can_buy_after=None):
+    """创建卖信号"""
+    return create_signal(SIDE_SELL, pst_rate, rmk, can_buy_after)
+
 
 def decision_signals(signals):
     """决策交易信号"""
