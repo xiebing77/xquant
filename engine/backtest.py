@@ -298,7 +298,7 @@ class BackTest(Engine):
             "side": side,
             "pst_rate": pst_rate,
             "type": xq.ORDER_TYPE_LIMIT,
-            "pirce": limit_price,
+            "price": limit_price,
             "amount": amount,
             "status": xq.ORDER_STATUS_CLOSE,
             "order_id": order_id,
