@@ -35,7 +35,6 @@ if __name__ == "__main__":
     exchange = BinanceExchange(debug=True)
     symbol = creat_symbol(base_coin=base_coin, target_coin=target_coin)
 
-
     if args.k == "1min":
         interval = 60 * 1000
         collection = "kline_%s" % symbol
@@ -44,7 +43,6 @@ if __name__ == "__main__":
         collection = "kline_1day_%s" % symbol
     else:
         exit(1)
-
 
     print("collection: ", collection)
     size = 1000
