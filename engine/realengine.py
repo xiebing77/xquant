@@ -160,6 +160,7 @@ class RealEngine(Engine):
                 "side": side,
                 "pst_rate": pst_rate,
                 "type": xq.ORDER_TYPE_LIMIT,
+                "market_price": cur_price,
                 "price": limit_price,
                 "amount": amount,
                 "status": xq.ORDER_STATUS_OPEN,

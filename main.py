@@ -23,7 +23,9 @@ if __name__ == "__main__":
     module_name = sys.argv[1].replace("/", ".")
     class_name = sys.argv[2]
     strategy_config = json.loads(sys.argv[3])
+    print(strategy_config)
     engine_config = json.loads(sys.argv[4])
+    print(engine_config)
     if len(sys.argv) >= 6:
         debug = bool(sys.argv[5])
     else:
