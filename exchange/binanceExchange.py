@@ -105,7 +105,6 @@ class BinanceExchange(Exchange):
         df_s = df.groupby('orderId')['qty', 'value'].sum()
         return df_s['qty'], df_s['value']
 
-
     def send_order(self, side, type, symbol, price, amount, client_order_id=None):
         """提交委托"""
         exchange_symbol = self.__trans_symbol(symbol)
@@ -146,4 +145,9 @@ class BinanceExchange(Exchange):
         exchange_symbol = self.__trans_symbol(symbol)
         self.__client.cancel_order(symbol=exchange_symbol, orderId=order_id)
 
+    def get_order_book(self, symbol, limit=100):
+        """获取挂单列表"""
+        exchange_symbol = self.__trans_symbol(symbol)
+        books = self.__client.get_order_book(symbol=exchange_symbol, limit=limit)
+        return books
 

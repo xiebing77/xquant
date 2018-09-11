@@ -5,8 +5,6 @@ import argparse
 from datetime import datetime,timedelta
 import db.mongodb as md
 from setup import *
-from exchange.binanceExchange import BinanceExchange
-import pandas as pd
 
 
 def fix_middle_kline(database, collection, start_kline, end_kline):

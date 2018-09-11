@@ -414,7 +414,7 @@ class Client(object):
 
         :param symbol: required
         :type symbol: str
-        :param limit:  Default 100; max 100
+        :param limit:  Default 100; max 1000. Valid limits:[5, 10, 20, 50, 100, 500, 1000]
         :type limit: int
 
         :returns: API response
