@@ -4,16 +4,16 @@ import numpy as np
 import pandas as pd
 
 
-def py_kdj(klines, period=9,):
+def py_kdj(klines, highindex, lowindex, closeindex, period=9,):
     M1 = 3
     M2 = 3
 
     kdj_arr = []
 
     kline = klines[0]
-    close = float(kline[4])
-    high = float(kline[2])
-    low = float(kline[3])
+    close = float(kline[closeindex])
+    high = float(kline[highindex])
+    low = float(kline[lowindex])
     rsv = (close - low) / (high - low) * 100
     kdj_arr.append(list((rsv, rsv, rsv, rsv)))
 
@@ -24,9 +24,9 @@ def py_kdj(klines, period=9,):
             highs.pop(0)
             lows.pop(0)
 
-        highs.append(float(kline[2]))
-        lows.append(float(kline[3]))
-        close = float(kline[4])
+        highs.append(float(kline[highindex]))
+        lows.append(float(kline[lowindex]))
+        close = float(kline[closeindex])
         min_low = min(lows)
         rsv = (close - min_low) / (max(highs) - min_low) * 100
 
