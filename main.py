@@ -19,17 +19,25 @@ def createInstance(module_name, class_name, *args, **kwargs):
 
 if __name__ == "__main__":
 
-    # print(sys.argv)
+    #print(sys.argv)
     module_name = sys.argv[1].replace("/", ".")
+
     class_name = sys.argv[2]
+
     strategy_config = json.loads(sys.argv[3])
     print(strategy_config)
+
     engine_config = json.loads(sys.argv[4])
     print(engine_config)
-    if len(sys.argv) >= 6:
-        debug = bool(sys.argv[5])
+
+    select = sys.argv[5]
+    print("select: ", select)
+
+    if len(sys.argv) >= 7:
+        debug = bool(sys.argv[6])
     else:
         debug = False
+    print("debug: ", debug)
 
     if engine_config["select"] == "real":
         instance_id = engine_config["real"]["instance_id"]  # 实盘则暂时由config配置
@@ -64,10 +72,13 @@ if __name__ == "__main__":
     logging.info("strategy name: %s;  config: %s", class_name, strategy_config)
     logging.info("engine config: %s", engine_config)
 
-    if engine_config["select"] == "real":
+    if select == "real":
         engine = RealEngine(instance_id, engine_config)
-    else:
+    elif select == "backtest":
         engine = BackTest(instance_id, engine_config)
+    else:
+        print("select engine error!")
+        exit(1)
 
     strategy = createInstance(module_name, class_name, strategy_config, engine)
 
