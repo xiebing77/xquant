@@ -39,7 +39,7 @@ if __name__ == "__main__":
         debug = False
     print("debug: ", debug)
 
-    if engine_config["select"] == "real":
+    if select == "real":
         instance_id = engine_config["real"]["instance_id"]  # 实盘则暂时由config配置
         logfilename = instance_id + ".log"
     else:
