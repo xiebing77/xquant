@@ -378,8 +378,9 @@ class Engine:
         gs = gridspec.GridSpec(9, 1)
         gs.update(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
         ax1 = plt.subplot(gs[0:-4, :])
-        ax2 = plt.subplot(gs[-4:-1, :])
-        ax3 = plt.subplot(gs[-1, :])
+        ax2 = plt.subplot(gs[-4:-2, :])
+        ax3 = plt.subplot(gs[-2:-1, :])
+        ax4 = plt.subplot(gs[-1, :])
 
         """
         fig, axes = plt.subplots(3,1, sharex=True)
@@ -403,13 +404,17 @@ class Engine:
 
         ax1.plot([order["trade_time"] for order in orders],[ (order["deal_value"] / order["deal_amount"]) for order in orders],"o--")
 
-        ax2.set_ylabel('total profit rate')
+        ax2.set_ylabel('profit rate')
         ax2.grid(True)
-        ax2.plot([order["trade_time"] for order in orders],[ order["total_profit_rate"] for order in orders],"ko--")
+        ax2.plot([order["trade_time"] for order in orders],[ order["profit_rate"] for order in orders],"k--", drawstyle="steps")
 
-        ax3.set_ylabel('position rate')
+        ax3.set_ylabel('total profit rate')
         ax3.grid(True)
-        ax3.plot([order["trade_time"] for order in orders],[ order["pst_rate"] for order in orders], "k-", drawstyle="steps-post")
+        ax3.plot([order["trade_time"] for order in orders],[ order["total_profit_rate"] for order in orders],"ko--")
+
+        ax4.set_ylabel('position rate')
+        ax4.grid(True)
+        ax4.plot([order["trade_time"] for order in orders],[ order["pst_rate"] for order in orders], "k-", drawstyle="steps-post")
 
         """
         trade_times = []
