@@ -306,6 +306,15 @@ class Engine:
         total_profit = 0
         total_profit_rate = 0
 
+        win_count = 0
+        fail_count = 0
+
+        max_win_profit_rate = 0
+        max_fail_profit_rate = 0
+
+        total_win_profit_rate = 0
+        total_fail_profit_rate = 0
+
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         print(
             "  id          create_time  side  pst_rate   cur_price  deal_amount  deal_value      amount      profit  profit_rate  total_profit  total_profit_rate  total_commission  rmk"
@@ -342,6 +351,19 @@ class Engine:
             if amount == 0:
                 total_profit += profit
 
+                if profit > 0:
+                    win_count += 1
+
+                    if max_win_profit_rate < profit_rate:
+                        max_win_profit_rate = profit_rate
+                    total_win_profit_rate += profit_rate
+                else:
+                    fail_count += 1
+
+                    if max_fail_profit_rate > profit_rate:
+                        max_fail_profit_rate = profit_rate
+                    total_fail_profit_rate += profit_rate
+
                 buy_value = 0
                 sell_value = 0
                 buy_commission = 0
@@ -372,6 +394,16 @@ class Engine:
                 )
             )
             i += 1
+
+        win_rate = win_count / (win_count + fail_count)
+        print("win count: %g, fail count: %g, win rate: %g%%" % (win_count, fail_count, round(win_rate*100, 2)))
+
+        average_win_profit_rate = total_win_profit_rate / win_count
+        print("win profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_win_profit_rate*100, 2), round(total_win_profit_rate*100, 2), round(average_win_profit_rate*100, 2)))
+
+        average_fail_profit_rate = total_fail_profit_rate / fail_count
+        print("fail profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_fail_profit_rate*100, 2), round(total_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
+
 
     def display(self, symbol, orders, k1ds):
 
