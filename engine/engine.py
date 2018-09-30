@@ -404,6 +404,8 @@ class Engine:
         average_fail_profit_rate = total_fail_profit_rate / fail_count
         print("fail profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_fail_profit_rate*100, 2), round(total_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
 
+        kelly = win_rate - (1-win_rate)/(average_win_profit_rate/abs(average_fail_profit_rate))
+        print("Kelly Criterion: %.2g%%" % round(kelly*100, 2))
 
     def display(self, symbol, orders, k1ds):
 
