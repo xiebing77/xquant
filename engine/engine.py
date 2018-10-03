@@ -401,30 +401,34 @@ class Engine:
         average_win_profit_rate = total_win_profit_rate / win_count
         print("win profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_win_profit_rate*100, 2), round(total_win_profit_rate*100, 2), round(average_win_profit_rate*100, 2)))
 
-        average_fail_profit_rate = total_fail_profit_rate / fail_count
-        print("fail profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_fail_profit_rate*100, 2), round(total_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
+        if fail_count > 0:
+            average_fail_profit_rate = total_fail_profit_rate / fail_count
+            kelly = win_rate - (1-win_rate)/(average_win_profit_rate/abs(average_fail_profit_rate))
+        else:
+            average_fail_profit_rate = 0
+            kelly = win_rate
 
-        kelly = win_rate - (1-win_rate)/(average_win_profit_rate/abs(average_fail_profit_rate))
-        print("Kelly Criterion: %.2g%%" % round(kelly*100, 2))
+        print("fail profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_fail_profit_rate*100, 2), round(total_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
+        print("Kelly Criterion: %.2f%%" % round(kelly*100, 2))
 
     def display(self, symbol, orders, k1ds):
 
-        gs = gridspec.GridSpec(9, 1)
+        """
+        gs = gridspec.GridSpec(8, 1)
         gs.update(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
         axes = [
-            plt.subplot(gs[0:-4, :]),
-            plt.subplot(gs[-4:-2, :]),
+            plt.subplot(gs[0:-2, :]),
+            #plt.subplot(gs[-4:-2, :]),
             plt.subplot(gs[-2:-1, :]),
             plt.subplot(gs[-1, :])
         ]
-
         """
         fig, axes = plt.subplots(3,1, sharex=True)
         fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
         ax1 = axes[0]
         ax2 = axes[1]
         ax3 = axes[2]
-        """
+
 
         quotes = []
         for k1d in k1ds:
@@ -437,21 +441,18 @@ class Engine:
         axes[0].grid(True)
         axes[0].autoscale_view()
         axes[0].xaxis_date()
-
         axes[0].plot([order["trade_time"] for order in orders],[ (order["deal_value"] / order["deal_amount"]) for order in orders],"o--")
 
-        axes[-3].set_ylabel('profit rate')
-        axes[-3].grid(True)
-        axes[-3].plot([order["trade_time"] for order in orders],[ order["profit_rate"] for order in orders],"k--", drawstyle="steps")
 
         axes[-2].set_ylabel('total profit rate')
         axes[-2].grid(True)
         axes[-2].plot([order["trade_time"] for order in orders],[ order["total_profit_rate"] for order in orders],"ko--")
 
-        axes[-1].set_ylabel('position rate')
+        axes[-1].set_ylabel('rate')
         axes[-1].grid(True)
-        axes[-1].plot([order["trade_time"] for order in orders],[ order["pst_rate"] for order in orders], "k-", drawstyle="steps-post")
-
+        #axes[-1].set_label(["position rate", "profit rate"])
+        axes[-1].plot([order["trade_time"] for order in orders],[ round(order["pst_rate"]*100,2) for order in orders], "k-", drawstyle="steps-post", label="position")
+        axes[-1].plot([order["trade_time"] for order in orders],[ order["profit_rate"] for order in orders],"g--", drawstyle="steps", label="profit")
         """
         trade_times = []
         pst_rates = []
