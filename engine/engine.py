@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as dts
 from matplotlib import gridspec
 import mpl_finance as mpf
+import pandas as pd
+import talib
 from datetime import datetime,timedelta
 import logging
 import utils.tools as ts
@@ -399,7 +401,7 @@ class Engine:
         print("win count: %g, fail count: %g, win rate: %g%%" % (win_count, fail_count, round(win_rate*100, 2)))
 
         average_win_profit_rate = total_win_profit_rate / win_count
-        print("win profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_win_profit_rate*100, 2), round(total_win_profit_rate*100, 2), round(average_win_profit_rate*100, 2)))
+        print("profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_win_profit_rate*100, 2), round(total_win_profit_rate*100, 2), round(average_win_profit_rate*100, 2)))
 
         if fail_count > 0:
             average_fail_profit_rate = total_fail_profit_rate / fail_count
@@ -408,7 +410,7 @@ class Engine:
             average_fail_profit_rate = 0
             kelly = win_rate
 
-        print("fail profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_fail_profit_rate*100, 2), round(total_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
+        print("loss rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_fail_profit_rate*100, 2), round(total_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
         print("Kelly Criterion: %.2f%%" % round(kelly*100, 2))
 
     def display(self, symbol, orders, k1ds):
@@ -423,12 +425,10 @@ class Engine:
             plt.subplot(gs[-1, :])
         ]
         """
-        fig, axes = plt.subplots(3,1, sharex=True)
+        fig, axes = plt.subplots(4,1, sharex=True)
         fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
-        ax1 = axes[0]
-        ax2 = axes[1]
-        ax3 = axes[2]
 
+        trade_times = [order["trade_time"] for order in orders]
 
         quotes = []
         for k1d in k1ds:
@@ -441,18 +441,34 @@ class Engine:
         axes[0].grid(True)
         axes[0].autoscale_view()
         axes[0].xaxis_date()
-        axes[0].plot([order["trade_time"] for order in orders],[ (order["deal_value"] / order["deal_amount"]) for order in orders],"o--")
+        axes[0].plot(trade_times, [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
+
+        klines_df = pd.DataFrame(k1ds, columns=self.kline_column_names)
+        open_times = [datetime.fromtimestamp((open_time/1000)) for open_time in klines_df["open_time"]]
+        klines_df["close"] = pd.to_numeric(klines_df["close"])
+        base_close = klines_df["close"].values[0]
+
+        klines_df["ATR"] = talib.ATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+        klines_df["NATR"] = talib.NATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+        klines_df["TRANGE"] = talib.TRANGE(klines_df["high"], klines_df["low"], klines_df["close"])
+
+        axes[1].set_ylabel('volatility')
+        axes[1].grid(True)
+        axes[1].plot(open_times, klines_df["ATR"], "r--", label="ATR")
+        axes[1].plot(open_times, klines_df["NATR"], "g--", label="NATR")
+        axes[1].plot(open_times, klines_df["TRANGE"], "y--", label="TRANGE")
 
 
         axes[-2].set_ylabel('total profit rate')
         axes[-2].grid(True)
-        axes[-2].plot([order["trade_time"] for order in orders],[ order["total_profit_rate"] for order in orders],"ko--")
+        axes[-2].plot(trade_times, [order["total_profit_rate"] for order in orders], "go--")
+        axes[-2].plot(open_times, [round(100*((close/base_close)-1), 2) for close in klines_df["close"]], "r--")
 
         axes[-1].set_ylabel('rate')
         axes[-1].grid(True)
         #axes[-1].set_label(["position rate", "profit rate"])
-        axes[-1].plot([order["trade_time"] for order in orders],[ round(order["pst_rate"]*100,2) for order in orders], "k-", drawstyle="steps-post", label="position")
-        axes[-1].plot([order["trade_time"] for order in orders],[ order["profit_rate"] for order in orders],"g--", drawstyle="steps", label="profit")
+        axes[-1].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
+        axes[-1].plot(trade_times ,[order["profit_rate"] for order in orders], "g--", drawstyle="steps", label="profit")
         """
         trade_times = []
         pst_rates = []
