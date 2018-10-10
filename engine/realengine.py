@@ -33,6 +33,10 @@ class RealEngine(Engine):
     def now(self):
         return datetime.datetime.now()
 
+    def get_klines(self, symbol, interval, size):
+        """ 获取日k线 """
+        return self.__exchange.get_klines(symbol, interval, size)
+
     def get_klines_1day(self, symbol, size):
         """ 获取日k线 """
         return self.__exchange.get_klines_1day(symbol, size)

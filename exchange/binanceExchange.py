@@ -44,6 +44,45 @@ class BinanceExchange(Exchange):
         else:
             return None
 
+    def __trans_interval(self, interval):
+        if interval == xq.KLINE_INTERVAL_1MINUTE:
+            return KLINE_INTERVAL_1MINUTE
+        elif interval == xq.KLINE_INTERVAL_3MINUTE:
+            return KLINE_INTERVAL_3MINUTE
+        elif interval == xq.KLINE_INTERVAL_5MINUTE:
+            return KLINE_INTERVAL_5MINUTE
+        elif interval == xq.KLINE_INTERVAL_15MINUTE:
+            return KLINE_INTERVAL_15MINUTE
+        elif interval == xq.KLINE_INTERVAL_30MINUTE:
+            return KLINE_INTERVAL_30MINUTE
+
+        elif interval == xq.KLINE_INTERVAL_1HOUR:
+            return KLINE_INTERVAL_1HOUR
+        elif interval == xq.KLINE_INTERVAL_2HOUR:
+            return KLINE_INTERVAL_2HOUR
+        elif interval == xq.KLINE_INTERVAL_4HOUR:
+            return KLINE_INTERVAL_4HOUR
+        elif interval == xq.KLINE_INTERVAL_6HOUR:
+            return KLINE_INTERVAL_6HOUR
+        elif interval == xq.KLINE_INTERVAL_8HOUR:
+            return KLINE_INTERVAL_8HOUR
+        elif interval == xq.KLINE_INTERVAL_12HOUR:
+            return KLINE_INTERVAL_12HOUR
+
+        elif interval == xq.KLINE_INTERVAL_1DAY:
+            return KLINE_INTERVAL_1DAY
+        elif interval == xq.KLINE_INTERVAL_3DAY:
+            return KLINE_INTERVAL_3DAY
+
+        elif interval == xq.KLINE_INTERVAL_1WEEK:
+            return KLINE_INTERVAL_1WEEK
+
+        elif interval == xq.KLINE_INTERVAL_1MONTH:
+            return KLINE_INTERVAL_1MONTH
+
+        else:
+            return None
+
     @staticmethod
     def get_kline_column_names():
         return ['open_time', 'open','high','low','close','volume','close_time',
@@ -58,6 +97,9 @@ class BinanceExchange(Exchange):
             klines = self.__client.get_klines(symbol=exchange_symbol, interval=interval, limit=size, startTime=since)
 
         return klines
+
+    def get_klines(self, symbol, interval, size=300, since=None):
+        return self.__get_klines(symbol, self.__trans_interval(interval), size, since)
 
     def get_klines_1day(self, symbol, size=300, since=None):
         """获取日k线"""

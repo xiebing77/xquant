@@ -47,6 +47,14 @@ class BackTest(Engine):
     def now(self):
         return self.tick_time
 
+    def get_klines(self, symbol, interval, size, since=None):
+        if interval == xq.KLINE_INTERVAL_1MINUTE:
+            return self.get_klines_1min(symbol, size, since)
+        elif interval == xq.KLINE_INTERVAL_1DAY:
+            return self.get_klines_1day(symbol, size, since)
+        else:
+            return None
+
     def get_klines_1min(self, symbol, size, since=None):
         """ 获取分钟k线 """
         if since is None:
