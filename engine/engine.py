@@ -398,7 +398,7 @@ class Engine:
             i += 1
 
         win_rate = win_count / (win_count + fail_count)
-        print("win count: %g, fail count: %g, win rate: %g%%" % (win_count, fail_count, round(win_rate*100, 2)))
+        print("win count: %g, loss count: %g, win rate: %g%%" % (win_count, fail_count, round(win_rate*100, 2)))
 
         average_win_profit_rate = total_win_profit_rate / win_count
         print("profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_win_profit_rate*100, 2), round(total_win_profit_rate*100, 2), round(average_win_profit_rate*100, 2)))
@@ -410,7 +410,7 @@ class Engine:
             average_fail_profit_rate = 0
             kelly = win_rate
 
-        print("loss rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_fail_profit_rate*100, 2), round(total_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
+        print("loss   rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_fail_profit_rate*100, 2), round(total_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
         print("Kelly Criterion: %.2f%%" % round(kelly*100, 2))
 
     def display(self, symbol, orders, k1ds):

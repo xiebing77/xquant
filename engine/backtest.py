@@ -47,6 +47,28 @@ class BackTest(Engine):
     def now(self):
         return self.tick_time
 
+    def __get_klines(self, collection, s_time, e_time):
+        """ 获取k线 """
+        ks = self._db.find(
+            collection,
+            {
+                "open_time": {
+                    "$gte": s_time.timestamp() * 1000,
+                    "$lt": e_time.timestamp() * 1000,
+                }
+            },
+            {"_id":0},
+        )
+        return ks
+
+    def __get_klines_1min(self, symbol, s_time, e_time):
+        """ 获取分钟k线 """
+        return self.__get_klines(DB_KLINES_1MIN + symbol, s_time, e_time)
+
+    def __get_klines_1day(self, symbol, s_time, e_time):
+        """ 获取日k线 """
+        return self.__get_klines(DB_KLINES_1DAY + symbol, s_time, e_time)
+
     def get_klines(self, symbol, interval, size, since=None):
         if interval == xq.KLINE_INTERVAL_1MINUTE:
             return self.get_klines_1min(symbol, size, since)
@@ -70,20 +92,6 @@ class BackTest(Engine):
         # print("1min e_time timestamp: ",e_time.timestamp())
 
         k1ms = self.__get_klines_1min_cache(symbol, s_time, e_time)
-        return k1ms
-
-    def __get_klines_1min(self, symbol, s_time, e_time):
-        """ 获取分钟k线 """
-        k1ms = self._db.find(
-            DB_KLINES_1MIN + symbol,
-            {
-                "open_time": {
-                    "$gte": s_time.timestamp() * 1000,
-                    "$lt": e_time.timestamp() * 1000,
-                }
-            },
-            {"_id":0},
-        )
         return k1ms
 
     def __get_klines_1min_cache(self, symbol, s_time, e_time):
@@ -205,20 +213,6 @@ class BackTest(Engine):
 
         klines = k1ds + k1d
         return [[(kline[column_name] if (column_name in kline) else "0") for column_name in self.get_kline_column_names()] for kline in klines]
-
-
-    def __get_klines_1day(self, symbol, s_time, e_time):
-        """ 获取分钟k线 """
-        return self._db.find(
-            DB_KLINES_1DAY + symbol,
-            {
-                "open_time": {
-                    "$gte": s_time.timestamp() * 1000,
-                    "$lt": e_time.timestamp() * 1000,
-                }
-            },
-            {"_id":0},
-        )
 
     def __get_klines_1day_cache(self, symbol, s_time, e_time):
         """ 获取分钟k线 """
@@ -381,5 +375,5 @@ class BackTest(Engine):
 
         symbol = strategy.config["symbol"]
         self.analyze(symbol, self.orders)
-        k1ds = self.get_klines_1day(symbol, (end_time - start_time).total_seconds()/(24*60*60))
-        self.display(strategy.config["symbol"], self.orders, k1ds)
+        klines = self.get_klines(symbol, strategy.config["kline"]["interval"], (end_time - start_time).total_seconds()/(24*60*60))
+        self.display(symbol, self.orders, klines)
