@@ -19,13 +19,14 @@ from exchange.okexExchange import OkexExchange
 class Engine:
     """引擎"""
 
-    def __init__(self, instance_id, config, db_orders_name):
+    def __init__(self, instance_id, config, db_orders_name=None):
         self.instance_id = instance_id
         self.config = config
-        self.db_orders_name = db_orders_name
         self._db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
-        self._db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
+        if db_orders_name:
+            self.db_orders_name = db_orders_name
+            self._db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
 
         self.can_buy_time = None
 
@@ -312,7 +313,9 @@ class Engine:
         fail_count = 0
 
         max_win_profit_rate = 0
+        min_win_profit_rate = 1
         max_fail_profit_rate = 0
+        min_fail_profit_rate = 0
 
         total_win_profit_rate = 0
         total_fail_profit_rate = 0
@@ -358,12 +361,16 @@ class Engine:
 
                     if max_win_profit_rate < profit_rate:
                         max_win_profit_rate = profit_rate
+                    if min_win_profit_rate > profit_rate:
+                        min_win_profit_rate = profit_rate
                     total_win_profit_rate += profit_rate
                 else:
                     fail_count += 1
 
                     if max_fail_profit_rate > profit_rate:
                         max_fail_profit_rate = profit_rate
+                    if min_fail_profit_rate < profit_rate:
+                        min_fail_profit_rate = profit_rate
                     total_fail_profit_rate += profit_rate
 
                 buy_value = 0
@@ -398,10 +405,10 @@ class Engine:
             i += 1
 
         win_rate = win_count / (win_count + fail_count)
-        print("win count: %g, loss count: %g, win rate: %g%%" % (win_count, fail_count, round(win_rate*100, 2)))
+        print("win count: %g, loss count: %g, win rate: %4.2f%%" % (win_count, fail_count, round(win_rate*100, 2)))
 
         average_win_profit_rate = total_win_profit_rate / win_count
-        print("profit rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_win_profit_rate*100, 2), round(total_win_profit_rate*100, 2), round(average_win_profit_rate*100, 2)))
+        print("profit rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(total_win_profit_rate*100, 2), round(max_win_profit_rate*100, 2), round(min_win_profit_rate*100, 2), round(average_win_profit_rate*100, 2)))
 
         if fail_count > 0:
             average_fail_profit_rate = total_fail_profit_rate / fail_count
@@ -410,7 +417,7 @@ class Engine:
             average_fail_profit_rate = 0
             kelly = win_rate
 
-        print("loss   rate(max: %g%%, total: %g%%, average: %g%%)" % (round(max_fail_profit_rate*100, 2), round(total_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
+        print("loss   rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(total_fail_profit_rate*100, 2), round(max_fail_profit_rate*100, 2), round(min_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
         print("Kelly Criterion: %.2f%%" % round(kelly*100, 2))
 
     def display(self, symbol, orders, k1ds):

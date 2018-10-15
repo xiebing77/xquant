@@ -5,7 +5,7 @@ import argparse
 import time
 from datetime import datetime
 import db.mongodb as md
-from common.xquant import creat_symbol
+import common.xquant as xq
 from exchange.binanceExchange import BinanceExchange
 from setup import *
 import pandas as pd
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     parser.add_argument('-t', help='target coin')
     parser.add_argument('-s', help='start time (2018-8-1)')
     parser.add_argument('-e', help='end time (2018-9-1)')
-    parser.add_argument('-k', help='kline type (1min、1day...)')
+    parser.add_argument('-k', help='kline type (1m、4h、1d...)')
 
     args = parser.parse_args()
     # print(args)
@@ -33,18 +33,26 @@ if __name__ == "__main__":
 
     db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
     exchange = BinanceExchange(debug=True)
-    symbol = creat_symbol(base_coin=base_coin, target_coin=target_coin)
+    symbol = xq.creat_symbol(base_coin=base_coin, target_coin=target_coin)
 
-    if args.k == "1min":
-        interval = 60 * 1000
-        collection = "kline_%s" % symbol
-    elif args.k == "1day":
-        interval = 24 * 60 * 60 * 1000
-        collection = "kline_1day_%s" % symbol
+    interval_minute = 60 * 1000
+    interval_hour = 60 * interval_minute
+    interval_day = 24 * interval_hout
+
+    if args.k == xq.KLINE_INTERVAL_1MINUTE:
+        interval = interval_minute
+
+    elif args.k == xq.KLINE_INTERVAL_4HOUR:
+        interval =  4 * interval_hour
+
+    elif args.k == xq.KLINE_INTERVAL_1DAY:
+        interval = interval_day
     else:
         exit(1)
 
+    collection = xq.get_kline_collection(symbol, args.k)
     print("collection: ", collection)
+
     size = 1000
     tmp_time = start_time
 
@@ -55,10 +63,8 @@ if __name__ == "__main__":
         else:
             batch = size
          # print(batch)
-        if args.k == "1min":
-            klines = exchange.get_klines_1min(symbol, size=batch, since=tmp_time)
-        elif args.k == "1day":
-            klines = exchange.get_klines_1day(symbol, size=batch, since=tmp_time)
+
+        klines = exchange.get_klines(symbol, args.k, size=batch, since=tmp_time)
 
         klines_df = pd.DataFrame(klines, columns=exchange.get_kline_column_names())
 

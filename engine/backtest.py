@@ -10,37 +10,24 @@ import db.mongodb as md
 from .engine import Engine
 
 
-DB_KLINES_1MIN = "kline_"
-DB_KLINES_1DAY = "kline_1day_"
-DB_KLINES_INDEX = "open_time"
-
-DB_ORDERS_NAME = "bt_orders"
-
-MINS_ON_DAY = 60 * 24
-
-
-def get_open_time(dt):
-    if dt.hour < 8:
-        open_time = datetime.combine(dt.date() - timedelta(days=1), time(8, 0, 0))
-    else:
-        open_time = datetime.combine(dt.date(), time(8, 0, 0))
-    return open_time
-
-
 class BackTest(Engine):
     """回测引擎"""
 
     def __init__(self, instance_id, config, *symbols):
-        super().__init__(instance_id, config, DB_ORDERS_NAME)
+        super().__init__(instance_id, config)
 
         self.tick_time = None
 
         self.k1ms_cache = None
         self.k1ms_cache_s_time = None
 
+        '''
         self.k1ds_cache = None
         self.k1ds_cache_s_time = None
         self.k1ds_cache_e_time = None
+        '''
+
+        self.klines_cache = {}
 
         self.orders = []
 
@@ -63,19 +50,58 @@ class BackTest(Engine):
 
     def __get_klines_1min(self, symbol, s_time, e_time):
         """ 获取分钟k线 """
-        return self.__get_klines(DB_KLINES_1MIN + symbol, s_time, e_time)
+        return self.__get_klines(xq.get_kline_collection(symbol, xq.KLINE_INTERVAL_1MINUTE), s_time, e_time)
 
+    '''
     def __get_klines_1day(self, symbol, s_time, e_time):
         """ 获取日k线 """
-        return self.__get_klines(DB_KLINES_1DAY + symbol, s_time, e_time)
+        return self.__get_klines(xq.get_kline_collection(symbol, xq.KLINE_INTERVAL_1DAY), s_time, e_time)
+    '''
+
+    def __get_klines_cache(self, symbol, interval, s_time, e_time):
+        """ 获取k线缓存 """
+        if (
+            interval not in self.klines_cache
+            or s_time != self.klines_cache[interval]["s_time"]
+            or e_time != self.klines_cache[interval]["e_time"]
+        ):
+            cache = {}
+            cache["data"] = self.__get_klines(xq.get_kline_collection(symbol, interval), s_time, e_time)
+            cache["s_time"] = s_time
+            cache["e_time"] = e_time
+            self.klines_cache[interval] = cache
+
+        return self.klines_cache[interval]["data"]
+
+    def __join_klines(self, symbol, interval, size, since=None):
+        """ 拼接k线 """
+        # print("tick_time     : ", self.tick_time)
+        tick_open_time = xq.get_open_time(interval, self.tick_time)
+        td = xq.get_timedelta(interval, size)
+        #print("tick_open_time: ", tick_open_time)
+
+        if since is None:
+            # 取出之前的k线
+            s_time = tick_open_time - td
+            e_time = tick_open_time
+        else:
+            s_time = xq.get_open_time(since)
+            e_time = s_time + td
+
+        ks = self.__get_klines_cache(symbol, interval, s_time, e_time)
+
+        k = self.__create_kline_from_1min(
+            symbol, tick_open_time, self.tick_time
+        )
+
+        klines = ks + k
+        return [[(kline[column_name] if (column_name in kline) else "0") for column_name in self.get_kline_column_names()] for kline in klines]
 
     def get_klines(self, symbol, interval, size, since=None):
         if interval == xq.KLINE_INTERVAL_1MINUTE:
             return self.get_klines_1min(symbol, size, since)
-        elif interval == xq.KLINE_INTERVAL_1DAY:
-            return self.get_klines_1day(symbol, size, since)
         else:
-            return None
+            return self.__join_klines(symbol, interval, size, since)
 
     def get_klines_1min(self, symbol, size, since=None):
         """ 获取分钟k线 """
@@ -134,6 +160,7 @@ class BackTest(Engine):
             tmp_len -= 1
         return self.k1ms_cache[:tmp_len]
 
+    '''
     def __get_info_Klines(self, klines):
         high = float(klines[0]["high"])
         low = float(klines[0]["low"])
@@ -145,8 +172,9 @@ class BackTest(Engine):
                 low = float(kline["low"])
             volume += float(kline["volume"])
         return high, low, volume
+    '''
 
-    def __create_klines_1day_from_1min(self, symbol, s_time, e_time):
+    def __create_kline_from_1min(self, symbol, s_time, e_time):
         """ 取出tick当天开盘到tick时间的分钟k线，生成日k线 """
         k1ms = self.__get_klines_1min_cache1(symbol, s_time, e_time)
         if len(k1ms) == 0:
@@ -179,7 +207,7 @@ class BackTest(Engine):
         last_k1m["min_low"] = min_low
         last_k1m["total_volume"] = total_volume
 
-        k1d = {
+        kline = {
             "open_time": k1ms[0]["open_time"],
             "open": k1ms[0]["open"],
             "high": max_high,
@@ -188,8 +216,9 @@ class BackTest(Engine):
             "volume": total_volume,
             "close_time": k1ms[-1]["close_time"],
         }
-        return [k1d]
+        return [kline]
 
+    '''
     def get_klines_1day(self, symbol, size, since=None):
         """ 获取日k线 """
 
@@ -268,6 +297,7 @@ class BackTest(Engine):
             self.k1ds_cache_e_time = e_time
 
         return self.k1ds_cache
+    '''
 
     def get_balances(self, *coins):
         """ 获取账户余额，回测默认1个亿，哈哈 """

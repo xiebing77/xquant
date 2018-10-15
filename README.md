@@ -32,11 +32,13 @@ mongodb3.6
 ### 登录
 > mongo mongodb://<用户名>:<密码>@localhost/binance
 ### 导出
-> mongodump -d binance -c kline_1day_btc_usdt  
-  mongodump -d binance -c kline_btc_usdt
+> mongodump -d binance -c kline_btc_usdt_1m  
+  mongodump -d binance -c kline_btc_usdt_4h  
+  mongodump -d binance -c kline_btc_usdt_1d  
 ### 导入
-> mongorestore -d binance -c kline_1day_btc_usdt kline_1day_btc_usdt.bson --drop  
-  mongorestore -d binance -c kline_btc_usdt kline_btc_usdt.bson --drop
+> mongorestore -d binance -c kline_btc_usdt_1m kline_btc_usdt_1m.bson --drop  
+  mongorestore -d binance -c kline_btc_usdt_4h kline_btc_usdt_4h.bson --drop  
+  mongorestore -d binance -c kline_btc_usdt_1d kline_btc_usdt_1d.bson --drop  
 ## 程序入口
 main.py
 ### 使用方式

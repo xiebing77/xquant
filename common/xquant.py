@@ -2,6 +2,7 @@
 """xquant公共定义及公用函数"""
 
 import utils.tools as ts
+from datetime import datetime, timedelta, time
 
 SIDE_BUY = "BUY"
 SIDE_SELL = "SELL"
@@ -31,6 +32,38 @@ ORDER_STATUS_OPEN = "open"
 ORDER_STATUS_CLOSE = "close"
 ORDER_STATUS_CANCELLING = "cancelling"
 ORDER_STATUS_CANCELLED = "cancelled"
+
+def get_kline_collection(symbol, interval):
+    return "kline_%s_%s" % (symbol, interval)
+
+def get_open_time(interval, dt):
+    if interval == KLINE_INTERVAL_1MINUTE:
+        return datetime.combine(dt.date(), time(dt.hour, dt.minute, 0))
+
+    elif interval == KLINE_INTERVAL_4HOUR:
+        open_hour = (dt.hour // 4) * 4
+        return datetime.combine(dt.date(), time(open_hour, 0, 0))
+
+    elif interval == KLINE_INTERVAL_1DAY:
+        if dt.hour < 8:
+            return datetime.combine(dt.date() - timedelta(days=1), time(8, 0, 0))
+        else:
+            return datetime.combine(dt.date(), time(8, 0, 0))
+    else:
+        return None
+
+def get_timedelta(interval, size):
+    if interval == KLINE_INTERVAL_1MINUTE:
+        return timedelta(minutes=size-1)
+
+    elif interval == KLINE_INTERVAL_4HOUR:
+        return timedelta(hours=4*size-1)
+
+    elif interval == KLINE_INTERVAL_1DAY:
+        return timedelta(days=size-1)
+
+    else:
+        return None
 
 
 def creat_symbol(target_coin, base_coin):
