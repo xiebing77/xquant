@@ -33,6 +33,10 @@ ORDER_STATUS_CLOSE = "close"
 ORDER_STATUS_CANCELLING = "cancelling"
 ORDER_STATUS_CANCELLED = "cancelled"
 
+SECONDS_MINUTE = 60
+SECONDS_HOUR = 60 * SECONDS_MINUTE
+SECONDS_DAY = 24 * SECONDS_HOUR
+
 def get_kline_collection(symbol, interval):
     return "kline_%s_%s" % (symbol, interval)
 
@@ -61,6 +65,32 @@ def get_timedelta(interval, size):
 
     elif interval == KLINE_INTERVAL_1DAY:
         return timedelta(days=size-1)
+
+    else:
+        return None
+
+def get_interval_timedelta(interval):
+    if interval == KLINE_INTERVAL_1MINUTE:
+        return timedelta(minutes=1)
+
+    elif interval == KLINE_INTERVAL_4HOUR:
+        return timedelta(hours=4)
+
+    elif interval == KLINE_INTERVAL_1DAY:
+        return timedelta(days=1)
+
+    else:
+        return None
+
+def get_interval_seconds(interval):
+    if interval == KLINE_INTERVAL_1MINUTE:
+        return SECONDS_MINUTE
+
+    elif interval == KLINE_INTERVAL_4HOUR:
+        return 4 * SECONDS_HOUR
+
+    elif interval == KLINE_INTERVAL_1DAY:
+        return SECONDS_DAY
 
     else:
         return None

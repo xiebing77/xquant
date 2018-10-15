@@ -91,7 +91,7 @@ class BackTest(Engine):
         ks = self.__get_klines_cache(symbol, interval, s_time, e_time)
 
         k = self.__create_kline_from_1min(
-            symbol, tick_open_time, self.tick_time
+            symbol, interval, tick_open_time, self.tick_time
         )
 
         klines = ks + k
@@ -138,15 +138,15 @@ class BackTest(Engine):
             self.k1ms_cache = k1ms
         return self.k1ms_cache
 
-    def __get_klines_1min_cache1(self, symbol, s_time, e_time):
+    def __get_klines_1min_cache1(self, symbol, interval, s_time, e_time):
         """ 获取分钟k线 """
         if not self.k1ms_cache or (
             self.k1ms_cache
             and self.k1ms_cache_s_time != s_time
         ):
-            # 把整天的分钟k线都取下来
-            next_day_time = s_time + timedelta(days=1)
-            self.k1ms_cache = self.__get_klines_1min(symbol, s_time, next_day_time)
+            # 把整个间隔的分钟k线都取下来
+            next_interval_time = s_time + xq.get_interval_timedelta(interval)
+            self.k1ms_cache = self.__get_klines_1min(symbol, s_time, next_interval_time)
             self.k1ms_cache_s_time = s_time
 
         tmp_len = int((e_time - s_time).total_seconds() / 60)
@@ -174,9 +174,9 @@ class BackTest(Engine):
         return high, low, volume
     '''
 
-    def __create_kline_from_1min(self, symbol, s_time, e_time):
+    def __create_kline_from_1min(self, symbol, interval, s_time, e_time):
         """ 取出tick当天开盘到tick时间的分钟k线，生成日k线 """
-        k1ms = self.__get_klines_1min_cache1(symbol, s_time, e_time)
+        k1ms = self.__get_klines_1min_cache1(symbol, interval, s_time, e_time)
         if len(k1ms) == 0:
             return []
 
@@ -405,5 +405,6 @@ class BackTest(Engine):
 
         symbol = strategy.config["symbol"]
         self.analyze(symbol, self.orders)
-        klines = self.get_klines(symbol, strategy.config["kline"]["interval"], (end_time - start_time).total_seconds()/(24*60*60))
+        interval = strategy.config["kline"]["interval"]
+        klines = self.get_klines(symbol, interval, (end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
         self.display(symbol, self.orders, klines)

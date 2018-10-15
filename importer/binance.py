@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     interval_minute = 60 * 1000
     interval_hour = 60 * interval_minute
-    interval_day = 24 * interval_hout
+    interval_day = 24 * interval_hour
 
     if args.k == xq.KLINE_INTERVAL_1MINUTE:
         interval = interval_minute

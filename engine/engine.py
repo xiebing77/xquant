@@ -420,7 +420,7 @@ class Engine:
         print("loss   rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(total_fail_profit_rate*100, 2), round(max_fail_profit_rate*100, 2), round(min_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
         print("Kelly Criterion: %.2f%%" % round(kelly*100, 2))
 
-    def display(self, symbol, orders, k1ds):
+    def display(self, symbol, orders, klines):
 
         """
         gs = gridspec.GridSpec(8, 1)
@@ -438,9 +438,9 @@ class Engine:
         trade_times = [order["trade_time"] for order in orders]
 
         quotes = []
-        for k1d in k1ds:
-            d = datetime.fromtimestamp(k1d[0]/1000)
-            quote = (dts.date2num(d), float(k1d[1]), float(k1d[4]), float(k1d[2]), float(k1d[3]))
+        for k in klines:
+            d = datetime.fromtimestamp(k[0]/1000)
+            quote = (dts.date2num(d), float(k[1]), float(k[4]), float(k[2]), float(k[3]))
             quotes.append(quote)
 
         mpf.candlestick_ochl(axes[0], quotes, width=0.2, colorup='g', colordown='r')
@@ -450,7 +450,7 @@ class Engine:
         axes[0].xaxis_date()
         axes[0].plot(trade_times, [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
 
-        klines_df = pd.DataFrame(k1ds, columns=self.kline_column_names)
+        klines_df = pd.DataFrame(klines, columns=self.kline_column_names)
         open_times = [datetime.fromtimestamp((open_time/1000)) for open_time in klines_df["open_time"]]
         klines_df["close"] = pd.to_numeric(klines_df["close"])
         base_close = klines_df["close"].values[0]

@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='klines print or check')
     parser.add_argument('-s', help='symbol (btc_usdt)')
     parser.add_argument('-r', help='time range (2018-7-1,2018-8-1)')
-    parser.add_argument('-k', help='kline type (1min、1day...)')
+    parser.add_argument('-k', help='kline type (1m、4h、1d...)')
 
     args = parser.parse_args()
     # print(args)
@@ -46,18 +46,13 @@ if __name__ == "__main__":
     start_time = datetime.strptime(time_range[0], "%Y-%m-%d")
     end_time = datetime.strptime(time_range[1], "%Y-%m-%d")
 
-    if args.k == "1min":
-        collection = "kline_%s" % args.s
-        tick_time = start_time
-        td = timedelta(minutes=1)
-        period = 60
-    elif args.k == "1day":
-        collection = "kline_1day_%s" % args.s
-        tick_time = start_time + timedelta(hours=8)
-        td = timedelta(days=1)
-        period = 60 * 60 * 24
-    else:
-        exit(1)
+    interval = args.k
+    collection = xq.get_kline_collection(args.s, interval)
+    td = xq.get_interval_timedelta(interval)
+    period = xq.get_interval_seconds(interval)
+    tick_time = xq.get_open_time(interval, start_time)
+    if tick_time < start_time:
+        tick_time = xq.get_open_time(interval, start_time+td)
 
     db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
