@@ -35,20 +35,7 @@ if __name__ == "__main__":
     exchange = BinanceExchange(debug=True)
     symbol = xq.creat_symbol(base_coin=base_coin, target_coin=target_coin)
 
-    interval_minute = 60 * 1000
-    interval_hour = 60 * interval_minute
-    interval_day = 24 * interval_hour
-
-    if args.k == xq.KLINE_INTERVAL_1MINUTE:
-        interval = interval_minute
-
-    elif args.k == xq.KLINE_INTERVAL_4HOUR:
-        interval =  4 * interval_hour
-
-    elif args.k == xq.KLINE_INTERVAL_1DAY:
-        interval = interval_day
-    else:
-        exit(1)
+    interval = 1000 * xq.get_interval_seconds(args.k)
 
     collection = xq.get_kline_collection(symbol, args.k)
     print("collection: ", collection)
