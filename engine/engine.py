@@ -309,22 +309,19 @@ class Engine:
         total_profit = 0
         total_profit_rate = 0
 
-        win_count = 0
-        fail_count = 0
-
-        max_win_profit_rate = 0
-        min_win_profit_rate = 1
-        max_fail_profit_rate = 0
-        min_fail_profit_rate = 0
-
-        total_win_profit_rate = 0
-        total_fail_profit_rate = 0
-
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         print(
             "  id          create_time  side  pst_rate   cur_price  deal_amount  deal_value      amount      profit  profit_rate  total_profit  total_profit_rate  total_commission  rmk"
         )
-        for order in orders:
+        for index ,order in enumerate(orders):
+            if index == 0:
+                order["cycle_id"] = 0
+            else:
+                pre_order = orders[index-1]
+                order["cycle_id"] = pre_order["cycle_id"]
+                if order["cycle_id"] != pre_order["side"] and order["side"] == xq.SIDE_BUY:
+                    order["cycle_id"] += 1
+
             cur_price = order["deal_value"] / order["deal_amount"]
 
             deal_value = order["deal_value"]
@@ -345,8 +342,7 @@ class Engine:
             buy_cost = buy_value + buy_commission
             pst_value = cur_price * amount
             profit = pst_value + sell_value - sell_commission - buy_cost
-            profit_rate = profit / buy_cost
-            order["profit_rate"] = round(profit_rate * 100, 2)
+            order["profit_rate"] = profit / buy_cost
 
             tmp_total_profit = total_profit + profit
             tmp_total_profit_rate = tmp_total_profit / self.config["limit"]["value"]
@@ -355,23 +351,6 @@ class Engine:
 
             if amount == 0:
                 total_profit += profit
-
-                if profit > 0:
-                    win_count += 1
-
-                    if max_win_profit_rate < profit_rate:
-                        max_win_profit_rate = profit_rate
-                    if min_win_profit_rate > profit_rate:
-                        min_win_profit_rate = profit_rate
-                    total_win_profit_rate += profit_rate
-                else:
-                    fail_count += 1
-
-                    if max_fail_profit_rate > profit_rate:
-                        max_fail_profit_rate = profit_rate
-                    if min_fail_profit_rate < profit_rate:
-                        min_fail_profit_rate = profit_rate
-                    total_fail_profit_rate += profit_rate
 
                 buy_value = 0
                 sell_value = 0
@@ -395,7 +374,7 @@ class Engine:
                     order["deal_value"],
                     amount,
                     profit,
-                    order["profit_rate"],
+                    round(order["profit_rate"] * 100, 2),
                     tmp_total_profit,
                     order["total_profit_rate"],
                     total_commission,
@@ -404,20 +383,50 @@ class Engine:
             )
             i += 1
 
+        orders_df = pd.DataFrame(orders)
+
+        orders_df["create_time"] = orders_df["create_time"].map(lambda x: datetime.fromtimestamp(x))
+        orders_df["deal_price"] = orders_df["deal_value"] / orders_df["deal_amount"]
+        orders_df["commission"] = orders_df["deal_value"] * self.config["commission_rate"]
+
+
+        orders_df["signal_id"] = orders_df["rmk"].map(lambda x: x.split("：")[0])
+        orders_df["signal_rmk"] = orders_df["rmk"].map(lambda x: x.split("：")[1])
+        del orders_df["order_id"]
+        del orders_df["instance_id"]
+        del orders_df["rmk"]
+        #print(orders_df)
+        self.stat("total", orders_df)
+
+        for signal_id in orders_df["signal_id"].drop_duplicates().values:
+            #print(signal_id)
+
+            cycle_ids = orders_df[(orders_df["signal_id"]==signal_id)]["cycle_id"]
+            #print(cycle_ids)
+
+            self.stat(signal_id, orders_df[(orders_df["cycle_id"].isin(cycle_ids))] )
+
+
+
+    def stat(self, signal_id, orders_df):
+        print("\n signal: " + signal_id)
+        win_df = orders_df[(orders_df["side"]==xq.SIDE_SELL) & (orders_df["profit_rate"] > 0)]
+        loss_df =orders_df[(orders_df["side"]==xq.SIDE_SELL) & (orders_df["profit_rate"] < 0)]
+
+        win_count = len(win_df)
+        fail_count = len(loss_df)
         win_rate = win_count / (win_count + fail_count)
         print("win count: %g, loss count: %g, win rate: %4.2f%%" % (win_count, fail_count, round(win_rate*100, 2)))
 
-        average_win_profit_rate = total_win_profit_rate / win_count
-        print("profit rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(total_win_profit_rate*100, 2), round(max_win_profit_rate*100, 2), round(min_win_profit_rate*100, 2), round(average_win_profit_rate*100, 2)))
+        w_profit_rates = win_df["profit_rate"]
+        l_profit_rates = loss_df["profit_rate"]
+        print("profit rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(w_profit_rates.sum()*100, 2), round(w_profit_rates.max()*100, 2), round(w_profit_rates.min()*100, 2), round(w_profit_rates.mean()*100, 2)))
+        print("loss   rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(l_profit_rates.sum()*100, 2), round(l_profit_rates.min()*100, 2), round(l_profit_rates.max()*100, 2), round(l_profit_rates.mean()*100, 2)))
 
         if fail_count > 0:
-            average_fail_profit_rate = total_fail_profit_rate / fail_count
-            kelly = win_rate - (1-win_rate)/(average_win_profit_rate/abs(average_fail_profit_rate))
+            kelly = win_rate - (1-win_rate)/(w_profit_rates.mean()/abs(l_profit_rates.mean()))
         else:
-            average_fail_profit_rate = 0
             kelly = win_rate
-
-        print("loss   rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(total_fail_profit_rate*100, 2), round(max_fail_profit_rate*100, 2), round(min_fail_profit_rate*100, 2), round(average_fail_profit_rate*100, 2)))
         print("Kelly Criterion: %.2f%%" % round(kelly*100, 2))
 
     def display(self, symbol, orders, klines):
