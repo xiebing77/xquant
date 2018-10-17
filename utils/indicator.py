@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-def py_kdj(klines, highindex, lowindex, closeindex, period=9,):
+def py_kdj(klines, highindex, lowindex, closeindex, period=9):
     M1 = 3
     M2 = 3
 
@@ -73,9 +73,8 @@ def np_kdj(klines, N=9):
     return kdjarr
 
 
-def pd_kdj(klines, columns, period=9, ksgn="close"):
+def pd_kdj(klines_df, period=9, ksgn="close"):
     """kdj"""
-    klines_df = pd.DataFrame(klines, columns=columns)
 
     low_list = pd.Series(klines_df["low"]).rolling(period).min()
     low_list.fillna(value=pd.Series(klines_df["low"]).expanding().min(), inplace=True)
@@ -86,7 +85,7 @@ def pd_kdj(klines, columns, period=9, ksgn="close"):
     ksgn_list = klines_df[ksgn].apply(pd.to_numeric)
     rsv = (ksgn_list - low_list) / (high_list - low_list) * 100
     k = rsv.ewm(com=2, adjust=False).mean()  # pd.ewma(rsv,com=2)
-    d = k.ewm(com=2).mean() # pd.ewma(klines['kdj_k'],com=2)，注意需要加adjust=False才能和np_kdj的结果相同，要不有些许差别
+    d = k.ewm(com=2, adjust=False).mean() # pd.ewma(klines['kdj_k'],com=2)，注意需要加adjust=False才能和np_kdj的结果相同，要不有些许差别
     j = 3.0 * k - 2.0 * d
 
     #klines_df["rsv"] = rsv
@@ -117,10 +116,8 @@ def py_macd(klines, closeindex, fastperiod=12, slowperiod=26, signalperiod=9):
     return arr
 
 
-def pd_macd(klines, columns, fastperiod=12, slowperiod=26, signalperiod=9):
+def pd_macd(klines_df, fastperiod=12, slowperiod=26, signalperiod=9):
     """macd"""
-    klines_df = pd.DataFrame(klines, columns=columns)
-
     fast_ema = klines_df["close"].ewm(span=fastperiod, adjust=False).mean()
     slow_ema = klines_df["close"].ewm(span=slowperiod, adjust=False).mean()
 

@@ -9,6 +9,7 @@ import talib
 from datetime import datetime,timedelta
 import logging
 import utils.tools as ts
+import utils.indicator as ic
 from setup import mongo_user, mongo_pwd, db_name, db_url
 import common.xquant as xq
 import db.mongodb as md
@@ -441,7 +442,7 @@ class Engine:
             plt.subplot(gs[-1, :])
         ]
         """
-        fig, axes = plt.subplots(4,1, sharex=True)
+        fig, axes = plt.subplots(5,1, sharex=True)
         fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
 
         trade_times = [order["trade_time"] for order in orders]
@@ -474,6 +475,12 @@ class Engine:
         axes[1].plot(open_times, klines_df["NATR"], "g--", label="NATR")
         axes[1].plot(open_times, klines_df["TRANGE"], "y--", label="TRANGE")
 
+        ks, ds, js = ic.pd_kdj(klines_df)
+        axes[2].set_ylabel('kdj')
+        axes[2].grid(True)
+        axes[2].plot(open_times, ks, "k", label="k")
+        axes[2].plot(open_times, ds, "y", label="d")
+        axes[2].plot(open_times, js, "m", label="j")
 
         axes[-2].set_ylabel('total profit rate')
         axes[-2].grid(True)
@@ -484,7 +491,7 @@ class Engine:
         axes[-1].grid(True)
         #axes[-1].set_label(["position rate", "profit rate"])
         axes[-1].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
-        axes[-1].plot(trade_times ,[order["profit_rate"] for order in orders], "g--", drawstyle="steps", label="profit")
+        axes[-1].plot(trade_times ,[round(100*order["profit_rate"], 2) for order in orders], "g--", drawstyle="steps", label="profit")
         """
         trade_times = []
         pst_rates = []
