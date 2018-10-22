@@ -408,7 +408,6 @@ class Engine:
             self.stat(signal_id, orders_df[(orders_df["cycle_id"].isin(cycle_ids))] )
 
 
-
     def stat(self, signal_id, orders_df):
         print("\n signal: " + signal_id)
         win_df = orders_df[(orders_df["side"]==xq.SIDE_SELL) & (orders_df["profit_rate"] > 0)]
@@ -429,6 +428,7 @@ class Engine:
         else:
             kelly = win_rate
         print("Kelly Criterion: %.2f%%" % round(kelly*100, 2))
+
 
     def display(self, symbol, orders, klines):
 
@@ -478,7 +478,7 @@ class Engine:
         ks, ds, js = ic.pd_kdj(klines_df)
         axes[2].set_ylabel('kdj')
         axes[2].grid(True)
-        axes[2].plot(open_times, ks, "k", label="k")
+        axes[2].plot(open_times, ks, "b", label="k")
         axes[2].plot(open_times, ds, "y", label="d")
         axes[2].plot(open_times, js, "m", label="j")
 

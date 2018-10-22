@@ -43,10 +43,50 @@ def get_kline_collection(symbol, interval):
 def get_open_time(interval, dt):
     if interval == KLINE_INTERVAL_1MINUTE:
         return datetime.combine(dt.date(), time(dt.hour, dt.minute, 0))
+    elif interval == KLINE_INTERVAL_3MINUTE:
+        open_minute = (dt.hour // 3) * 3
+        return datetime.combine(dt.date(), time(dt.hour, open_minute, 0))
+    elif interval == KLINE_INTERVAL_5MINUTE:
+        open_minute = (dt.hour // 5) * 5
+        return datetime.combine(dt.date(), time(dt.hour, open_minute, 0))
+    elif interval == KLINE_INTERVAL_15MINUTE:
+        open_minute = (dt.hour // 15) * 15
+        return datetime.combine(dt.date(), time(dt.hour, open_minute, 0))
+    elif interval == KLINE_INTERVAL_30MINUTE:
+        open_minute = (dt.hour // 30) * 30
+        return datetime.combine(dt.date(), time(dt.hour, open_minute, 0))
 
+    elif interval == KLINE_INTERVAL_1HOUR:
+        open_hour = dt.hour
+        return datetime.combine(dt.date(), time(open_hour, 0, 0))
+    elif interval == KLINE_INTERVAL_2HOUR:
+        open_hour = (dt.hour // 2) * 2
+        return datetime.combine(dt.date(), time(open_hour, 0, 0))
     elif interval == KLINE_INTERVAL_4HOUR:
         open_hour = (dt.hour // 4) * 4
         return datetime.combine(dt.date(), time(open_hour, 0, 0))
+
+    elif interval == KLINE_INTERVAL_6HOUR:
+        if dt.hour < 2:
+            return datetime.combine(dt.date() - timedelta(days=1), time(20, 0, 0))
+        elif dt.hour < 8:
+            return datetime.combine(dt.date(), time(2, 0, 0))
+        elif dt.hour < 14:
+            return datetime.combine(dt.date(), time(8, 0, 0))
+        elif dt.hour < 20:
+            return datetime.combine(dt.date(), time(14, 0, 0))
+        else:
+            return datetime.combine(dt.date(), time(20, 0, 0))
+
+    elif interval == KLINE_INTERVAL_8HOUR:
+        open_hour = (dt.hour // 8) * 8
+        return datetime.combine(dt.date(), time(open_hour, 0, 0))
+
+    elif interval == KLINE_INTERVAL_12HOUR:
+        if dt.hour < 8:
+            return datetime.combine(dt.date() - timedelta(days=1), time(20, 0, 0))
+        else:
+            return datetime.combine(dt.date(), time(8, 0, 0))
 
     elif interval == KLINE_INTERVAL_1DAY:
         if dt.hour < 8:
@@ -59,9 +99,27 @@ def get_open_time(interval, dt):
 def get_timedelta(interval, size):
     if interval == KLINE_INTERVAL_1MINUTE:
         return timedelta(minutes=size-1)
+    elif interval == KLINE_INTERVAL_3MINUTE:
+        return timedelta(minutes=3*size-1)
+    elif interval == KLINE_INTERVAL_5MINUTE:
+        return timedelta(minutes=5*size-1)
+    elif interval == KLINE_INTERVAL_15MINUTE:
+        return timedelta(minutes=15*size-1)
+    elif interval == KLINE_INTERVAL_30MINUTE:
+        return timedelta(minutes=30*size-1)
 
+    elif interval == KLINE_INTERVAL_1HOUR:
+        return timedelta(hours=1*size-1)
+    elif interval == KLINE_INTERVAL_2HOUR:
+        return timedelta(hours=2*size-1)
     elif interval == KLINE_INTERVAL_4HOUR:
         return timedelta(hours=4*size-1)
+    elif interval == KLINE_INTERVAL_6HOUR:
+        return timedelta(hours=6*size-1)
+    elif interval == KLINE_INTERVAL_8HOUR:
+        return timedelta(hours=8*size-1)
+    elif interval == KLINE_INTERVAL_12HOUR:
+        return timedelta(hours=12*size-1)
 
     elif interval == KLINE_INTERVAL_1DAY:
         return timedelta(days=size-1)
@@ -72,9 +130,27 @@ def get_timedelta(interval, size):
 def get_interval_timedelta(interval):
     if interval == KLINE_INTERVAL_1MINUTE:
         return timedelta(minutes=1)
+    elif interval == KLINE_INTERVAL_3MINUTE:
+        return timedelta(minutes=3)
+    elif interval == KLINE_INTERVAL_5MINUTE:
+        return timedelta(minutes=5)
+    elif interval == KLINE_INTERVAL_15MINUTE:
+        return timedelta(minutes=15)
+    elif interval == KLINE_INTERVAL_30MINUTE:
+        return timedelta(minutes=30)
 
+    elif interval == KLINE_INTERVAL_1HOUR:
+        return timedelta(hours=1)
+    elif interval == KLINE_INTERVAL_2HOUR:
+        return timedelta(hours=2)
     elif interval == KLINE_INTERVAL_4HOUR:
         return timedelta(hours=4)
+    elif interval == KLINE_INTERVAL_6HOUR:
+        return timedelta(hours=6)
+    elif interval == KLINE_INTERVAL_8HOUR:
+        return timedelta(hours=8)
+    elif interval == KLINE_INTERVAL_12HOUR:
+        return timedelta(hours=12)
 
     elif interval == KLINE_INTERVAL_1DAY:
         return timedelta(days=1)
@@ -84,10 +160,28 @@ def get_interval_timedelta(interval):
 
 def get_interval_seconds(interval):
     if interval == KLINE_INTERVAL_1MINUTE:
-        return SECONDS_MINUTE
+        return 1 * SECONDS_MINUTE
+    elif interval == KLINE_INTERVAL_3MINUTE:
+        return 3 * SECONDS_MINUTE
+    elif interval == KLINE_INTERVAL_5MINUTE:
+        return 5 * SECONDS_MINUTE
+    elif interval == KLINE_INTERVAL_15MINUTE:
+        return 15 * SECONDS_MINUTE
+    elif interval == KLINE_INTERVAL_30MINUTE:
+        return 30 * SECONDS_MINUTE
 
+    elif interval == KLINE_INTERVAL_1HOUR:
+        return 1 * SECONDS_HOUR
+    elif interval == KLINE_INTERVAL_2HOUR:
+        return 2 * SECONDS_HOUR
     elif interval == KLINE_INTERVAL_4HOUR:
         return 4 * SECONDS_HOUR
+    elif interval == KLINE_INTERVAL_6HOUR:
+        return 6 * SECONDS_HOUR
+    elif interval == KLINE_INTERVAL_8HOUR:
+        return 8 * SECONDS_HOUR
+    elif interval == KLINE_INTERVAL_12HOUR:
+        return 12 * SECONDS_HOUR
 
     elif interval == KLINE_INTERVAL_1DAY:
         return SECONDS_DAY
