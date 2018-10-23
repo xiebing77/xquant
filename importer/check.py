@@ -23,6 +23,7 @@ if __name__ == "__main__":
     time_range = args.r.split(",")
     start_time = datetime.strptime(time_range[0], "%Y-%m-%d")
     end_time = datetime.strptime(time_range[1], "%Y-%m-%d")
+    print("range: %s ~ %s"%(start_time, end_time))
 
     interval = args.k
     collection = xq.get_kline_collection(args.s, interval)
@@ -33,46 +34,42 @@ if __name__ == "__main__":
         tick_time = xq.get_open_time(interval, start_time+td)
 
 
-
     db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
     target_len = int((int(end_time.timestamp()) - int(start_time.timestamp())) / period)
     print("Target length:", target_len)
 
-    length = db.count(collection, {"open_time": {
-        "$gte": int(start_time.timestamp())*1000,
-        "$lt": int(end_time.timestamp())*1000}})
-
-    print("Real length:", length)
-    # if length == target_len:
-    #     print('No data lost. Everything is okay.')
-    #     exit(0)
-
     klines = db.find_sort(collection, {"open_time": {
         "$gte": int(start_time.timestamp())*1000,
         "$lt": int(end_time.timestamp())*1000}}, 'open_time', 1)
+    print("klines len: %d"%len(klines))
 
     i = 0
-    miss_start = None
-    miss_count = target_len - length
-    if miss_count != 0:
-        print("miss count: %d " % miss_count)
-        exit(1)
+    repeat_count = 0
+    wrong_count = 0
+    miss_count = 0
+    while tick_time < end_time:
+        next_tick_time = tick_time + td
+        open_time = klines[i]["open_time"]/1000
+        #print("tick_time   %s, next_tick_time %s" % (tick_time, next_tick_time) )
+        #print("tick_time   %s, open_time %s" % (tick_time.timestamp(), open_time) )
 
-    # scan all klines to check integration
-    while i < len(klines):
-        ts = int(tick_time.timestamp()*1000)
-        if ts == klines[i]["open_time"]:
+        if open_time < tick_time.timestamp():
             i += 1
+            repeat_count += 1
+            print("repeat %s" % (datetime.fromtimestamp(open_time)))
+        elif open_time == tick_time.timestamp():
+            i += 1
+            tick_time = next_tick_time
+        elif open_time < next_tick_time.timestamp():
+            i += 1
+            tick_time = next_tick_time
+            wrong_count += 1
+            print("tick_time %s, wrong 2 %s" % (tick_time, datetime.fromtimestamp(open_time)))
         else:
-            miss_start = ts
-            break
+            miss_count += 1
+            print("miss   %s" % (tick_time) )
+            tick_time = next_tick_time
 
-        tick_time += td
-
-    if miss_start:
-        miss_start = int(tick_time.timestamp()*1000)
-        print('Some kline data is not correct. Please check below information', miss_start)
-        print(klines[i])
-
-
-
+    print("repeat count: ", repeat_count)
+    print("wrong  count: ", wrong_count)
+    print("miss   count: ", miss_count)
