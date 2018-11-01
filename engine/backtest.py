@@ -371,13 +371,7 @@ class BackTest(Engine):
             logging.info("tick_time: %s", self.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
             tick_start = datetime.now()
 
-            if debug:
-                strategy.on_tick()
-            else:
-                try:
-                    strategy.on_tick()
-                except Exception as ept:
-                    logging.critical(ept)
+            strategy.on_tick()
 
             tick_end = datetime.now()
             logging.info("tick  cost: %s \n\n", tick_end - tick_start)

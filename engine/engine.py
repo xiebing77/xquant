@@ -296,24 +296,16 @@ class Engine:
             "current price: %g;  rate: %g;  order_id: %s", cur_price, rate, order_id
         )
 
-
-    def analyze(self, symbol, orders):
-
-        i = 1
+    def calc_order(self, symbol, orders):
         amount = 0
         buy_value = 0
         sell_value = 0
         buy_commission = 0
         sell_commission = 0
 
-        total_commission = 0
         total_profit = 0
-        total_profit_rate = 0
 
         target_coin, base_coin = xq.get_symbol_coins(symbol)
-        print(
-            "  id          create_time  side  pst_rate   cur_price  deal_amount  deal_value      amount      profit  profit_rate  total_profit  total_profit_rate  total_commission  rmk"
-        )
         for index ,order in enumerate(orders):
             if index == 0:
                 order["cycle_id"] = 0
@@ -323,66 +315,69 @@ class Engine:
                 if order["cycle_id"] != pre_order["side"] and order["side"] == xq.SIDE_BUY:
                     order["cycle_id"] += 1
 
-            cur_price = order["deal_value"] / order["deal_amount"]
-
-            deal_value = order["deal_value"]
-            commission = deal_value * self.config["commission_rate"]
-            total_commission += commission
+            commission = order["deal_value"] * self.config["commission_rate"]
+            deal_price = order["deal_value"] / order["deal_amount"]
 
             if order["side"] == xq.SIDE_BUY:
                 amount += order["deal_amount"]
-                buy_value += deal_value
+                buy_value += order["deal_value"]
                 buy_commission += commission
             else:
                 amount -= order["deal_amount"]
-                sell_value += deal_value
+                sell_value += order["deal_value"]
                 sell_commission += commission
 
             amount = ts.reserve_float(amount, self.config["digits"][target_coin])
 
             buy_cost = buy_value + buy_commission
-            pst_value = cur_price * amount
-            profit = pst_value + sell_value - sell_commission - buy_cost
-            order["profit_rate"] = profit / buy_cost
-
-            tmp_total_profit = total_profit + profit
-            tmp_total_profit_rate = tmp_total_profit / self.config["limit"]["value"]
-            order["total_profit_rate"] = round(tmp_total_profit_rate * 100, 2)
-            order["trade_time"] = datetime.fromtimestamp(order["create_time"])
+            order["profit"] = deal_price * amount + sell_value - sell_commission - buy_cost
+            order["profit_rate"] = order["profit"] / buy_cost
+            order["total_profit"] = (total_profit + order["profit"])
+            order["total_profit_rate"] = order["total_profit"] / self.config["limit"]["value"]
 
             if amount == 0:
-                total_profit += profit
+                total_profit += order["profit"]
 
                 buy_value = 0
                 sell_value = 0
                 buy_commission = 0
                 sell_commission = 0
-            elif amount > 0:
-                pass
-            else:
-                pass
 
+        return orders
+
+    def analyze(self, symbol, orders):
+        if len(orders) == 0:
+            return
+
+        orders = self.calc_order(symbol, orders)
+        print(
+            "  id          create_time  side  pst_rate   deal_price  deal_amount  deal_value      profit  profit_rate  total_profit  total_profit_rate  total_commission  rmk"
+        )
+        total_commission = 0
+        for index ,order in enumerate(orders):
+            commission = order["deal_value"] * self.config["commission_rate"]
+            total_commission += commission
+
+            order["trade_time"] = datetime.fromtimestamp(order["create_time"])
 
             print(
-                "%4d  %s  %4s  %8g  %10g  %11g  %10g  %10g  %10g  %10.2f%%  %12g  %16.2f%%  %16g  %s"
+                "%4d  %s  %4s  %8g  %10g  %11g  %10g  %10g  %10.2f%%  %12g  %16.2f%%  %16g  %s"
                 % (
-                    i,
+                    index,
                     datetime.fromtimestamp(order["create_time"]),
                     order["side"],
                     order["pst_rate"],
-                    cur_price,
+                    order["deal_value"]/order["deal_amount"],
                     order["deal_amount"],
                     order["deal_value"],
-                    amount,
-                    profit,
+                    order["profit"],
                     round(order["profit_rate"] * 100, 2),
-                    tmp_total_profit,
-                    order["total_profit_rate"],
+                    order["total_profit"],
+                    round(order["total_profit_rate"] * 100, 2),
                     total_commission,
                     order["rmk"],
                 )
             )
-            i += 1
 
         orders_df = pd.DataFrame(orders)
 
@@ -406,6 +401,22 @@ class Engine:
             #print(cycle_ids)
 
             self.stat(signal_id, orders_df[(orders_df["cycle_id"].isin(cycle_ids))] )
+
+
+    def calc(self, symbol, orders):
+        if len(orders) <= 0:
+            return 0, 0, 0, 0
+        orders_df = pd.DataFrame(self.calc_order(symbol, orders))
+        sell_df = orders_df[(orders_df["side"]==xq.SIDE_SELL)]
+
+        win_df = sell_df[(sell_df["profit_rate"] > 0)]
+        loss_df =sell_df[(sell_df["profit_rate"] < 0)]
+        win_count = len(win_df)
+        loss_count = len(loss_df)
+
+        total_profit_rate = sell_df["profit"].sum() / self.config["limit"]["value"]
+        sum_profit_rate = sell_df["profit_rate"].sum()
+        return round(total_profit_rate, 4), round(sum_profit_rate, 4), win_count, loss_count
 
 
     def stat(self, signal_id, orders_df):
@@ -484,7 +495,7 @@ class Engine:
 
         axes[-2].set_ylabel('total profit rate')
         axes[-2].grid(True)
-        axes[-2].plot(trade_times, [order["total_profit_rate"] for order in orders], "go--")
+        axes[-2].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "go--")
         axes[-2].plot(open_times, [round(100*((close/base_close)-1), 2) for close in klines_df["close"]], "r--")
 
         axes[-1].set_ylabel('rate')

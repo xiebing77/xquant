@@ -6,6 +6,7 @@ import logging
 import uuid
 from engine.realengine import RealEngine
 from engine.backtest import BackTest
+from engine.backtestsearch import BackTestSearch
 
 
 def createInstance(module_name, class_name, *args, **kwargs):
@@ -76,6 +77,8 @@ if __name__ == "__main__":
         engine = RealEngine(instance_id, engine_config)
     elif select == "backtest":
         engine = BackTest(instance_id, engine_config)
+    elif select == "backtestsearch":
+        engine = BackTestSearch(instance_id, engine_config)
     else:
         print("select engine error!")
         exit(1)
