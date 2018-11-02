@@ -21,5 +21,5 @@ def critical(info):
     logging.critical(info)
 
 def debug(info):
-        logging.debug(info)
+    logging.debug(info)
 
