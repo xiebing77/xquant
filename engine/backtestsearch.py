@@ -3,7 +3,6 @@
 import sys
 from datetime import datetime, timedelta, time
 import uuid
-import logging
 import utils.tools as ts
 import common.xquant as xq
 from .backtest import BackTest
@@ -14,6 +13,9 @@ class BackTestSearch(BackTest):
 
     def __init__(self, instance_id, config, *symbols):
         super().__init__(instance_id, config)
+
+    def log_info(self, info):
+        return
 
     def handle_one(self, strategy, start_time, end_time):
         self.orders = []

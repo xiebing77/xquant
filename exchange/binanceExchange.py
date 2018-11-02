@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """binance适配对接"""
 import os
-import logging
+import common.log as log
 import pandas as pd
 import common.xquant as xq
 from .exchange import Exchange
@@ -158,10 +158,10 @@ class BinanceExchange(Exchange):
         if binance_type is None:
             return
 
-        logging.info('send order: pair(%s), side(%s), type(%s), price(%f), amount(%f)' % (exchange_symbol, binance_side, binance_type, price, amount))
+        log.info('send order: pair(%s), side(%s), type(%s), price(%f), amount(%f)' % (exchange_symbol, binance_side, binance_type, price, amount))
         ret = self.__client.create_order(symbol=exchange_symbol, side=binance_side, type=binance_type,
             timeInForce=TIME_IN_FORCE_GTC, price=price, quantity=amount)
-        logging.debug(ret)
+        log.debug(ret)
         try:
             if ret['orderId']:
 

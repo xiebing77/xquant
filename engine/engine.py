@@ -7,7 +7,7 @@ import mpl_finance as mpf
 import pandas as pd
 import talib
 from datetime import datetime,timedelta
-import logging
+import common.log as log
 import utils.tools as ts
 import utils.indicator as ic
 from setup import mongo_user, mongo_pwd, db_name, db_url
@@ -36,6 +36,21 @@ class Engine:
             self.kline_column_names = BinanceExchange.get_kline_column_names()
         elif exchange == "okex":
             self.kline_column_names = OkexExchange.get_kline_column_names()
+
+    def log_info(self, info):
+        log.info(info)
+
+    def log_warning(self, info):
+        log.warngin(info)
+
+    def log_error(self, info):
+        log.error(info)
+
+    def log_critical(self, info):
+        log.critical(info)
+
+    def log_debug(self, info):
+        log.debug(info)
 
     def get_kline_column_names(self):
         return self.kline_column_names
@@ -73,7 +88,7 @@ class Engine:
                 info["value"] -= deal_value
                 info["commission"] += commission
             else:
-                logging.error("错误的委托方向")
+                self.log_error("错误的委托方向")
                 continue
 
             info["amount"] = ts.reserve_float(info["amount"], self.config["digits"][target_coin])
@@ -95,14 +110,14 @@ class Engine:
             info["cost_price"] = (info["value"] + info["commission"]) / info["amount"]
 
         else:
-            logging.error("持仓数量不可能小于0")
+            self.log_error("持仓数量不可能小于0")
 
         info["limit_base_amount"] = self.config["limit"]["value"]
         if orders:
             info["pst_rate"] = orders[-1]["pst_rate"]
 
-        logging.info(
-            "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  history_commission: %g,  total_profit_rate: %g)",
+        self.log_info(
+            "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  history_commission: %g,  total_profit_rate: %g)" % (
             symbol,
             cur_price,
             "amount: %g,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g,"
@@ -126,7 +141,8 @@ class Engine:
             else "",
             info["history_profit"],
             info["history_commission"],
-            (info["profit"] + info["history_profit"]) / info["limit_base_amount"],
+            (info["profit"] + info["history_profit"]) / info["limit_base_amount"]
+            )
         )
         # print(info)
         return info
@@ -143,7 +159,7 @@ class Engine:
         elif limit_mode == 1:
             limit_value += position_info["history_profit"]
         else:
-            logging("请选择额度模式，默认是0")
+            self.log_error("请选择额度模式，默认是0")
 
         loss_limit = limit_value * 0.1
         if loss_limit + position_info["profit"] <= 0:
@@ -189,21 +205,22 @@ class Engine:
 
         rc_signals = self.risk_control(position_info, cur_price)
         if xq.SIDE_BUY in rc_signals:
-            logging.warning("风控方向不能为买")
+            self.log_warning("风控方向不能为买")
             return
 
         signals = rc_signals + check_signals
         if not signals:
             return
 
-        logging.info("signals(%r)", signals)
+        self.log_info("signals(%r)" % signals)
         dcs_side, dcs_pst_rate, dcs_rmk, dcs_cba = xq.decision_signals2(signals)
-        logging.info(
-            "decision signal side(%s), position rate(%g), rmk(%s), can buy after(%s)",
+        self.log_info(
+            "decision signal side(%s), position rate(%g), rmk(%s), can buy after(%s)" % (
             dcs_side,
             dcs_pst_rate,
             dcs_rmk,
-            dcs_cba,
+            dcs_cba
+            )
         )
 
         if dcs_side is None:
@@ -221,10 +238,10 @@ class Engine:
         if dcs_cba:
             if not self.can_buy_time or (self.can_buy_time and self.can_buy_time < self.now() + dcs_cba):
                 self.can_buy_time = self.now() + dcs_cba
-                logging.info("can buy time: %s", self.can_buy_time)
+                self.log_info("can buy time: %s" % self.can_buy_time)
 
         if dcs_pst_rate > 1 or dcs_pst_rate < 0:
-            logging.warning("仓位率（%g）超出范围（0 ~ 1）", dcs_pst_rate)
+            self.log_warning("仓位率（%g）超出范围（0 ~ 1）" % dcs_pst_rate)
             return
 
         limit_mode = self.config["limit"]["mode"]
@@ -234,7 +251,7 @@ class Engine:
         elif limit_mode == 1:
             limit_value += position_info["history_profit"]
         else:
-            logging("请选择额度模式，默认是0")
+            self.log_error("请选择额度模式，默认是0")
 
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         if dcs_side == xq.SIDE_BUY:
@@ -250,10 +267,10 @@ class Engine:
                 return
 
             base_balance = self.get_balances(base_coin)
-            logging.info("base   balance:  %s", base_balance)
+            self.log_info("base   balance:  %s" % base_balance)
 
             buy_base_amount = min(xq.get_balance_free(base_balance), buy_base_amount)
-            logging.info("buy_base_amount: %g", buy_base_amount)
+            self.log_info("buy_base_amount: %g" % buy_base_amount)
             if buy_base_amount <= 0:  #
                 return
 
@@ -279,7 +296,7 @@ class Engine:
         else:
             return
 
-        logging.info("%s target amount: %g" % (dcs_side, target_amount))
+        self.log_info("%s target amount: %g" % (dcs_side, target_amount))
         if target_amount <= 0:
             return
         limit_price = ts.reserve_float(cur_price * rate, self.config["digits"][base_coin])
@@ -292,8 +309,8 @@ class Engine:
             target_amount,
             "%s, timedelta: %s, can buy after: %s" % (dcs_rmk, dcs_cba, self.can_buy_time) if (dcs_cba or self.can_buy_time) else "%s" % (dcs_rmk),
         )
-        logging.info(
-            "current price: %g;  rate: %g;  order_id: %s", cur_price, rate, order_id
+        self.log_info(
+            "current price: %g;  rate: %g;  order_id: %s" % (cur_price, rate, order_id)
         )
 
     def calc_order(self, symbol, orders):

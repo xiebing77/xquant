@@ -3,7 +3,6 @@
 import sys
 from datetime import datetime, timedelta, time
 import uuid
-import logging
 import utils.tools as ts
 import common.xquant as xq
 import db.mongodb as md
@@ -368,13 +367,13 @@ class BackTest(Engine):
         self.tick_time = start_time
         tick_count = 0
         while self.tick_time < end_time:
-            logging.info("tick_time: %s", self.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
+            self.log_info("tick_time: %s" % self.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
             tick_start = datetime.now()
 
             strategy.on_tick()
 
             tick_end = datetime.now()
-            logging.info("tick  cost: %s \n\n", tick_end - tick_start)
+            self.log_info("tick  cost: %s \n\n" % (tick_end - tick_start))
 
             tick_count += 1
             self.tick_time += timedelta(seconds=strategy.config["sec"])

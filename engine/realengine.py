@@ -2,7 +2,6 @@
 """实盘"""
 import time
 import datetime
-import logging
 import utils.tools as ts
 import common.xquant as xq
 from .engine import Engine
@@ -79,7 +78,7 @@ class RealEngine(Engine):
 
         df_amount, df_value = self.__exchange.get_deals(symbol)
         for order in orders:
-            logging.debug("order: %r", order)
+            self.log_debug("order: %r" % order)
             order_id = order["order_id"]
             order_amount = order["amount"]
 
@@ -92,21 +91,21 @@ class RealEngine(Engine):
 
             status = xq.ORDER_STATUS_OPEN
             if deal_amount > order_amount:
-                logging.error("最新成交数量大于委托数量")
+                self.log_error("最新成交数量大于委托数量")
                 continue
             elif deal_amount == order_amount:
                 status = xq.ORDER_STATUS_CLOSE
             else:
                 if deal_amount < order["deal_amount"]:
-                    logging.warning("最新成交数量小于委托里记载的旧成交数量")
+                    self.log_warning("最新成交数量小于委托里记载的旧成交数量")
                     continue
                 elif deal_amount == order["deal_amount"]:
-                    logging.info("成交数量没有更新")
+                    self.log_info("成交数量没有更新")
                 else:
                     pass
                 if self.__exchange.order_status_is_close(symbol, order_id):
                     status = xq.ORDER_STATUS_CLOSE
-            logging.debug("deal_amount: %g,  deal_value: %g,  deal_price: %g", deal_amount, deal_value, deal_value/deal_amount)
+            self.log_debug("deal_amount: %g,  deal_value: %g,  deal_price: %g" % (deal_amount, deal_value, deal_value/deal_amount))
             self._db.update_one(
                 DB_ORDERS_NAME,
                 order["_id"],
@@ -195,8 +194,8 @@ class RealEngine(Engine):
         """ run """
         while True:
             tick_start = datetime.datetime.now()
-            logging.info(
-                "%s tick start......................................", tick_start
+            self.log_info(
+                "%s tick start......................................" % tick_start
             )
 
             if debug:
@@ -205,12 +204,13 @@ class RealEngine(Engine):
                 try:
                     strategy.on_tick()
                 except Exception as ept:
-                    logging.critical(ept)
+                    self.log_critical(ept)
 
             tick_end = datetime.datetime.now()
-            logging.info(
-                "%s tick end...; tick  cost: %s -----------------------\n\n",
+            self.log_info(
+                "%s tick end...; tick  cost: %s -----------------------\n\n" % (
                 tick_end,
-                tick_end - tick_start,
+                tick_end - tick_start
+                )
             )
             time.sleep(strategy.config["sec"])

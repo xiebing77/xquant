@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """mongodb"""
-import logging
+import common.log as log
 from pymongo import MongoClient
 from pymongo.errors import BulkWriteError
 from bson import ObjectId
@@ -29,7 +29,7 @@ class MongoDB:
     def insert_one(self, collection, record):
         """insert_one"""
         try:
-            logging.debug("mongodb %s insert : %s", collection, record)
+            log.debug("mongodb %s insert : %s" % (collection, record))
             _id = self.__client[collection].insert_one(record).inserted_id
             return _id
         except Exception as exc:
@@ -47,7 +47,7 @@ class MongoDB:
 
     def update_one(self, collection, _id, record):
         """update_one"""
-        logging.debug("mongodb %s(_id=%s) update : %s", collection, _id, record)
+        log.debug("mongodb %s(_id=%s) update : %s" % (collection, _id, record))
         self.__client[collection].update_one({"_id": ObjectId(_id)}, {"$set": record})
 
     def find(self, collection, query, projection=None):

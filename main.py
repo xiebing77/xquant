@@ -2,7 +2,7 @@
 import sys
 import json
 from datetime import datetime
-import logging
+import common.log as log
 import uuid
 from engine.realengine import RealEngine
 from engine.backtest import BackTest
@@ -68,10 +68,10 @@ if __name__ == "__main__":
         )
 
     print(logfilename)
-    logging.basicConfig(level=logging.NOTSET, filename=logfilename)
+    log.init(logfilename)
 
-    logging.info("strategy name: %s;  config: %s", class_name, strategy_config)
-    logging.info("engine config: %s", engine_config)
+    log.info("strategy name: %s;  config: %s" % (class_name, strategy_config))
+    log.info("engine config: %s" % engine_config)
 
     if select == "real":
         engine = RealEngine(instance_id, engine_config)
