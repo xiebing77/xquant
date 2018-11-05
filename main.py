@@ -54,7 +54,8 @@ if __name__ == "__main__":
         )
 
         logfilename = (
-            "backtest_"
+            select
+            +"_"
             + class_name
             + "_"
             + strategy_config["symbol"]

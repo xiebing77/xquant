@@ -74,7 +74,7 @@ class BackTestSearch(BackTest):
             rs = strategy.search_init()
             result.append((i, rs, self.handle_one(strategy, start_time, end_time)))
 
-        sorted_rs = sorted(result, key=lambda x: x[1][0], reverse=True)
+        sorted_rs = sorted(result, key=lambda x: x[2][0], reverse=True)
         
         for r in sorted_rs:
             print(r)
