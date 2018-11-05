@@ -72,11 +72,12 @@ class BackTestSearch(BackTest):
         for i in range(count):
             print("%d/%d " % (i, count), end="  ")
             rs = strategy.search_init()
-            result.append((rs, self.handle_one(strategy, start_time, end_time)))
+            result.append((i, rs, self.handle_one(strategy, start_time, end_time)))
 
         sorted_rs = sorted(result, key=lambda x: x[1][0], reverse=True)
         
         for r in sorted_rs:
             print(r)
+            self.log_debug(" %s  %s  %s " % r)
 
 
