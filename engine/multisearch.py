@@ -83,7 +83,7 @@ class MultiSearch(BackTest):
             task_q.put(index)
 
         #print('Parent process %s.' % os.getpid())
-        cpu_num = 2#cpu_count()
+        cpu_num = cpu_count()
         """
         if cpu_count > 1:
             cpu_count -= 1
