@@ -50,7 +50,7 @@ class BackTestSearch(BackTest):
         symbol = strategy.config["symbol"]
         return self.calc(symbol, self.orders)
 
-    def run(self, strategy, debug):
+    def run(self, strategy):
         """ run """
         print(
             "backtest time range: [ %s , %s )"
@@ -70,14 +70,15 @@ class BackTestSearch(BackTest):
         count = strategy.config["search"]["count"]
         result = []
         for i in range(count):
-            print("%d/%d " % (i, count), end="  ")
             rs = strategy.search_init()
+            print("%d/%d    %s" % (i, count, rs))
             result.append((i, rs, self.handle_one(strategy, start_time, end_time)))
 
         sorted_rs = sorted(result, key=lambda x: x[2][0], reverse=True)
         
         for r in sorted_rs:
-            print(r)
-            self.log_debug(" %s  %s  %s " % r)
+            info = "%6s    %30s    %s " % r
+            print(info)
+            self.log_debug(info)
 
 

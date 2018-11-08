@@ -10,6 +10,15 @@ MATH_CEIL = 1  # 向上，
 MATH_ROUND = 2  # 四舍五入
 
 
+def createInstance(module_name, class_name, *args, **kwargs):
+    # print("args  :", args)
+    # print("kwargs:", kwargs)
+    module_meta = __import__(module_name, globals(), locals(), [class_name])
+    class_meta = getattr(module_meta, class_name)
+    obj = class_meta(*args, **kwargs)
+    return obj
+
+
 def reserve_float_ceil(flo, float_digits=0):
     return reserve_float(flo, float_digits, MATH_CEIL)
 

@@ -4,18 +4,11 @@ import json
 from datetime import datetime
 import common.log as log
 import uuid
+import utils.tools as ts
 from engine.realengine import RealEngine
 from engine.backtest import BackTest
 from engine.backtestsearch import BackTestSearch
-
-
-def createInstance(module_name, class_name, *args, **kwargs):
-    # print("args  :", args)
-    # print("kwargs:", kwargs)
-    module_meta = __import__(module_name, globals(), locals(), [class_name])
-    class_meta = getattr(module_meta, class_name)
-    obj = class_meta(*args, **kwargs)
-    return obj
+from engine.multisearch import MultiSearch
 
 
 if __name__ == "__main__":
@@ -76,14 +69,25 @@ if __name__ == "__main__":
 
     if select == "real":
         engine = RealEngine(instance_id, engine_config)
+        strategy = ts.createInstance(module_name, class_name, strategy_config, engine)
+        engine.run(strategy, debug)
+
     elif select == "backtest":
         engine = BackTest(instance_id, engine_config)
-    elif select == "backtestsearch":
+        strategy = ts.createInstance(module_name, class_name, strategy_config, engine)
+        engine.run(strategy)
+
+    elif select == "search":
         engine = BackTestSearch(instance_id, engine_config)
+        strategy = ts.createInstance(module_name, class_name, strategy_config, engine)
+        engine.run(strategy)
+
+    elif select == "multisearch":
+        bts_engine = MultiSearch(instance_id, engine_config)
+        count = strategy_config["search"]["count"]
+        bts_engine.run(count, module_name, class_name, strategy_config)
+
     else:
         print("select engine error!")
         exit(1)
 
-    strategy = createInstance(module_name, class_name, strategy_config, engine)
-
-    engine.run(strategy, debug)

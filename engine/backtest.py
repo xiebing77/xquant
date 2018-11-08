@@ -346,7 +346,7 @@ class BackTest(Engine):
         """ 撤掉本策略的所有挂单委托 """
         pass
 
-    def run(self, strategy, debug):
+    def run(self, strategy):
         """ run """
         print(
             "backtest time range: [ %s , %s )"
