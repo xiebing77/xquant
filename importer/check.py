@@ -41,13 +41,19 @@ if __name__ == "__main__":
     klines = db.find_sort(collection, {"open_time": {
         "$gte": int(start_time.timestamp())*1000,
         "$lt": int(end_time.timestamp())*1000}}, 'open_time', 1)
-    print("klines len: %d"%len(klines))
+    klines_len = len(klines)
+    print("klines len: %d"% klines_len)
 
     i = 0
     repeat_count = 0
     wrong_count = 0
     miss_count = 0
     while tick_time < end_time:
+        if i >= klines_len:
+            miss_count += (end_time - tick_time).total_seconds()/td.total_seconds()
+            print("miss tail  %s~%s" % (tick_time, end_time) )
+            break
+
         next_tick_time = tick_time + td
         open_time = klines[i]["open_time"]/1000
         #print("tick_time   %s, next_tick_time %s" % (tick_time, next_tick_time) )
