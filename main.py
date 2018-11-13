@@ -26,33 +26,26 @@ if __name__ == "__main__":
     params_index += 1
     config = json.loads(fo.read())
     fo.close()
-    #print("config: ", config)
+    print("config: ", config)
 
     module_name = config["module_name"].replace("/", ".")
-
     class_name = config["class_name"]
-
-    strategy_config = config["strategy_config"]
-    print(strategy_config)
-
-    engine_config = config["engine_config"]
-    print(engine_config)
 
     select = sys.argv[params_index]
     params_index += 1
     print("select: ", select)
 
     if select == "real":
-        instance_id = engine_config["real"]["instance_id"]  # 实盘则暂时由config配置
+        instance_id = config["real"]["instance_id"]  # 实盘则暂时由config配置
         logfilename = instance_id + ".log"
     elif select == "backtest" or select == "search" or select == "multisearch":
         instance_id = str(uuid.uuid1())  # 每次回测都是一个独立的实例
 
         start_time = datetime.strptime(
-            engine_config["backtest"]["start_time"], "%Y-%m-%d %H:%M:%S"
+            config["backtest"]["start_time"], "%Y-%m-%d %H:%M:%S"
         )
         end_time = datetime.strptime(
-            engine_config["backtest"]["end_time"], "%Y-%m-%d %H:%M:%S"
+            config["backtest"]["end_time"], "%Y-%m-%d %H:%M:%S"
         )
 
         logfilename = (
@@ -60,7 +53,7 @@ if __name__ == "__main__":
             +"_"
             + class_name
             + "_"
-            + strategy_config["symbol"]
+            + config["symbol"]
             + "_"
             + start_time.strftime("%Y%m%d")
             + "_"
@@ -76,12 +69,12 @@ if __name__ == "__main__":
     print(logfilename)
     log.init(logfilename)
 
-    log.info("strategy name: %s;  config: %s" % (class_name, strategy_config))
-    log.info("engine config: %s" % engine_config)
+    log.info("strategy name: %s;  config: %s" % (class_name, config))
+    log.info("engine config: %s" % config)
 
     if select == "real":
-        engine = RealEngine(instance_id, engine_config)
-        strategy = ts.createInstance(module_name, class_name, strategy_config, engine)
+        engine = RealEngine(instance_id, config)
+        strategy = ts.createInstance(module_name, class_name, config, engine)
 
         if len(sys.argv) > params_index:
             debug = bool(sys.argv[params_index])
@@ -92,13 +85,13 @@ if __name__ == "__main__":
         engine.run(strategy, debug)
 
     elif select == "backtest":
-        engine = BackTest(instance_id, engine_config)
-        strategy = ts.createInstance(module_name, class_name, strategy_config, engine)
+        engine = BackTest(instance_id, config)
+        strategy = ts.createInstance(module_name, class_name, config, engine)
         engine.run(strategy)
 
     elif select == "search":
-        engine = BackTestSearch(instance_id, engine_config)
-        strategy = ts.createInstance(module_name, class_name, strategy_config, engine)
+        engine = BackTestSearch(instance_id, config)
+        strategy = ts.createInstance(module_name, class_name, config, engine)
         if len(sys.argv) > params_index:
             count = int(sys.argv[params_index])
             params_index += 1
@@ -122,8 +115,8 @@ if __name__ == "__main__":
             cpus = cpu_count()
         print("cpus: ", cpus)
 
-        bts_engine = MultiSearch(instance_id, engine_config)
-        bts_engine.run(count, cpus, module_name, class_name, strategy_config)
+        bts_engine = MultiSearch(instance_id, config)
+        bts_engine.run(count, cpus, module_name, class_name, config)
 
     else:
         print("select engine error!")
