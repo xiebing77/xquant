@@ -50,7 +50,7 @@ class BackTestSearch(BackTest):
         symbol = strategy.config["symbol"]
         return self.calc(symbol, self.orders)
 
-    def run(self, strategy):
+    def run(self, count, strategy):
         """ run """
         print(
             "backtest time range: [ %s , %s )"
@@ -67,7 +67,6 @@ class BackTestSearch(BackTest):
             self.config["backtest"]["end_time"], "%Y-%m-%d %H:%M:%S"
         )
 
-        count = strategy.config["search"]["count"]
         result = []
         for i in range(count):
             rs = strategy.search_init()

@@ -4,39 +4,48 @@ import json
 from datetime import datetime
 import common.log as log
 import uuid
+from multiprocessing import cpu_count
 import utils.tools as ts
 from engine.realengine import RealEngine
 from engine.backtest import BackTest
 from engine.backtestsearch import BackTestSearch
 from engine.multisearch import MultiSearch
 
+def help_print():
+    print("./xp.sh config/kdjmacd_btc_usdt.jsn real True       实盘，debug默认是关闭的")
+    print("./xp.sh config/kdjmacd_btc_usdt.jsn backtest        回测")
+    print("./xp.sh config/kdjmacd_btc_usdt.jsn search          寻优")
+    print("./xp.sh config/kdjmacd_btc_usdt.jsn multisearch     多进程寻优")
+
 
 if __name__ == "__main__":
 
-    #print(sys.argv)
-    module_name = sys.argv[1].replace("/", ".")
+    print(sys.argv)
+    params_index = 1
+    fo = open(sys.argv[params_index], "r")
+    params_index += 1
+    config = json.loads(fo.read())
+    fo.close()
+    #print("config: ", config)
 
-    class_name = sys.argv[2]
+    module_name = config["module_name"].replace("/", ".")
 
-    strategy_config = json.loads(sys.argv[3])
+    class_name = config["class_name"]
+
+    strategy_config = config["strategy_config"]
     print(strategy_config)
 
-    engine_config = json.loads(sys.argv[4])
+    engine_config = config["engine_config"]
     print(engine_config)
 
-    select = sys.argv[5]
+    select = sys.argv[params_index]
+    params_index += 1
     print("select: ", select)
-
-    if len(sys.argv) >= 7:
-        debug = bool(sys.argv[6])
-    else:
-        debug = False
-    print("debug: ", debug)
 
     if select == "real":
         instance_id = engine_config["real"]["instance_id"]  # 实盘则暂时由config配置
         logfilename = instance_id + ".log"
-    else:
+    elif select == "backtest" or select == "search" or select == "multisearch":
         instance_id = str(uuid.uuid1())  # 每次回测都是一个独立的实例
 
         start_time = datetime.strptime(
@@ -60,6 +69,9 @@ if __name__ == "__main__":
             + instance_id
             + ".log"
         )
+    else:
+        help_print()
+        exit(1)
 
     print(logfilename)
     log.init(logfilename)
@@ -70,6 +82,13 @@ if __name__ == "__main__":
     if select == "real":
         engine = RealEngine(instance_id, engine_config)
         strategy = ts.createInstance(module_name, class_name, strategy_config, engine)
+
+        if len(sys.argv) > params_index:
+            debug = bool(sys.argv[params_index])
+            params_index += 1
+        else:
+            debug = False
+        print("debug: ", debug)
         engine.run(strategy, debug)
 
     elif select == "backtest":
@@ -80,12 +99,31 @@ if __name__ == "__main__":
     elif select == "search":
         engine = BackTestSearch(instance_id, engine_config)
         strategy = ts.createInstance(module_name, class_name, strategy_config, engine)
-        engine.run(strategy)
+        if len(sys.argv) > params_index:
+            count = int(sys.argv[params_index])
+            params_index += 1
+        else:
+            count = 10
+        print("count: ", count)
+        engine.run(count, strategy)
 
     elif select == "multisearch":
+        if len(sys.argv) > params_index:
+            count = int(sys.argv[params_index])
+            params_index += 1
+        else:
+            count = 10
+        print("count: ", count)
+
+        if len(sys.argv) > params_index:
+            cpus = int(sys.argv[params_index])
+            params_index += 1
+        else:
+            cpus = cpu_count()
+        print("cpus: ", cpus)
+
         bts_engine = MultiSearch(instance_id, engine_config)
-        count = strategy_config["search"]["count"]
-        bts_engine.run(count, module_name, class_name, strategy_config)
+        bts_engine.run(count, cpus, module_name, class_name, strategy_config)
 
     else:
         print("select engine error!")
