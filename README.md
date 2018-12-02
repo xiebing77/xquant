@@ -2,43 +2,8 @@
 量化交易
 
 ## 运行环境
-### 普通模式
 python3.6
 mongodb3.6
-### docker模式
-为了标准化运行环境，特采用docker，请先安装docker！
-#### db容器
-1. 创建db容器
-> docker run -d -v <宿主目录>:/db_data --name xquant-db mongo
-2. 进入db容器
-> docker exec -i -t xquant-db /bin/bash  
-3. 退出db容器
-> exit
-
-#### xquant容器
-1. 创建xquant镜像
-> cd xquant/docker  
-  docker build -t "xquant:v0.0.1" .
-##### 交互式
-1. 第一次
-> docker run -i -t -v <宿主目录>:/xquant --name xquant dd1e3f6e2749 /bin/bash  
-3. 第二次及以后
-> docker start xquant  
-  docker attach xquant
-
-##### 后台
-
-## 数据
-### 登录
-> mongo mongodb://<用户名>:<密码>@localhost/binance
-### 导出
-> mongodump -d binance -c kline_btc_usdt_1m  
-  mongodump -d binance -c kline_btc_usdt_4h  
-  mongodump -d binance -c kline_btc_usdt_1d  
-### 导入
-> mongorestore -d binance -c kline_btc_usdt_1m kline_btc_usdt_1m.bson --drop  
-  mongorestore -d binance -c kline_btc_usdt_4h kline_btc_usdt_4h.bson --drop  
-  mongorestore -d binance -c kline_btc_usdt_1d kline_btc_usdt_1d.bson --drop  
 ## 程序入口
 main.py
 ### 使用方式
