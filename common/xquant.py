@@ -85,6 +85,8 @@ def get_open_time(interval, dt):
     elif interval == KLINE_INTERVAL_12HOUR:
         if dt.hour < 8:
             return datetime.combine(dt.date() - timedelta(days=1), time(20, 0, 0))
+        elif dt.hour >= 20:
+            return datetime.combine(dt.date(), time(20, 0, 0))
         else:
             return datetime.combine(dt.date(), time(8, 0, 0))
 
