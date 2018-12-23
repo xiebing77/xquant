@@ -70,7 +70,6 @@ if __name__ == "__main__":
     log.init(logfilename)
 
     log.info("strategy name: %s;  config: %s" % (class_name, config))
-    log.info("engine config: %s" % config)
 
     if select == "real":
         engine = RealEngine(instance_id, config)

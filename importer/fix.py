@@ -64,19 +64,20 @@ if __name__ == "__main__":
     miss_count = 0
     print(len(klines))
 
+    period_ms = period * 1000
     for kline in klines:
-        rest = kline['open_time'] % (period * 1000)
+        rest = kline['open_time'] % period_ms
         if rest:
             print(kline)
             kline['open_time'] -= rest
-            kline['close_time'] = kline['open_time'] + 59999
+            kline['close_time'] = kline['open_time'] + period_ms - 1
             print(kline)
             db.update_one(collection, kline['_id'], kline)
 
-        rest = (kline['close_time'] + 1) % (period * 1000)
+        rest = (kline['close_time'] + 1) % period_ms
         if rest:
             print(kline)
-            kline['close_time'] = kline['open_time'] + 59999
+            kline['close_time'] = kline['open_time'] + period_ms - 1
             print(kline)
             db.update_one(collection, kline['_id'], kline)
 

@@ -23,7 +23,7 @@ if __name__ == "__main__":
     time_range = args.r.split(",")
     start_time = datetime.strptime(time_range[0], "%Y-%m-%d")
     end_time = datetime.strptime(time_range[1], "%Y-%m-%d")
-    print("range: %s ~ %s"%(start_time, end_time))
+    print("range: [%s, %s)"%(start_time, end_time))
 
     interval = args.k
     collection = xq.get_kline_collection(args.s, interval)
