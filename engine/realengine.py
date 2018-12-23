@@ -87,11 +87,14 @@ class RealEngine(Engine):
                 continue
 
             deal_amount = df_amount[order_id]
+
+            target_coin, base_coin = xq.get_symbol_coins(symbol)
+            deal_amount = ts.reserve_float(deal_amount, self.config["digits"][target_coin])
             deal_value = df_value[order_id]
 
             status = xq.ORDER_STATUS_OPEN
             if deal_amount > order_amount:
-                self.log_error("最新成交数量大于委托数量")
+                self.log_error("最新成交数量(%f)大于委托数量(%f)  %g" % (deal_amount, order_amount, (deal_amount-order_amount)))
                 continue
             elif deal_amount == order_amount:
                 status = xq.ORDER_STATUS_CLOSE
@@ -105,7 +108,7 @@ class RealEngine(Engine):
                     pass
                 if self.__exchange.order_status_is_close(symbol, order_id):
                     status = xq.ORDER_STATUS_CLOSE
-            self.log_debug("deal_amount: %g,  deal_value: %g,  deal_price: %g" % (deal_amount, deal_value, deal_value/deal_amount))
+            self.log_debug("deal_amount: %f,  deal_value: %g,  deal_price: %g" % (deal_amount, deal_value, deal_value/deal_amount))
             self._db.update_one(
                 DB_ORDERS_NAME,
                 order["_id"],

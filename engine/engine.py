@@ -120,7 +120,7 @@ class Engine:
             "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  history_commission: %g,  total_profit_rate: %g)" % (
             symbol,
             cur_price,
-            "amount: %g,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g,"
+            "amount: %f,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g,"
             % (
                 info["amount"],
                 info["price"],
