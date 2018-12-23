@@ -17,8 +17,8 @@ class BackTest(Engine):
 
         self.tick_time = None
 
-        self.k1ms_cache = None
-        self.k1ms_cache_s_time = None
+        self.k1ms_cache = {}
+        self.k1ms_cache_s_time = {}
 
         '''
         self.k1ds_cache = None
@@ -98,11 +98,11 @@ class BackTest(Engine):
 
     def get_klines(self, symbol, interval, size, since=None):
         if interval == xq.KLINE_INTERVAL_1MINUTE:
-            return self.get_klines_1min(symbol, size, since)
+            return self.get_klines_1min(symbol, interval, size, since)
         else:
             return self.__join_klines(symbol, interval, size, since)
 
-    def get_klines_1min(self, symbol, size, since=None):
+    def get_klines_1min(self, symbol, interval, size, since=None):
         """ 获取分钟k线 """
         if since is None:
             s_time = self.tick_time - timedelta(minutes=size)
@@ -116,48 +116,48 @@ class BackTest(Engine):
         # print("1min s_time timestamp: ",s_time.timestamp())
         # print("1min e_time timestamp: ",e_time.timestamp())
 
-        k1ms = self.__get_klines_1min_cache(symbol, s_time, e_time)
+        k1ms = self.__get_klines_1min_cache(symbol, interval, s_time, e_time)
         return k1ms
 
-    def __get_klines_1min_cache(self, symbol, s_time, e_time):
+    def __get_klines_1min_cache(self, symbol, interval, s_time, e_time):
         """ 获取分钟k线 """
-        if self.k1ms_cache:
-            if self.k1ms_cache[0]["open_time"] == s_time.timestamp() * 1000:
+        if interval in self.k1ms_cache:
+            if self.k1ms_cache[interval][0]["open_time"] == s_time.timestamp() * 1000:
                 s_time = datetime.fromtimestamp(
-                    self.k1ms_cache[-1]["open_time"] / 1000
+                    self.k1ms_cache[interval][-1]["open_time"] / 1000
                 ) + timedelta(minutes=1)
             else:
-                self.k1ms_cache = None
+                del self.k1ms_cache[interval]
 
         k1ms = self.__get_klines_1min(symbol, s_time, e_time)
 
-        if self.k1ms_cache:
-            self.k1ms_cache += k1ms
+        if interval in self.k1ms_cache:
+            self.k1ms_cache[interval] += k1ms
         else:
-            self.k1ms_cache = k1ms
-        return self.k1ms_cache
+            self.k1ms_cache[interval] = k1ms
+        return self.k1ms_cache[interval]
 
     def __get_klines_1min_cache1(self, symbol, interval, s_time, e_time):
         """ 获取分钟k线 """
-        if not self.k1ms_cache or (
-            self.k1ms_cache
-            and self.k1ms_cache_s_time != s_time
+        if interval not in self.k1ms_cache or (
+            interval in self.k1ms_cache
+            and self.k1ms_cache_s_time[interval] != s_time
         ):
             # 把整个间隔的分钟k线都取下来
             next_interval_time = s_time + xq.get_interval_timedelta(interval)
-            self.k1ms_cache = self.__get_klines_1min(symbol, s_time, next_interval_time)
-            self.k1ms_cache_s_time = s_time
+            self.k1ms_cache[interval] = self.__get_klines_1min(symbol, s_time, next_interval_time)
+            self.k1ms_cache_s_time[interval] = s_time
 
         tmp_len = int((e_time - s_time).total_seconds() / 60)
-        if tmp_len >= len(self.k1ms_cache):
-            return self.k1ms_cache
+        if tmp_len >= len(self.k1ms_cache[interval]):
+            return self.k1ms_cache[interval]
 
         e_timestamp = e_time.timestamp() * 1000
         while tmp_len > 0:
-            if self.k1ms_cache[tmp_len]["open_time"] <= e_timestamp:
+            if self.k1ms_cache[interval][tmp_len]["open_time"] <= e_timestamp:
                 break
             tmp_len -= 1
-        return self.k1ms_cache[:tmp_len]
+        return self.k1ms_cache[interval][:tmp_len]
 
     '''
     def __get_info_Klines(self, klines):
