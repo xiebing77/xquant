@@ -93,14 +93,14 @@ class BackTest(Engine):
             symbol, interval, tick_open_time, self.tick_time
         )
 
-        klines = ks + k
-        return [[(kline[column_name] if (column_name in kline) else "0") for column_name in self.get_kline_column_names()] for kline in klines]
+        return ks + k
 
     def get_klines(self, symbol, interval, size, since=None):
         if interval == xq.KLINE_INTERVAL_1MINUTE:
-            return self.get_klines_1min(symbol, interval, size, since)
+            klines = self.get_klines_1min(symbol, interval, size, since)
         else:
-            return self.__join_klines(symbol, interval, size, since)
+            klines = self.__join_klines(symbol, interval, size, since)
+        return [[(kline[column_name] if (column_name in kline) else "0") for column_name in self.get_kline_column_names()] for kline in klines]
 
     def get_klines_1min(self, symbol, interval, size, since=None):
         """ 获取分钟k线 """
