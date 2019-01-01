@@ -44,16 +44,19 @@ def get_open_time(interval, dt):
     if interval == KLINE_INTERVAL_1MINUTE:
         return datetime.combine(dt.date(), time(dt.hour, dt.minute, 0))
     elif interval == KLINE_INTERVAL_3MINUTE:
-        open_minute = (dt.hour // 3) * 3
+        open_minute = (dt.minute // 3) * 3
         return datetime.combine(dt.date(), time(dt.hour, open_minute, 0))
     elif interval == KLINE_INTERVAL_5MINUTE:
-        open_minute = (dt.hour // 5) * 5
+        open_minute = (dt.minute // 5) * 5
         return datetime.combine(dt.date(), time(dt.hour, open_minute, 0))
     elif interval == KLINE_INTERVAL_15MINUTE:
-        open_minute = (dt.hour // 15) * 15
+        open_minute = (dt.minute // 15) * 15
         return datetime.combine(dt.date(), time(dt.hour, open_minute, 0))
     elif interval == KLINE_INTERVAL_30MINUTE:
-        open_minute = (dt.hour // 30) * 30
+        if dt.minute < 30:
+            open_minute = 0
+        else:
+            open_minute = 30
         return datetime.combine(dt.date(), time(dt.hour, open_minute, 0))
 
     elif interval == KLINE_INTERVAL_1HOUR:
