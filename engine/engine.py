@@ -114,7 +114,7 @@ class Engine:
         else:
             self.log_error("持仓数量不可能小于0")
 
-        info["limit_base_amount"] = self.config["limit"]["value"]
+        info["limit_base_amount"] = self.value
         if orders:
             info["pst_rate"] = orders[-1]["pst_rate"]
 
@@ -352,7 +352,7 @@ class Engine:
             order["profit"] = deal_price * amount + sell_value - sell_commission - buy_cost
             order["profit_rate"] = order["profit"] / buy_cost
             order["total_profit"] = (total_profit + order["profit"])
-            order["total_profit_rate"] = order["total_profit"] / self.config["limit"]["value"]
+            order["total_profit_rate"] = order["total_profit"] / self.value
 
             if amount == 0:
                 total_profit += order["profit"]
@@ -433,7 +433,7 @@ class Engine:
         win_count = len(win_df)
         loss_count = len(loss_df)
 
-        total_profit_rate = sell_df["profit"].sum() / self.config["limit"]["value"]
+        total_profit_rate = sell_df["profit"].sum() / self.value
         sum_profit_rate = sell_df["profit_rate"].sum()
         return round(total_profit_rate, 4), round(sum_profit_rate, 4), win_count, loss_count
 
