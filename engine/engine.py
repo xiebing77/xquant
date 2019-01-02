@@ -25,6 +25,8 @@ class Engine:
         self.config = config
         self._db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
+        self.value = 100
+
         if db_orders_name:
             self.db_orders_name = db_orders_name
             self._db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
@@ -152,8 +154,8 @@ class Engine:
         rc_signals = []
 
         # 风控第一条：亏损金额超过额度的10%，如额度1000，亏损金额超过100即刻清仓
-        limit_mode = self.config["limit"]["mode"]
-        limit_value = self.config["limit"]["value"]
+        limit_mode = self.config["mode"]
+        limit_value = self.value
         if limit_mode == 0:
             pass
         elif limit_mode == 1:
@@ -244,8 +246,8 @@ class Engine:
             self.log_warning("仓位率（%g）超出范围（0 ~ 1）" % dcs_pst_rate)
             return
 
-        limit_mode = self.config["limit"]["mode"]
-        limit_value = self.config["limit"]["value"]
+        limit_mode = self.config["mode"]
+        limit_value = self.value
         if limit_mode == 0:
             pass
         elif limit_mode == 1:

@@ -12,10 +12,10 @@ from engine.backtestsearch import BackTestSearch
 from engine.multisearch import MultiSearch
 
 def help_print():
-    print("./xp.sh config/kdjmacd_btc_usdt.jsn real True       实盘，debug默认是关闭的")
-    print("./xp.sh config/kdjmacd_btc_usdt.jsn backtest        回测")
-    print("./xp.sh config/kdjmacd_btc_usdt.jsn search          寻优")
-    print("./xp.sh config/kdjmacd_btc_usdt.jsn multisearch     多进程寻优")
+    print("./xp.sh config/kdjmacd_btc_usdt.jsn  real         xbtc1               100  True  实盘，debug默认是关闭的")
+    print("./xp.sh config/kdjmacd_btc_usdt.jsn  backtest     2018-12-1~2019-1-1             回测")
+    print("./xp.sh config/kdjmacd_btc_usdt.jsn  search       2018-12-1~2019-1-1             寻优")
+    print("./xp.sh config/kdjmacd_btc_usdt.jsn  multisearch  2018-12-1~2019-1-1             多进程寻优")
 
 
 if __name__ == "__main__":
@@ -36,17 +36,38 @@ if __name__ == "__main__":
     print("select: ", select)
 
     if select == "real":
-        instance_id = config["real"]["instance_id"]  # 实盘则暂时由config配置
+        if len(sys.argv) > params_index:
+            instance_id = sys.argv[params_index]
+            params_index += 1
+        else:
+            help_print()
+            exit(1)
+
+        if len(sys.argv) > params_index:
+            value = float(sys.argv[params_index])
+            params_index += 1
+        else:
+            help_print()
+            exit(1)
+
+        if len(sys.argv) > params_index:
+            debug = bool(sys.argv[params_index])
+            params_index += 1
+        else:
+            debug = False
+
+        print("value: %s, debug: %s" % (value, debug))
+
         logfilename = instance_id + ".log"
     elif select == "backtest" or select == "search" or select == "multisearch":
         instance_id = str(uuid.uuid1())  # 每次回测都是一个独立的实例
 
-        start_time = datetime.strptime(
-            config["backtest"]["start_time"], "%Y-%m-%d %H:%M:%S"
-        )
-        end_time = datetime.strptime(
-            config["backtest"]["end_time"], "%Y-%m-%d %H:%M:%S"
-        )
+        if len(sys.argv) > params_index:
+            date_range = sys.argv[params_index]
+            params_index += 1
+        else:
+            help_print()
+            exit(1)
 
         logfilename = (
             select
@@ -55,9 +76,7 @@ if __name__ == "__main__":
             + "_"
             + config["symbol"]
             + "_"
-            + start_time.strftime("%Y%m%d")
-            + "_"
-            + end_time.strftime("%Y%m%d")
+            + date_range
             + "_"
             + instance_id
             + ".log"
@@ -75,18 +94,14 @@ if __name__ == "__main__":
         engine = RealEngine(instance_id, config)
         strategy = ts.createInstance(module_name, class_name, config, engine)
 
-        if len(sys.argv) > params_index:
-            debug = bool(sys.argv[params_index])
-            params_index += 1
-        else:
-            debug = False
-        print("debug: ", debug)
+        engine.value = value
         engine.run(strategy, debug)
 
     elif select == "backtest":
         engine = BackTest(instance_id, config)
         strategy = ts.createInstance(module_name, class_name, config, engine)
-        engine.run(strategy)
+
+        engine.run(strategy, date_range)
 
     elif select == "search":
         engine = BackTestSearch(instance_id, config)
