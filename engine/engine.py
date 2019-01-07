@@ -246,6 +246,7 @@ class Engine:
             self.log_warning("仓位率（%g）超出范围（0 ~ 1）" % dcs_pst_rate)
             return
 
+        limit_price_rate = self.config["limit_price_rate"]
         limit_mode = self.config["mode"]
         limit_value = self.value
         if limit_mode == 0:
@@ -281,7 +282,7 @@ class Engine:
                 self.config["digits"][target_coin],
             )
 
-            rate = 1.1
+            rate = limit_price_rate["buy"]
 
         elif dcs_side == xq.SIDE_SELL:
             if position_info["pst_rate"] <= dcs_pst_rate:
@@ -294,7 +295,7 @@ class Engine:
                 self.config["digits"][target_coin],
             )
 
-            rate = 0.9
+            rate = limit_price_rate["sell"]
         else:
             return
 
