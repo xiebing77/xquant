@@ -127,3 +127,37 @@ def pd_macd(klines_df, fastperiod=12, slowperiod=26, signalperiod=9):
     klines_df["macd dea"] = klines_df["macd dif"].ewm(span=signalperiod, adjust=False).mean()
 
     #print(klines_df)
+
+def py_wr(klines, highindex, lowindex, closeindex, period=14):
+
+    close = float(klines[-1][closeindex])
+    max_high = float(klines[-1][highindex])
+    min_low = float(klines[-1][lowindex])
+    for kline in klines[-period:-1]:
+        if max_high < float(kline[highindex]):
+            max_high = float(kline[highindex])
+        if min_low > float(kline[lowindex]):
+            min_low = float(kline[lowindex])
+
+    wr = (max_high - close) / (max_high - min_low) * 100
+    #print("py_wr(%g, %g, %g, %g)" % (max_high, min_low, close, wr))
+    return wr
+
+def py_wrs(klines, highindex, lowindex, closeindex, period=14):
+    arr = []
+    highs = []
+    lows = []
+    for kline in klines:
+        if len(highs) >= period:
+            highs.pop(0)
+            lows.pop(0)
+        highs.append(float(kline[highindex]))
+        lows.append(float(kline[lowindex]))
+
+        max_high = max(highs)
+        min_low = min(lows)
+        wr = (max_high - float(kline[closeindex])) / (max_high - min_low) * 100
+        arr.append(wr)
+
+    #print(arr)
+    return arr
