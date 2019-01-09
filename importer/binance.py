@@ -44,7 +44,7 @@ if __name__ == "__main__":
     tmp_time = start_time
 
     while tmp_time < end_time:
-        print(datetime.fromtimestamp(tmp_time/1000))
+        print(datetime.fromtimestamp(tmp_time/1000), end="    ")
         if (tmp_time + size * interval) > end_time:
             batch = int((end_time - tmp_time)/interval)
         else:

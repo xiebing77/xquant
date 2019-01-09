@@ -500,6 +500,8 @@ class Engine:
         klines_df["NATR"] = talib.NATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
         klines_df["TRANGE"] = talib.TRANGE(klines_df["high"], klines_df["low"], klines_df["close"])
 
+        axes[0].plot(open_times, klines_df["ATR"]*10, "r--", label="ATR")
+
         axes[1].set_ylabel('volatility')
         axes[1].grid(True)
         axes[1].plot(open_times, klines_df["ATR"], "r--", label="ATR")
