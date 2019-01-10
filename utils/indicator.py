@@ -3,6 +3,17 @@
 import numpy as np
 import pandas as pd
 
+def py_ma(klines, index, period):
+    arr = []
+    vs = []
+    for kline in klines:
+        if len(vs) >= period:
+            vs.pop(0)
+        vs.append(float(kline[index]))
+        arr.append(sum(vs)/len(vs))
+
+    return arr
+
 
 def py_kdj(klines, highindex, lowindex, closeindex, period=9):
     M1 = 3
