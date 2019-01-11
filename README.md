@@ -7,8 +7,10 @@ mongodb3.6
 ## 程序入口
 main.py
 ### 使用方式
-参见kdj_btc_usdt.sh
-
+#### 实盘
+python3.6 main.py  kdj_btc_usdt.jsn real testbtc1 100 
+#### 回测
+python3.6 main.py  kdj_btc_usdt.jsn backtest 2018-1-1~2019-1-1
 ## 目录说明
 ### utils
 工具，不仅限于本项目
