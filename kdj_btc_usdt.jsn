@@ -1,0 +1,18 @@
+{
+    "module_name": "strategies/kdjmacd",
+    "class_name": "KDJMACDStrategy",
+    "exchange": "binance",
+    "commission_rate": 0.001,
+    "symbol": "btc_usdt",
+    "digits": {"btc": 6, "usdt": 2},
+    "sec": 60,
+    "kline": {"interval": "1d", "interval_s1": "12h", "interval_s2": "1h", "size": 180},
+    "kdj_offset": [1.5, 3.6],
+    "macd_rate": [0.01368, 0.0083, 0.0076, 0.003, -0.018, -0.027],
+    "mode": 1,
+    "limit_price_rate": {"buy": 1.01, "sell": 0.9},
+    "search": {
+        "macd_rate": {"max": 0.05, "min": -0.05, "digits": 5},
+        "kdj": {"max": 5, "min": 0, "digits": 2}
+    }
+}
