@@ -31,15 +31,16 @@ if __name__ == "__main__":
     print("start time:", start_time, args.s)
     print("end time:", end_time, args.e)
 
-    db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
-    exchange = BinanceExchange(debug=True)
     symbol = xq.creat_symbol(base_coin=base_coin, target_coin=target_coin)
-
-    interval = 1000 * xq.get_interval_seconds(args.k)
-
     collection = xq.get_kline_collection(symbol, args.k)
     print("collection: ", collection)
 
+    db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
+    db.ensure_index(collection, [("open_time",1)], unique=True)
+
+    exchange = BinanceExchange(debug=True)
+
+    interval = 1000 * xq.get_interval_seconds(args.k)
     size = 1000
     tmp_time = start_time
 

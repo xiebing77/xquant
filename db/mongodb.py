@@ -23,8 +23,8 @@ class MongoDB:
     def create_index(self, collection, index):
         self.__client[collection].create_index(index, unique=True)
 
-    def ensure_index(self, collection, index):
-        self.__client[collection].ensure_index(index)
+    def ensure_index(self, collection, index, unique=False):
+        self.__client[collection].ensure_index(index, unique)
 
     def insert_one(self, collection, record):
         """insert_one"""
