@@ -25,7 +25,10 @@ def py_kdj(klines, highindex, lowindex, closeindex, period=9):
     close = float(kline[closeindex])
     high = float(kline[highindex])
     low = float(kline[lowindex])
-    rsv = (close - low) / (high - low) * 100
+    if high > low:
+        rsv = (close - low) / (high - low) * 100
+    else:
+        rsv = 0
     kdj_arr.append(list((rsv, rsv, rsv, rsv)))
 
     highs = [high]
