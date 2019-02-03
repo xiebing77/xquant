@@ -12,6 +12,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', help='symbol (btc_usdt)')
     parser.add_argument('-r', help='time range (2018-7-1,2018-8-1)')
     parser.add_argument('-k', help='kline type (1m、4h、1d...)')
+    parser.add_argument('-d', '--display', action = 'store_true', help='display info')
 
     args = parser.parse_args()
     # print(args)
@@ -64,6 +65,12 @@ if __name__ == "__main__":
             repeat_count += 1
             print("repeat %s" % (datetime.fromtimestamp(open_time)))
         elif open_time == tick_time.timestamp():
+            kline = klines[i]
+            if args.display:
+                open_time = datetime.fromtimestamp(int(kline["open_time"])/1000)
+                close_time = datetime.fromtimestamp(int(kline["close_time"])/1000)
+                print("(%s ~ %s)  high: %s  low: %s  close: %s  volume: %s" %
+                    (open_time, close_time, kline["high"], kline["low"], kline["close"], kline["volume"]))
             i += 1
             tick_time = next_tick_time
         elif open_time < next_tick_time.timestamp():
