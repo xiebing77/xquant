@@ -111,7 +111,7 @@ if __name__ == "__main__":
         engine = BackTest(instance_id, config)
         strategy = ts.createInstance(module_name, class_name, config, engine)
 
-        engine.run(strategy, date_range)
+        engine.run(strategy, start_time, end_time)
 
     elif select == "search":
         engine = BackTestSearch(instance_id, config)
