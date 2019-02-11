@@ -17,6 +17,14 @@ def help_print():
     print("./xp.sh config/kdjmacd_btc_usdt.jsn  search       2018-12-1~2019-1-1             寻优")
     print("./xp.sh config/kdjmacd_btc_usdt.jsn  multisearch  2018-12-1~2019-1-1             多进程寻优")
 
+def parse_date_range(date_range):
+    print("time range: [ %s )" % date_range)
+    dates = date_range.split("~")
+
+    start_time = datetime.strptime(dates[0], "%Y-%m-%d")
+    end_time = datetime.strptime(dates[1], "%Y-%m-%d")
+    return start_time, end_time
+
 
 if __name__ == "__main__":
 
@@ -81,6 +89,8 @@ if __name__ == "__main__":
             + instance_id
             + ".log"
         )
+        start_time, end_time = parse_date_range(date_range)
+
     else:
         help_print()
         exit(1)
@@ -112,7 +122,7 @@ if __name__ == "__main__":
         else:
             count = 10
         print("count: ", count)
-        engine.run(count, strategy)
+        engine.run(count, strategy, start_time, end_time)
 
     elif select == "multisearch":
         if len(sys.argv) > params_index:
@@ -130,7 +140,7 @@ if __name__ == "__main__":
         print("cpus: ", cpus)
 
         bts_engine = MultiSearch(instance_id, config)
-        bts_engine.run(count, cpus, module_name, class_name, config)
+        bts_engine.run(count, cpus, module_name, class_name, config, start_time, end_time)
 
     else:
         print("select engine error!")

@@ -60,23 +60,8 @@ class MultiSearch(BackTest):
     def __init__(self, instance_id, config, *symbols):
         super().__init__(instance_id, config)
 
-    def run(self, count, cpus, module_name, class_name, strategy_config):
+    def run(self, count, cpus, module_name, class_name, strategy_config, start_time, end_time):
         """ run """
-        print(
-            "backtest time range: [ %s , %s )"
-            % (
-                self.config["backtest"]["start_time"],
-                self.config["backtest"]["end_time"],
-            )
-        )
-
-        start_time = datetime.strptime(
-            self.config["backtest"]["start_time"], "%Y-%m-%d %H:%M:%S"
-        )
-        end_time = datetime.strptime(
-            self.config["backtest"]["end_time"], "%Y-%m-%d %H:%M:%S"
-        )
-
         result_q = Manager().Queue()#Manager中的Queue才能配合Pool
         task_q = Manager().Queue()#Manager中的Queue才能配合Pool
         for index in range(count):

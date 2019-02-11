@@ -346,14 +346,8 @@ class BackTest(Engine):
         """ 撤掉本策略的所有挂单委托 """
         pass
 
-    def run(self, strategy, date_range):
+    def run(self, strategy, start_time, end_time):
         """ run """
-        print("backtest time range: [ %s )" % date_range)
-        dates = date_range.split("~")
-
-        start_time = datetime.strptime(dates[0], "%Y-%m-%d")
-        end_time = datetime.strptime(dates[1], "%Y-%m-%d")
-
         total_tick_start = datetime.now()
         self.tick_time = start_time
         tick_count = 0
