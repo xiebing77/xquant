@@ -370,9 +370,20 @@ class Engine:
             return
 
         orders = self.calc_order(symbol, orders)
-        print(
-            "  id          create_time  side  pst_rate   deal_price  deal_amount  deal_value      profit  profit_rate  total_profit  total_profit_rate  total_commission  rmk"
-        )
+
+        print_switch_deal = False
+        print_switch_commission = False
+        print_switch_profit = False
+
+        title = "  id          create_time  side             price"
+        if print_switch_deal:
+            title += "  deal_amount  deal_value"
+        if print_switch_commission:
+            title += "  total_commission"
+        if print_switch_profit:
+            title += "  profit(total)"
+        title += "  profit_rate(total)  rmk"
+        print(title)
         total_commission = 0
         for index ,order in enumerate(orders):
             commission = order["deal_value"] * self.config["commission_rate"]
@@ -380,24 +391,33 @@ class Engine:
 
             order["trade_time"] = datetime.fromtimestamp(order["create_time"])
 
-            print(
-                "%4d  %s  %4s  %8g  %10g  %11g  %10g  %10g  %10.2f%%  %12g  %16.2f%%  %16g  %s"
-                % (
+            info = "%4d  %s  %4s  %4g  %10g" % (
                     index,
                     datetime.fromtimestamp(order["create_time"]),
                     order["side"],
                     order["pst_rate"],
                     order["deal_value"]/order["deal_amount"],
-                    order["deal_amount"],
-                    order["deal_value"],
-                    order["profit"],
+                )
+            if print_switch_deal:
+                info += "  %11g  %10g" % (
+                        order["deal_amount"],
+                        order["deal_value"],
+                    )
+            if print_switch_commission:
+                info += "  %17g" % (
+                        total_commission,
+                    )
+            if print_switch_profit:
+                info += "  %5.2g(%6.2g)" % (
+                        order["profit"],
+                        order["total_profit"],
+                    )
+            info += "  %9.2f%%(%5.2f%%)  %s" % (
                     round(order["profit_rate"] * 100, 2),
-                    order["total_profit"],
                     round(order["total_profit_rate"] * 100, 2),
-                    total_commission,
                     order["rmk"],
                 )
-            )
+            print(info)
 
         orders_df = pd.DataFrame(orders)
 
