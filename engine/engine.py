@@ -412,11 +412,11 @@ class Engine:
                         order["profit"],
                         order["total_profit"],
                     )
-            info += "  %9.2f%%(%5.2f%%)  %s" % (
-                    round(order["profit_rate"] * 100, 2),
-                    round(order["total_profit_rate"] * 100, 2),
-                    order["rmk"],
-                )
+            info += "  {:8.2%}({:8.2%})".format(
+                order["profit_rate"], order["total_profit_rate"]
+            )
+            info += "  %s" % (order["rmk"])
+
             print(info)
 
         orders_df = pd.DataFrame(orders)
