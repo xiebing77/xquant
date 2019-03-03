@@ -33,10 +33,11 @@ def attachment(filename):
 
 
 class EmailObj(object):
-    def __init__(self, server, user, pwd):
+    def __init__(self, server, user, pwd, port):
         self.server = server
         self.user = user
         self.pwd = pwd
+        self.port = port
 
     def send_mail(self, subject, msg_body, from_addr, to_addr, cc_addr='', attachments=None):
         msg = MIMEMultipart()
@@ -52,10 +53,10 @@ class EmailObj(object):
             for filename in attachments:
                 msg.attach(attachment(filename))
 
-        s = smtplib.SMTP(self.server)
+        s = smtplib.SMTP(self.server + ":" + self.port)
+        #s = smtplib.SMTP_SSL(self.server + ":587")
         # s.set_debuglevel(True)
         s.ehlo()
         s.starttls()
         s.login(self.user, self.pwd)
         return s.sendmail(from_addr, cc_addr.split(",") + [to_addr], msg.as_string())
-

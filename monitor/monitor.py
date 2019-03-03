@@ -44,6 +44,6 @@ if __name__ == "__main__":
     # html = template.render(orders=orders, process_info=process_info)
     html = "Quant is dead. Please check"
     print(html)
-    email_obj = EmailObj(email_srv, email_user, email_pwd)
+    email_obj = EmailObj(email_srv, email_user, email_pwd, email_port)
     email_obj.send_mail(subject, html, email_user, to_addr=email_addr)
 
