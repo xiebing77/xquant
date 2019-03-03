@@ -375,15 +375,19 @@ class Engine:
         print_switch_commission = False
         print_switch_profit = False
 
-        title = "  id          create_time  side             price"
+        title = "  id"
+        title += "  profit_rate(total)"
+        title += "          create_time  side             price"
+
         if print_switch_deal:
             title += "  deal_amount  deal_value"
         if print_switch_commission:
             title += "  total_commission"
         if print_switch_profit:
             title += "  profit(total)"
-        title += "  profit_rate(total)  rmk"
+        title += "rmk"
         print(title)
+
         total_commission = 0
         for index ,order in enumerate(orders):
             commission = order["deal_value"] * self.config["commission_rate"]
@@ -391,8 +395,11 @@ class Engine:
 
             order["trade_time"] = datetime.fromtimestamp(order["create_time"])
 
-            info = "%4d  %s  %4s  %4g  %10g" % (
-                    index,
+            info = "%4d" % (index)
+            info += "  {:8.2%}({:8.2%})".format(
+                order["profit_rate"], order["total_profit_rate"]
+            )
+            info += "  %s  %4s  %4g  %10g" % (
                     datetime.fromtimestamp(order["create_time"]),
                     order["side"],
                     order["pst_rate"],
@@ -412,9 +419,6 @@ class Engine:
                         order["profit"],
                         order["total_profit"],
                     )
-            info += "  {:8.2%}({:8.2%})".format(
-                order["profit_rate"], order["total_profit_rate"]
-            )
             info += "  %s" % (order["rmk"])
 
             print(info)
@@ -520,13 +524,13 @@ class Engine:
         klines_df["NATR"] = talib.NATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
         klines_df["TRANGE"] = talib.TRANGE(klines_df["high"], klines_df["low"], klines_df["close"])
 
-        axes[0].plot(open_times, klines_df["ATR"]*10, "g--", label="ATR")
+        axes[0].plot(open_times, klines_df["ATR"]*10, "y:", label="ATR")
 
         axes[1].set_ylabel('volatility')
         axes[1].grid(True)
-        axes[1].plot(open_times, klines_df["ATR"], "r--", label="ATR")
-        axes[1].plot(open_times, klines_df["NATR"], "g--", label="NATR")
-        axes[1].plot(open_times, klines_df["TRANGE"], "y--", label="TRANGE")
+        axes[1].plot(open_times, klines_df["ATR"], "k--", label="ATR")
+        axes[1].plot(open_times, klines_df["NATR"], "y:", label="NATR")
+        axes[1].plot(open_times, klines_df["TRANGE"], "c--", label="TRANGE")
 
         ks, ds, js = ic.pd_kdj(klines_df)
         axes[2].set_ylabel('kdj')
