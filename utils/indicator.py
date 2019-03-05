@@ -142,6 +142,18 @@ def pd_macd(klines_df, fastperiod=12, slowperiod=26, signalperiod=9):
 
     #print(klines_df)
 
+def py_hl(klines, highindex, lowindex, period):
+
+    max_high = float(klines[-1][highindex])
+    min_low = float(klines[-1][lowindex])
+    for kline in klines[-period:-1]:
+        if max_high < float(kline[highindex]):
+            max_high = float(kline[highindex])
+        if min_low > float(kline[lowindex]):
+            min_low = float(kline[lowindex])
+
+    return max_high, min_low
+
 def py_wr(klines, highindex, lowindex, closeindex, period=14):
 
     close = float(klines[-1][closeindex])

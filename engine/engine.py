@@ -385,7 +385,7 @@ class Engine:
             title += "  total_commission"
         if print_switch_profit:
             title += "  profit(total)"
-        title += "rmk"
+        title += "  rmk"
         print(title)
 
         total_commission = 0
@@ -528,8 +528,8 @@ class Engine:
 
         axes[1].set_ylabel('volatility')
         axes[1].grid(True)
-        axes[1].plot(open_times, klines_df["ATR"], "k--", label="ATR")
-        axes[1].plot(open_times, klines_df["NATR"], "y:", label="NATR")
+        axes[1].plot(open_times, klines_df["ATR"], "y:", label="ATR")
+        axes[1].plot(open_times, klines_df["NATR"], "k--", label="NATR")
         axes[1].plot(open_times, klines_df["TRANGE"], "c--", label="TRANGE")
 
         ks, ds, js = ic.pd_kdj(klines_df)
