@@ -108,10 +108,16 @@ if __name__ == "__main__":
         engine.run(strategy, debug)
 
     elif select == "backtest":
+        if len(sys.argv) > params_index:
+            display_switch = sys.argv[params_index]
+            params_index += 1
+        else:
+            display_switch = False
+
         engine = BackTest(instance_id, config)
         strategy = ts.createInstance(module_name, class_name, config, engine)
 
-        engine.run(strategy, start_time, end_time)
+        engine.run(strategy, start_time, end_time, display_switch)
 
     elif select == "search":
         engine = BackTestSearch(instance_id, config)
