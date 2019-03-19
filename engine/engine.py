@@ -214,13 +214,14 @@ class Engine:
         if not signals:
             return
 
-        self.log_info("signals(%r)" % signals)
-        dcs_side, dcs_pst_rate, dcs_rmk, dcs_cba = xq.decision_signals2(signals)
+        for signal in signals:
+            self.log_info("signal(%r)" % signal["describe"])
+        dcs_side, dcs_pst_rate, dcs_desc, dcs_rmk, dcs_cba = xq.decision_signals2(signals)
         self.log_info(
-            "decision signal side(%s), position rate(%g), rmk(%s), can buy after(%s)" % (
+            "decision signal side(%s), position rate(%g), describe(%s), can buy after(%s)" % (
             dcs_side,
             dcs_pst_rate,
-            dcs_rmk,
+            dcs_desc,
             dcs_cba
             )
         )
@@ -303,6 +304,7 @@ class Engine:
         if target_amount <= 0:
             return
         limit_price = ts.reserve_float(cur_price * rate, self.config["digits"][base_coin])
+        order_rmk = dcs_desc+":  "+dcs_rmk
         order_id = self.send_order_limit(
             dcs_side,
             symbol,
@@ -310,7 +312,7 @@ class Engine:
             cur_price,
             limit_price,
             target_amount,
-            "%s, timedelta: %s, can buy after: %s" % (dcs_rmk, dcs_cba, self.can_buy_time) if (dcs_cba or self.can_buy_time) else "%s" % (dcs_rmk),
+            "%s, timedelta: %s, can buy after: %s" % (order_rmk, dcs_cba, self.can_buy_time) if (dcs_cba or self.can_buy_time) else "%s" % (order_rmk),
         )
         self.log_info(
             "current price: %g;  rate: %g;  order_id: %s" % (cur_price, rate, order_id)
@@ -430,8 +432,8 @@ class Engine:
         orders_df["commission"] = orders_df["deal_value"] * self.config["commission_rate"]
 
 
-        orders_df["signal_id"] = orders_df["rmk"].map(lambda x: x.split("：")[0])
-        orders_df["signal_rmk"] = orders_df["rmk"].map(lambda x: x.split("：")[1])
+        orders_df["signal_id"] = orders_df["rmk"].map(lambda x: x.split(":  ")[0])
+        orders_df["signal_rmk"] = orders_df["rmk"].map(lambda x: x.split(":  ")[1])
         del orders_df["order_id"]
         del orders_df["instance_id"]
         del orders_df["rmk"]
