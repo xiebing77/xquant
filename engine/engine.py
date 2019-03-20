@@ -165,12 +165,12 @@ class Engine:
 
         loss_limit = limit_value * 0.1
         if loss_limit + position_info["profit"] <= 0:
-            rc_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "风控平仓：亏损金额超过额度的10%", ts.get_next_open_timedelta(self.now())))
+            rc_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "风控平仓", "亏损金额超过额度的10%", ts.get_next_open_timedelta(self.now())))
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
         if pst_price > 0 and cur_price / pst_price <= 0.9:
-            rc_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "风控平仓：当前价低于持仓均价的90%"))
+            rc_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "风控平仓", "当前价低于持仓均价的90%"))
 
         return rc_signals
 
