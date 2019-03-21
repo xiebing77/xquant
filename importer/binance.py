@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import sys
 sys.path.append('../')
-import argparse
 import time
 from datetime import datetime
 import db.mongodb as md
@@ -9,31 +8,22 @@ import common.xquant as xq
 from exchange.binanceExchange import BinanceExchange
 from setup import *
 import pandas as pd
+from importer import add_common_arguments, split_time_range
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Binance Importer')
-    parser.add_argument('-b', help='base coin')
-    parser.add_argument('-t', help='target coin')
-    parser.add_argument('-s', help='start time (2018-8-1)')
-    parser.add_argument('-e', help='end time (2018-9-1)')
-    parser.add_argument('-k', help='kline type (1m、4h、1d...)')
-
+    parser = add_common_arguments('Binance Importer')
     args = parser.parse_args()
     # print(args)
-    if not (args.b and args.t and args.s and args.e):
+    if not (args.s and args.r and args.k):
         parser.print_help()
         exit(1)
 
-    base_coin = args.b
-    target_coin = args.t
-    start_time = int(time.mktime(time.strptime(args.s, "%Y-%m-%d"))) * 1000
-    end_time = int(time.mktime(time.strptime(args.e, "%Y-%m-%d"))) * 1000
-    print("start time:", start_time, args.s)
-    print("end time:", end_time, args.e)
+    start_time, end_time = split_time_range(args.r)
+    #print("range: [%s, %s)"%(start_time, end_time))
 
-    symbol = xq.creat_symbol(base_coin=base_coin, target_coin=target_coin)
+    symbol = args.s
     collection = xq.get_kline_collection(symbol, args.k)
-    print("collection: ", collection)
+    #print("collection: ", collection)
 
     db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
     db.ensure_index(collection, [("open_time",1)], unique=True)

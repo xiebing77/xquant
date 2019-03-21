@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 import sys
 sys.path.append('../')
-import argparse
 from datetime import datetime,timedelta
 import db.mongodb as md
 from setup import *
+from importer import add_common_arguments, split_time_range
 
 
 def fix_middle_kline(database, collection, start_kline, end_kline):
@@ -30,11 +30,7 @@ def fix_middle_kline(database, collection, start_kline, end_kline):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='klines print or check')
-    parser.add_argument('-s', help='symbol (btc_usdt)')
-    parser.add_argument('-r', help='time range (2018-7-1,2018-8-1)')
-    parser.add_argument('-k', help='kline type (1m、4h、1d...)')
-
+    parser = add_common_arguments('fix')
     args = parser.parse_args()
     # print(args)
 
@@ -42,9 +38,7 @@ if __name__ == "__main__":
         parser.print_help()
         exit(1)
 
-    time_range = args.r.split(",")
-    start_time = datetime.strptime(time_range[0], "%Y-%m-%d")
-    end_time = datetime.strptime(time_range[1], "%Y-%m-%d")
+    start_time, end_time = split_time_range(args.r)
 
     interval = args.k
     collection = xq.get_kline_collection(args.s, interval)
