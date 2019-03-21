@@ -2,7 +2,7 @@
 import sys
 sys.path.append('../')
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import db.mongodb as md
 import common.xquant as xq
 from exchange.binanceExchange import BinanceExchange
@@ -30,12 +30,12 @@ if __name__ == "__main__":
 
     exchange = BinanceExchange(debug=True)
 
-    interval = 1000 * xq.get_interval_seconds(args.k)
+    interval = timedelta(seconds=xq.get_interval_seconds(args.k))
     size = 1000
     tmp_time = start_time
 
     while tmp_time < end_time:
-        print(datetime.fromtimestamp(tmp_time/1000), end="    ")
+        print(tmp_time, end="    ")
         if (tmp_time + size * interval) > end_time:
             batch = int((end_time - tmp_time)/interval)
         else:
