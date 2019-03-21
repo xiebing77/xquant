@@ -14,23 +14,30 @@ if __name__ == "__main__":
     parser = add_common_arguments('Binance Importer')
     args = parser.parse_args()
     # print(args)
-    if not (args.s and args.r and args.k):
+    if not (args.s and args.k):
         parser.print_help()
         exit(1)
 
-    start_time, end_time = split_time_range(args.r)
-    #print("range: [%s, %s)"%(start_time, end_time))
-
     symbol = args.s
+    interval = timedelta(seconds=xq.get_interval_seconds(args.k))
+
     collection = xq.get_kline_collection(symbol, args.k)
     #print("collection: ", collection)
 
     db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
     db.ensure_index(collection, [("open_time",1)], unique=True)
 
+    # 注意，下面代码有隐患，在上午8点前取1d、12h时，最后的一个是不完整的，后续再整改
+    if args.r:
+        start_time, end_time = split_time_range(args.r)
+    else:
+        # 续接db中最后一条记录，至今天之前
+        klines = db.find_sort(collection, {}, 'open_time', -1, 1)
+        start_time = (datetime.fromtimestamp(klines[0]["open_time"]/1000) + interval).date()
+        end_time = datetime.now().date()
+
     exchange = BinanceExchange(debug=True)
 
-    interval = timedelta(seconds=xq.get_interval_seconds(args.k))
     size = 1000
     tmp_time = start_time
 

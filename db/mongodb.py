@@ -64,18 +64,23 @@ class MongoDB:
             records.append(i)
         return records
 
-    def find_sort(self, collection, query, sort_field, sort_dir, projection=None):
+    def find_sort(self, collection, query, sort_field, sort_dir, limit=None, projection=None):
         """find and sort
             sort_dir: 1. ASCENDING,
                      -1. DESCENDING
         """
         #print(query)
         #print(projection)
+        if limit:
+            ret = self.__client[collection].find(query, projection=projection).sort(sort_field, sort_dir).limit(limit)
+        else:
+            ret = self.__client[collection].find(query, projection=projection).sort(sort_field, sort_dir)
+        """
         if projection:
             ret = self.__client[collection].find(query, projection=projection).sort(sort_field, sort_dir)
         else:
             ret = self.__client[collection].find(query).sort(sort_field, sort_dir)
-
+        """
         records = []
         for i in ret:
             records.append(i)

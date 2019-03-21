@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #source ~/.profile
-range=2019-3-14~2019-3-21
+range=$1
 echo $range
 
 symbles=(btc_usdt bnb_usdt eth_usdt)
@@ -18,6 +18,11 @@ do
     do
         #echo $kline_type
         echo "downloading  ${range}  ${symble}  ${kline_type}"
-        python3.6 binance.py -r $range -s $symble -k $kline_type
+        if [ $range ]
+        then
+            python3.6 binance.py -s $symble -k $kline_type -r $range
+        else
+            python3.6 binance.py -s $symble -k $kline_type
+        fi
     done
 done
