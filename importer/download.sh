@@ -18,6 +18,6 @@ do
     do
         #echo $kline_type
         echo "downloading  ${range}  ${symble}  ${kline_type}"
-        #python3.6 binance.py -r $range -s $symble -k $kline_type
+        python3.6 binance.py -r $range -s $symble -k $kline_type
     done
 done
