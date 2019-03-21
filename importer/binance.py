@@ -42,7 +42,7 @@ if __name__ == "__main__":
             batch = size
          # print(batch)
 
-        klines = exchange.get_klines(symbol, args.k, size=batch, since=1000*int(time.mktime(tmp_time)))
+        klines = exchange.get_klines(symbol, args.k, size=batch, since=1000*int(tmp_time.timestamp()))
 
         klines_df = pd.DataFrame(klines, columns=exchange.get_kline_column_names())
 
