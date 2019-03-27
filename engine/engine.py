@@ -85,8 +85,9 @@ class Engine:
                 info["value"] += deal_value
                 info["commission"] += commission
 
-                info["high"] = order["high"]
-                info["low"] = order["low"]
+                if "high" in order:
+                    info["high"] = order["high"]
+                    info["low"] = order["low"]
 
             elif order["side"] == xq.SIDE_SELL:
                 info["amount"] -= deal_amount
@@ -189,6 +190,9 @@ class Engine:
     def take_profit(self, position_info, cur_price):
         """ 止盈 """
         tp_signals = []
+
+        if "high" not in position_info:
+            return tp_cfg
 
         tp_cfg = self.config["risk_control"]["take_profit"]
         if "base_buy" in tp_cfg and tp_cfg["base_buy"] > 0 and (position_info["high"] - cur_price) / position_info["price"] > tp_cfg["base_buy"]:
