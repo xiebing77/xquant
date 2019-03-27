@@ -50,6 +50,34 @@ class RealEngine(Engine):
 
         orders = self._db.find(self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol})
 
+        if len(orders) > 0:
+            now_ts = self.now().timestamp()
+
+            if orders[-1]["side"] == xq.SIDE_BUY:
+                if "high" not in orders[-1] or orders[-1]["high"] < cur_price:
+                    orders[-1]["high"] = cur_price
+                    orders[-1]["high_time"] = now_ts
+                    self._db.update_one(
+                        self.db_orders_name,
+                        orders[-1]["_id"],
+                        {
+                            "high": cur_price,
+                            "high_time": now_ts,
+                        },
+                    )
+
+                if "low" not in orders[-1] or orders[-1]["low"] > cur_price:
+                    orders[-1]["low"] = cur_price
+                    orders[-1]["low_time"] = now_ts
+                    self._db.update_one(
+                        self.db_orders_name,
+                        orders[-1]["_id"],
+                        {
+                            "low": cur_price,
+                            "low_time": now_ts,
+                        },
+                    )
+
         return self._get_position(symbol, orders, cur_price)
 
     def has_open_orders(self, symbol):
