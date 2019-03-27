@@ -85,6 +85,9 @@ class Engine:
                 info["value"] += deal_value
                 info["commission"] += commission
 
+                info["high"] = order["high"]
+                info["low"] = order["low"]
+
             elif order["side"] == xq.SIDE_SELL:
                 info["amount"] -= deal_amount
                 info["value"] -= deal_value
@@ -150,9 +153,17 @@ class Engine:
         return info
 
     def risk_control(self, position_info, cur_price):
-        """ 风控，用于止损 """
-        rc_signals = []
+        """ 风控 """
+        if position_info["amount"] == 0:
+            return []
 
+        sl_signals = self.stop_loss(position_info, cur_price)
+        tp_signals = self.take_profit(position_info, cur_price)
+        return sl_signals + tp_signals
+
+    def stop_loss(self, position_info, cur_price):
+        """ 止损 """
+        sl_signals = []
         # 风控第一条：亏损金额超过额度的10%，如额度1000，亏损金额超过100即刻清仓
         limit_mode = self.config["mode"]
         limit_value = self.value
@@ -163,20 +174,31 @@ class Engine:
         else:
             self.log_error("请选择额度模式，默认是0")
 
-        loss_limit = limit_value * 0.1
-        if loss_limit + position_info["profit"] <= 0:
-            rc_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "风控平仓", "亏损金额超过额度的10%", ts.get_next_open_timedelta(self.now())))
+        sl_cfg = self.config["risk_control"]["stop_loss"]
+
+        if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["profit"] <= 0:
+            sl_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), ts.get_next_open_timedelta(self.now())))
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
-        if pst_price > 0 and cur_price / pst_price <= 0.9:
-            rc_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "风控平仓", "当前价低于持仓均价的90%"))
+        if pst_price > 0 and "base_price" in sl_cfg and sl_cfg["base_price"] > 0 and cur_price / pst_price  <= (1 - sl_cfg["base_price"]):
+            sl_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"])))
 
-        return rc_signals
+        return sl_signals
 
-    '''
-    def loss_control():
-        """ 用于止盈 """
+    def take_profit(self, position_info, cur_price):
+        """ 止盈 """
+        tp_signals = []
+
+        tp_cfg = self.config["risk_control"]["take_profit"]
+        if "base_buy" in tp_cfg and tp_cfg["base_buy"] > 0 and (position_info["high"] - cur_price) / position_info["price"] > tp_cfg["base_buy"]:
+            tp_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "止盈", "盈利回落，基于持仓价的{:8.2%}".format(tp_cfg["base_buy"])))
+
+        if "base_high" in tp_cfg and tp_cfg["base_high"] > 0 and cur_price / position_info["high"] < (1 - tp_cfg["base_high"]):
+            tp_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "止盈", "盈利回落，基于最高价的{:8.2%}".format(tp_cfg["base_high"])))
+
+        return tp_signals
+        """
             if position_info["amount"] > 0:
         today_fall_rate = ts.cacl_today_fall_rate(klines, cur_price)
         if today_fall_rate > 0.1:
@@ -199,7 +221,7 @@ class Engine:
             check_signals.append(
                 xq.create_signal(xq.SIDE_SELL, 0.5, "减仓：当前价距离周期内最高价回落5%")
             )
-    '''
+        """
 
     def handle_order(self, symbol, cur_price, check_signals):
         """ 处理委托 """
@@ -373,6 +395,7 @@ class Engine:
 
         orders = self.calc_order(symbol, orders)
 
+        print_switch_hl = True
         print_switch_deal = False
         print_switch_commission = False
         print_switch_profit = False
@@ -380,6 +403,9 @@ class Engine:
         title = "  id"
         title += "  profit_rate(total)"
         title += "          create_time  side             price"
+
+        if print_switch_hl:
+            title += "  (                                         )"
 
         if print_switch_deal:
             title += "  deal_amount  deal_value"
@@ -407,6 +433,21 @@ class Engine:
                     order["pst_rate"],
                     order["deal_value"]/order["deal_amount"],
                 )
+            if print_switch_hl:
+                total_cost_rate = 1 + 2 * self.config["commission_rate"]
+                if "high" in order:
+                    deal_price = order["deal_value"]/order["deal_amount"]
+                    info += "  ({:8.2%}".format(
+                        order["high"] / deal_price - total_cost_rate,
+                    )
+                    info += "  %10g, %s)" % (order["high"], datetime.fromtimestamp(order["high_time"]))
+                else:
+                    pre_deal_price = pre_order["deal_value"]/pre_order["deal_amount"]
+                    info += "  ({:8.2%}".format(
+                        pre_order["low"] / pre_deal_price - total_cost_rate,
+                    )
+                    info += "  %10g, %s)" % (pre_order["low"], datetime.fromtimestamp(pre_order["low_time"]))
+
             if print_switch_deal:
                 info += "  %11g  %10g" % (
                         order["deal_amount"],
@@ -423,6 +464,7 @@ class Engine:
                     )
             info += "  %s" % (order["rmk"])
 
+            pre_order = order
             print(info)
 
         orders_df = pd.DataFrame(orders)

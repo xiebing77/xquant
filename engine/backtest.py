@@ -314,6 +314,14 @@ class BackTest(Engine):
 
     def get_position(self, symbol, cur_price):
         """ 获取持仓信息 """
+        if len(self.orders) > 0:
+            if self.orders[-1]["side"] == xq.SIDE_BUY:
+                if "high" not in self.orders[-1] or self.orders[-1]["high"] < cur_price:
+                    self.orders[-1]["high"] = cur_price
+                    self.orders[-1]["high_time"] = self.now().timestamp()
+                if "low" not in self.orders[-1] or self.orders[-1]["low"] > cur_price:
+                    self.orders[-1]["low"] = cur_price
+                    self.orders[-1]["low_time"] = self.now().timestamp()
         return self._get_position(symbol, self.orders, cur_price)
 
     def send_order_limit(
