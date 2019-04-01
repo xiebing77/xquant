@@ -9,7 +9,7 @@ def py_ma(klines, index, period):
     for kline in klines[-period:]:
         vs.append(float(kline[index]))
     """
-    vs = [ kline[index] for kline in klines]
+    vs = [ float(kline[index]) for kline in klines[-period:]]
 
     return sum(vs)/len(vs)
 
