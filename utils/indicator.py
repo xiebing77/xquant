@@ -4,6 +4,16 @@ import numpy as np
 import pandas as pd
 
 def py_ma(klines, index, period):
+    """
+    vs = []
+    for kline in klines[-period:]:
+        vs.append(float(kline[index]))
+    """
+    vs = [ kline[index] for kline in klines]
+
+    return sum(vs)/len(vs)
+
+def py_mas(klines, index, period):
     arr = []
     vs = []
     for kline in klines:
@@ -142,17 +152,20 @@ def pd_macd(klines_df, fastperiod=12, slowperiod=26, signalperiod=9):
 
     #print(klines_df)
 
-def py_hl(klines, highindex, lowindex, period):
+def py_hl(klines, highindex, lowindex, opentimeindex, period):
 
     max_high = float(klines[-1][highindex])
     min_low = float(klines[-1][lowindex])
+    high_time = low_time = klines[-1][opentimeindex]
     for kline in klines[-period:-1]:
         if max_high < float(kline[highindex]):
             max_high = float(kline[highindex])
+            high_time = kline[opentimeindex]
         if min_low > float(kline[lowindex]):
             min_low = float(kline[lowindex])
+            low_time = kline[opentimeindex]
 
-    return max_high, min_low
+    return max_high, high_time, min_low, low_time
 
 def py_wr(klines, highindex, lowindex, closeindex, period=14):
 
