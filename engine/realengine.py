@@ -137,7 +137,7 @@ class RealEngine(Engine):
                 if self.__exchange.order_status_is_close(symbol, order_id):
                     status = xq.ORDER_STATUS_CLOSE
             self.log_debug("deal_amount: %f,  deal_value: %g,  deal_price: %g" % (deal_amount, deal_value, deal_value/deal_amount))
-            self._db.update_one(
+            self.td_db.update_one(
                 DB_ORDERS_NAME,
                 order["_id"],
                 {
