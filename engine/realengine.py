@@ -57,7 +57,7 @@ class RealEngine(Engine):
                 if "high" not in orders[-1] or orders[-1]["high"] < cur_price:
                     orders[-1]["high"] = cur_price
                     orders[-1]["high_time"] = now_ts
-                    self._db.update_one(
+                    self.td_db.update_one(
                         self.db_orders_name,
                         orders[-1]["_id"],
                         {
