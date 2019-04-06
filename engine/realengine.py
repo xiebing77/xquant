@@ -48,7 +48,7 @@ class RealEngine(Engine):
         """ 获取持仓信息 """
         self.sync_orders(symbol)
 
-        orders = self._db.find(self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol})
+        orders = self.td_db.find(self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol})
 
         if len(orders) > 0:
             now_ts = self.now().timestamp()
@@ -69,7 +69,7 @@ class RealEngine(Engine):
                 if "low" not in orders[-1] or orders[-1]["low"] > cur_price:
                     orders[-1]["low"] = cur_price
                     orders[-1]["low_time"] = now_ts
-                    self._db.update_one(
+                    self.td_db.update_one(
                         self.db_orders_name,
                         orders[-1]["_id"],
                         {
@@ -82,7 +82,7 @@ class RealEngine(Engine):
 
     def has_open_orders(self, symbol):
         """ 是否有open状态的委托 """
-        db_orders = self._db.find(
+        db_orders = self.td_db.find(
             DB_ORDERS_NAME,
             {
                 "instance_id": self.instance_id,
@@ -98,7 +98,7 @@ class RealEngine(Engine):
         """ 同步委托。注意：触发是本策略有未完成的委托，但同步是account下所有委托，避免重复查询成交 """
         if not self.has_open_orders(symbol):
             return
-        orders = self._db.find(
+        orders = self.td_db.find(
             DB_ORDERS_NAME, {"symbol": symbol, "status": xq.ORDER_STATUS_OPEN}
         )
         if not orders:
@@ -185,7 +185,7 @@ class RealEngine(Engine):
             side, xq.ORDER_TYPE_LIMIT, symbol, limit_price, amount
         )
 
-        _id = self._db.insert_one(
+        _id = self.td_db.insert_one(
             DB_ORDERS_NAME,
             {
                 "create_time": self.now().timestamp(),
@@ -216,7 +216,7 @@ class RealEngine(Engine):
         orders = self.__exchange.get_open_orders(symbol)
         for order in orders:
             if order["instance_id"] == self.instance_id:
-                self._db.update_one(
+                self.td_db.update_one(
                     DB_ORDERS_NAME, order["_id"], {"status": xq.ORDER_STATUS_CANCELLING}
                 )
                 self.__exchange.cancel_order(symbol, order["order_id"])

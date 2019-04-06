@@ -14,6 +14,7 @@ def split_time_range(range):
 
 def add_common_arguments(description):
     parser = argparse.ArgumentParser(description='klines print or check')
+    parser.add_argument('-m', help='market data source')
     parser.add_argument('-s', help='symbol (btc_usdt)')
     parser.add_argument('-r', help='time range (2018-7-1' + time_range_split + '2018-8-1)')
     parser.add_argument('-k', help='kline type (1m、4h、1d...)')

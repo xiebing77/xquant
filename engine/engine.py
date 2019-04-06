@@ -10,7 +10,7 @@ from datetime import datetime,timedelta
 import common.log as log
 import utils.tools as ts
 import utils.indicator as ic
-from setup import mongo_user, mongo_pwd, db_name, db_url
+from setup import mongo_user, mongo_pwd, db_url
 import common.xquant as xq
 import db.mongodb as md
 from exchange.binanceExchange import BinanceExchange
@@ -23,21 +23,24 @@ class Engine:
     def __init__(self, instance_id, config, db_orders_name=None):
         self.instance_id = instance_id
         self.config = config
-        self._db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
-
-        self.value = 100
-
-        if db_orders_name:
-            self.db_orders_name = db_orders_name
-            self._db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
-
-        self.can_buy_time = None
 
         exchange = config["exchange"]
         if exchange == "binance":
             self.kline_column_names = BinanceExchange.get_kline_column_names()
         elif exchange == "okex":
             self.kline_column_names = OkexExchange.get_kline_column_names()
+
+        self.md_db = md.MongoDB(mongo_user, mongo_pwd, exchange, db_url)
+        self.td_db = md.MongoDB(mongo_user, mongo_pwd, "xquant", db_url)
+
+        self.value = 100
+
+        if db_orders_name:
+            self.db_orders_name = db_orders_name
+            self.td_db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
+
+        self.can_buy_time = None
+
 
     def log_info(self, info):
         log.info(info)
@@ -178,12 +181,12 @@ class Engine:
         sl_cfg = self.config["risk_control"]["stop_loss"]
 
         if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["profit"] <= 0:
-            sl_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), ts.get_next_open_timedelta(self.now())))
+            sl_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "  止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), ts.get_next_open_timedelta(self.now())))
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
         if pst_price > 0 and "base_price" in sl_cfg and sl_cfg["base_price"] > 0 and cur_price / pst_price  <= (1 - sl_cfg["base_price"]):
-            sl_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"])))
+            sl_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "  止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"])))
 
         return sl_signals
 
@@ -196,10 +199,10 @@ class Engine:
 
         tp_cfg = self.config["risk_control"]["take_profit"]
         if "base_buy" in tp_cfg and tp_cfg["base_buy"] > 0 and (position_info["high"] - cur_price) / position_info["price"] > tp_cfg["base_buy"]:
-            tp_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "止盈", "盈利回落，基于持仓价的{:8.2%}".format(tp_cfg["base_buy"])))
+            tp_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "  止盈", "盈利回落，基于持仓价的{:8.2%}".format(tp_cfg["base_buy"])))
 
         if "base_high" in tp_cfg and tp_cfg["base_high"] > 0 and cur_price / position_info["high"] < (1 - tp_cfg["base_high"]):
-            tp_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "止盈", "盈利回落，基于最高价的{:8.2%}".format(tp_cfg["base_high"])))
+            tp_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "  止盈", "盈利回落，基于最高价的{:8.2%}".format(tp_cfg["base_high"])))
 
         return tp_signals
         """

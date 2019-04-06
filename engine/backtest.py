@@ -35,7 +35,7 @@ class BackTest(Engine):
 
     def __get_klines(self, collection, s_time, e_time):
         """ 获取k线 """
-        ks = self._db.find(
+        ks = self.md_db.find(
             collection,
             {
                 "open_time": {

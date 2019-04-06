@@ -14,7 +14,7 @@ if __name__ == "__main__":
     parser = add_common_arguments('Binance Importer')
     args = parser.parse_args()
     # print(args)
-    if not (args.s and args.k):
+    if not (args.s and args.k and args.m):
         parser.print_help()
         exit(1)
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     collection = xq.get_kline_collection(symbol, args.k)
     #print("collection: ", collection)
 
-    db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
+    db = md.MongoDB(mongo_user, mongo_pwd, args.m, db_url)
     db.ensure_index(collection, [("open_time",1)], unique=True)
 
     # 注意，下面代码有隐患，在上午8点前取1d、12h时，最后的一个是不完整的，后续再整改
@@ -36,7 +36,11 @@ if __name__ == "__main__":
         start_time = (datetime.fromtimestamp(klines[0]["open_time"]/1000) + interval).replace(hour=0,minute=0,second=0,microsecond=0)
         end_time = datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
 
-    exchange = BinanceExchange(debug=True)
+    if args.m == "binance":
+        exchange = BinanceExchange(debug=True)
+    else:
+        print("market data source error!")
+        return
 
     size = 1000
     tmp_time = start_time

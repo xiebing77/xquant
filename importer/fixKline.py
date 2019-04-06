@@ -34,7 +34,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # print(args)
 
-    if not (args.s and args.r and args.k):
+    if not (args.s and args.r and args.k and args.m):
         parser.print_help()
         exit(1)
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     if tick_time < start_time:
         tick_time = xq.get_open_time(interval, start_time+td)
 
-    db = md.MongoDB(mongo_user, mongo_pwd, db_name, db_url)
+    db = md.MongoDB(mongo_user, mongo_pwd, args.m, db_url)
 
     target_len = int((int(end_time.timestamp()) - int(start_time.timestamp())) / period)
     print("Target length:", target_len)
