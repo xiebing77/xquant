@@ -95,11 +95,15 @@ class BackTest(Engine):
 
         return ks + k
 
-    def get_klines(self, symbol, interval, size, since=None):
+    def get_json_klines(self, symbol, interval, size, since=None):
         if interval == xq.KLINE_INTERVAL_1MINUTE:
             klines = self.get_klines_1min(symbol, interval, size, since)
         else:
             klines = self.__join_klines(symbol, interval, size, since)
+        return klines
+
+    def get_klines(self, symbol, interval, size, since=None):
+        klines = self.get_json_klines(symbol, interval, size, since)
         return [[(kline[column_name] if (column_name in kline) else "0") for column_name in self.get_kline_column_names()] for kline in klines]
 
     def get_klines_1min(self, symbol, interval, size, since=None):
@@ -134,6 +138,8 @@ class BackTest(Engine):
         if interval in self.k1ms_cache:
             self.k1ms_cache[interval] += k1ms
         else:
+            if len(k1ms) == 0:
+                return []
             self.k1ms_cache[interval] = k1ms
         return self.k1ms_cache[interval]
 
