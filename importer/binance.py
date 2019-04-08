@@ -40,7 +40,7 @@ if __name__ == "__main__":
         exchange = BinanceExchange(debug=True)
     else:
         print("market data source error!")
-        return
+        exit(1)
 
     size = 1000
     tmp_time = start_time

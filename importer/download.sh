@@ -22,7 +22,7 @@ do
         for kline_type in ${kline_types[*]}
         do
             #echo $kline_type
-            echo "downloading  ${range}  ${symble}  ${kline_type}"
+            echo "downloading  ${range}  ${md}  ${symble}  ${kline_type}"
             if [ $range ]
             then
                 python3.6 binance.py -m $md -s $symble -k $kline_type -r $range
