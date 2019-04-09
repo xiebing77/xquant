@@ -35,6 +35,8 @@ if __name__ == "__main__":
         klines = db.find_sort(collection, {}, 'open_time', -1, 1)
         if len(klines) > 0:
             start_time = (datetime.fromtimestamp(klines[0]["open_time"]/1000) + interval).replace(hour=0,minute=0,second=0,microsecond=0)
+        else:
+            start_time = None
         end_time = datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
 
     if args.m == "binance":
