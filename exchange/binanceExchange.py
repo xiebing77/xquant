@@ -1,6 +1,7 @@
 #!/usr/bin/python
 """binance适配对接"""
 import os
+from datetime import datetime
 import common.log as log
 import pandas as pd
 import common.xquant as xq
@@ -14,6 +15,8 @@ secret_key = os.environ.get('BINANCE_SECRET_KEY')
 
 class BinanceExchange(Exchange):
     """BinanceExchange"""
+    start_time = datetime(2017, 8, 17)
+
     def __init__(self, debug=False):
         self.__client = Client(api_key, secret_key)
 

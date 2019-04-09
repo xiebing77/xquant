@@ -105,52 +105,6 @@ def py_kdj(klines, highindex, lowindex, closeindex, period=9):
     #print(kdjarr)
     return kdj_arr
 
-def py_kdj2(klines, highindex, lowindex, closeindex, period=9):
-    M1 = 3
-    M2 = 3
-
-    kdj_arr = []
-
-    kline = klines[0]
-    close = float(kline[closeindex])
-    high = float(kline[highindex])
-    low = float(kline[lowindex])
-    if high > low:
-        rsv = (close - low) / (high - low) * 100
-    else:
-        rsv = 0
-    kline["rsv"] = rsv
-    kline["k"] = rsv
-    kline["d"] = rsv
-    kline["j"] = rsv
-    klines[0] = kline
-
-    pre_kline = kline
-    highs = [high]
-    lows = [low]
-    for idx, kline in enumerate(klines[1:]):
-        if len(highs) >= period:
-            highs.pop(0)
-            lows.pop(0)
-
-        highs.append(float(kline[highindex]))
-        lows.append(float(kline[lowindex]))
-        close = float(kline[closeindex])
-        min_low = min(lows)
-        rsv = (close - min_low) / (max(highs) - min_low) * 100
-
-        k = 1 / M1 * rsv + (M1 - 1) / M1 * pre_kline["k"]
-        d = 1 / M2 * k + (M2 - 1) / M2 * pre_kline["d"]
-        j = 3 * k - 2 * d
-
-        kline["rsv"] = rsv
-        kline["k"] = k
-        kline["d"] = d
-        kline["j"] = j
-        klines[idx] = kline
-        pre_kline = kline
-
-    return klines
 
 def np_kdj(klines, N=9):
     M1 = 3
