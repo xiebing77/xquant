@@ -521,7 +521,10 @@ class Engine:
 
         win_count = len(win_df)
         fail_count = len(loss_df)
-        win_rate = win_count / (win_count + fail_count)
+        if win_count > 0 or fail_count > 0:
+            win_rate = win_count / (win_count + fail_count)
+        else:
+            win_rate = 0
         print("win count: %g, loss count: %g, win rate: %4.2f%%" % (win_count, fail_count, round(win_rate*100, 2)))
 
         w_profit_rates = win_df["profit_rate"]
