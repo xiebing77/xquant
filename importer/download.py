@@ -60,4 +60,4 @@ if __name__ == "__main__":
             for item in klines_df.to_dict('records'):
                 db.insert_one(collection, item)
 
-        tmp_time = datetime.fromtimestamp(klines_df["open_time"][-1]/1000) + interval
+        tmp_time = datetime.fromtimestamp(klines_df["open_time"].values[-1]/1000) + interval
