@@ -25,9 +25,9 @@ do
             echo "downloading  ${range}  ${md}  ${symble}  ${kline_type}"
             if [ $range ]
             then
-                python3.6 binance.py -m $md -s $symble -k $kline_type -r $range
+                python3.6 download.py -m $md -s $symble -k $kline_type -r $range
             else
-                python3.6 binance.py -m $md -s $symble -k $kline_type
+                python3.6 download.py -m $md -s $symble -k $kline_type
             fi
         done
     done
