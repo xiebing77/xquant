@@ -72,6 +72,11 @@ if __name__ == "__main__":
         klines_df = pd.DataFrame(klines, columns=exchange.get_kline_column_names())
         klen = len(klines)
         print("klines len: ", klen)
+        for i in range(klen-1, -1, -1):
+            last_open_time = datetime.fromtimestamp(klines_df["open_time"].values[i]/1000)
+            if last_open_time + interval <= end_time:
+                break
+            klines_df.drop([i])
 
         if not db.insert_many(collection, klines_df.to_dict('records')):
             for item in klines_df.to_dict('records'):
