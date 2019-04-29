@@ -48,7 +48,7 @@ if __name__ == "__main__":
         exit(1)
 
     if start_time.hour != open_hour:
-        print("open time hour error! %s open time hour: %s" % (args.m, open_hour))
+        print("open time(%s) hour error! %s open time hour: %s" % (start_time, args.m, open_hour))
         exit(1)
 
     if end_time.hour < open_hour:
