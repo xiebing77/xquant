@@ -47,11 +47,18 @@ if __name__ == "__main__":
         print("market data source error!")
         exit(1)
 
+    size = 1000
     tmp_time = start_time
     while tmp_time < end_time:
         print(tmp_time, end="    ")
+        size_interval = size * interval
+        if (tmp_time + size_interval) > end_time:
+            batch = int((end_time - tmp_time)/interval)
+        else:
+            batch = size
+         # print(batch)
 
-        klines = exchange.get_klines(symbol, args.k, size=1000, since=1000*int(tmp_time.timestamp()))
+        klines = exchange.get_klines(symbol, args.k, size=batch, since=1000*int(tmp_time.timestamp()))
         klines_df = pd.DataFrame(klines, columns=exchange.get_kline_column_names())
         klen = len(klines)
         print("klines len: ", klen)
@@ -60,4 +67,7 @@ if __name__ == "__main__":
             for item in klines_df.to_dict('records'):
                 db.insert_one(collection, item)
 
-        tmp_time = datetime.fromtimestamp(klines_df["open_time"].values[-1]/1000) + interval
+        last_time = datetime.fromtimestamp(klines_df["open_time"].values[-1]/1000) + interval
+        if last_time > tmp_time + batch * interval:
+            batch = (last_time - tmp_time)/interval
+        tmp_time += batch * interval
