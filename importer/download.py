@@ -27,19 +27,19 @@ if __name__ == "__main__":
     db = md.MongoDB(mongo_user, mongo_pwd, args.m, db_url)
     db.ensure_index(collection, [("open_time",1)], unique=True)
 
-    # 注意，下面代码有隐患，在上午2点前取6h，8点前取1d、12h时，最后的一个是不完整的，后续再整改
     if args.r:
         start_time, end_time = split_time_range(args.r)
     else:
         # 续接db中最后一条记录，至今天之前
         klines = db.find_sort(collection, {}, 'open_time', -1, 1)
         if len(klines) > 0:
-            start_time = (datetime.fromtimestamp(klines[0]["open_time"]/1000) + interval).replace(hour=0,minute=0,second=0,microsecond=0)
+            start_time = (datetime.fromtimestamp(klines[0]["open_time"]/1000) + interval)
         else:
             start_time = None
-        end_time = datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
+        end_time = datetime.now()
 
     if args.m == "binance":
+        open_hour = BinanceExchange.start_time.hour
         exchange = BinanceExchange(debug=True)
         if not start_time:
             start_time = BinanceExchange.start_time
@@ -47,10 +47,20 @@ if __name__ == "__main__":
         print("market data source error!")
         exit(1)
 
+    if start_time.hour != open_hour:
+        print("open time hour error! %s open time hour: %s" % (args.m, open_hour))
+        exit(1)
+
+    if end_time.hour < open_hour:
+        end_time -= timedelta(days=1)
+    end_time.replace(hour=open_hour, minute=0, second=0, microsecond=0)
+    print("download time range(%s ~ %s)" % (start_time, end_time))
+
     size = 1000
     tmp_time = start_time
     while tmp_time < end_time:
         print(tmp_time, end="    ")
+
         size_interval = size * interval
         if (tmp_time + size_interval) > end_time:
             batch = int((end_time - tmp_time)/interval)
