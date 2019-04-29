@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     if end_time.hour < open_hour:
         end_time -= timedelta(days=1)
-    end_time.replace(hour=open_hour, minute=0, second=0, microsecond=0)
+    end_time = end_time.replace(hour=open_hour, minute=0, second=0, microsecond=0)
     print("download time range(%s ~ %s)" % (start_time, end_time))
 
     size = 1000
