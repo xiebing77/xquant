@@ -54,7 +54,7 @@ if __name__ == "__main__":
     if end_time.hour < open_hour:
         end_time -= timedelta(days=1)
     end_time = end_time.replace(hour=open_hour, minute=0, second=0, microsecond=0)
-    print("download time range(%s ~ %s)" % (start_time, end_time))
+    print("time range:  %s ~ %s " % (start_time, end_time))
 
     size = 1000
     tmp_time = start_time
@@ -76,7 +76,9 @@ if __name__ == "__main__":
             last_open_time = datetime.fromtimestamp(klines_df["open_time"].values[i]/1000)
             if last_open_time + interval <= end_time:
                 break
-            klines_df.drop([i])
+            klines_df = klines_df.drop([i])
+            # last_kline = klines[i]
+            # print("%s  %s" % (datetime.fromtimestamp(last_kline[0]/1000),last_kline))
 
         if not db.insert_many(collection, klines_df.to_dict('records')):
             for item in klines_df.to_dict('records'):
@@ -84,5 +86,5 @@ if __name__ == "__main__":
 
         last_time = datetime.fromtimestamp(klines_df["open_time"].values[-1]/1000) + interval
         if last_time > tmp_time + batch * interval:
-            batch = (last_time - tmp_time)/interval
+            batch = int((last_time - tmp_time)/interval)
         tmp_time += batch * interval
