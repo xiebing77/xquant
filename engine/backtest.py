@@ -321,7 +321,7 @@ class BackTest(Engine):
     def get_position(self, symbol, cur_price):
         """ 获取持仓信息 """
         if len(self.orders) > 0:
-            if self.orders[-1]["side"] == xq.SIDE_BUY:
+            if self.orders[-1]["action"] == xq.OPEN_POSITION:
                 if "high" not in self.orders[-1] or self.orders[-1]["high"] < cur_price:
                     self.orders[-1]["high"] = cur_price
                     self.orders[-1]["high_time"] = self.now().timestamp()
@@ -331,7 +331,7 @@ class BackTest(Engine):
         return self._get_position(symbol, self.orders, cur_price)
 
     def send_order_limit(
-        self, side, symbol, pst_rate, cur_price, limit_price, amount, rmk
+        self, direction, action, symbol, pst_rate, cur_price, limit_price, amount, rmk
     ):
         """ 提交委托，回测默认以当前价全部成交 """
         # order_id = uuid.uuid1()
@@ -340,7 +340,8 @@ class BackTest(Engine):
             "create_time": self.now().timestamp(),
             "instance_id": self.instance_id,
             "symbol": symbol,
-            "side": side,
+            "direction": direction,
+            "action": action,
             "pst_rate": pst_rate,
             "type": xq.ORDER_TYPE_LIMIT,
             "market_price": cur_price,

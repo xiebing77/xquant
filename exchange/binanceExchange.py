@@ -29,14 +29,19 @@ class BinanceExchange(Exchange):
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         return '%s%s' % (self.__get_coinkey(target_coin), self.__get_coinkey(base_coin))
 
-    def __trans_side(self, side):
+    def __trans_side(self, direciton, action):
         """转换为binance格式的side"""
-        if side == xq.SIDE_BUY:
-            return SIDE_BUY
-        elif side == xq.SIDE_SELL:
-            return SIDE_SELL
-        else:
-            return None
+        if direciton == xq.DIRECTION_LONG:
+            if action == xq.OPEN_POSITION:
+                return SIDE_BUY
+            elif action == xq.CLOSE_POSITION:
+                return SIDE_SELL
+        elif direciton == xq.DIRECTION_SHORT:
+            if action == xq.OPEN_POSITION:
+                return SIDE_SELL
+            elif action == xq.CLOSE_POSITION:
+                return SIDE_BUY
+        return None
 
     def __trans_type(self, type):
         """转换为binance格式的type"""
@@ -150,11 +155,11 @@ class BinanceExchange(Exchange):
         df_s = df.groupby('orderId')['qty', 'value'].sum()
         return df_s['qty'], df_s['value']
 
-    def send_order(self, side, type, symbol, price, amount, client_order_id=None):
+    def send_order(self, direciton, action, type, symbol, price, amount, client_order_id=None):
         """提交委托"""
         exchange_symbol = self.__trans_symbol(symbol)
 
-        binance_side = self.__trans_side(side)
+        binance_side = self.__trans_side(direciton, action)
         if binance_side is None:
             return
         binance_type = self.__trans_type(type)

@@ -4,8 +4,13 @@
 import utils.tools as ts
 from datetime import datetime, timedelta, time
 
-SIDE_BUY = "BUY"
-SIDE_SELL = "SELL"
+
+DIRECTION_LONG = "LONG"   # 做多
+DIRECTION_SHORT = "SHORT"  # 做空
+
+OPEN_POSITION = "OPEN"    # 开仓
+CLOSE_POSITION = "CLOSE"   # 平仓
+
 
 KLINE_INTERVAL_1MINUTE = '1m'
 KLINE_INTERVAL_3MINUTE = '3m'
@@ -221,73 +226,52 @@ def get_balance_frozen(balance):
     return ts.str_to_float(balance["frozen"])
 
 
-def create_signal(side, pst_rate, describe, rmk, can_buy_after=None):
+def create_signal(direction, action, pst_rate, describe, rmk, can_open_time=None):
     """创建交易信号"""
-    return {"side": side, "pst_rate": pst_rate, "describe": describe, "rmk": rmk, "can_buy_after": can_buy_after}
+    return {"direction": direction, "action": action, "pst_rate": pst_rate, "describe": describe, "rmk": rmk, "can_open_time": can_open_time}
 
-def create_buy_signal(pst_rate, describe, rmk, can_buy_after=None):
+def open_long_signal(pst_rate, describe, rmk, can_open_time=None):
     """创建买信号"""
-    return create_signal(SIDE_BUY, pst_rate, describe, rmk, can_buy_after)
+    return create_signal(DIRECTION_LONG, OPEN_POSITION, pst_rate, describe, rmk, can_open_time)
 
-def create_sell_signal(pst_rate, describe, rmk, can_buy_after=None):
+def close_long_signal(pst_rate, describe, rmk, can_open_time=None):
     """创建卖信号"""
-    return create_signal(SIDE_SELL, pst_rate, describe, rmk, can_buy_after)
+    return create_signal(DIRECTION_LONG, CLOSE_POSITION, pst_rate, describe, rmk, can_open_time)
+
+def open_short_signal(pst_rate, describe, rmk, can_open_time=None):
+    """创建买信号"""
+    return create_signal(DIRECTION_SHORT, OPEN_POSITION, pst_rate, describe, rmk, can_open_time)
+
+def close_short_signal(pst_rate, describe, rmk, can_open_time=None):
+    """创建卖信号"""
+    return create_signal(DIRECTION_SHORT, CLOSE_POSITION, pst_rate, describe, rmk, can_open_time)
 
 
 def decision_signals(signals):
     """决策交易信号"""
-    sdf = pd.DataFrame(signals)
-    sdf_min = sdf.groupby("side")["pst_rate"].min()
-
-    if xq.SIDE_SELL in sdf_min:
-        return xq.SIDE_SELL, sdf_min[xq.SIDE_SELL]
-
-    if xq.SIDE_BUY in sdf_min:
-        return xq.SIDE_BUY, sdf_min[xq.SIDE_BUY]
-
-    return None, None
-
-
-def decision_signals2(signals):
-    """决策交易信号"""
     if not signals:
-        return None, None, None, None, None
+        return None
 
-    side = None
-    for signal in signals:
-        new_side = signal["side"]
-        new_rate = signal["pst_rate"]
-        new_desc = signal["describe"]
-        new_rmk = signal["rmk"]
-        new_cba = signal["can_buy_after"]
+    ds_signal = signals[0]
 
-        if side is None:
-            side = new_side
-            rate = new_rate
-            desc = new_desc
-            rmk = new_rmk
-            cba = new_cba
-        elif side is new_side:
-            if rate > new_rate:
-                rate = new_rate
-                desc = new_desc
-                rmk = new_rmk
-            elif rate == new_rate:
-                desc += ", " + new_desc
-                rmk += ", " + new_rmk
-                if new_cba:
-                    if cba:
-                        if new_cba > cba:
-                            cba = new_cba
-                    else:
-                        cba = new_cba
+    for signal in signals[1:]:
+        # 暂时不支持同时做多、做空
+        if ds_signal["direction"] != signal["direction"]:
+            return None
 
+        if ds_signal["action"] == signal["action"]:
+            # 持仓率低的信号优先
+            if ds_signal["action"] > signal["pst_rate"]:
+                ds_signal = signal
+            elif ds_signal["action"] == signal["pst_rate"]:
+                ds_signal["describe"] += ", " + signal["describe"]
+                ds_signal["rmk"] += ", " + signal["rmk"]
+                # 限制开仓时间长的优先
+                if ds_signal["can_open_time"] < signal["can_open_time"]:
+                    ds_signal["can_open_time"] = signal["can_open_time"]
         else:
-            if side is SIDE_BUY:
-                side = new_side
-                rate = new_rate
-                desc = new_desc
-                rmk = new_rmk
-                cba = new_cba
+            # 平仓信号优先于开仓信号
+            if ds_signal["action"] == OPEN_POSITION:
+                ds_signal = signal
 
-    return side, rate, desc, rmk, cba
+    return ds_signal

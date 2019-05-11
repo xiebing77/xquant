@@ -53,7 +53,7 @@ class RealEngine(Engine):
         if len(orders) > 0:
             now_ts = self.now().timestamp()
 
-            if orders[-1]["side"] == xq.SIDE_BUY:
+            if orders[-1]["action"] == xq.OPEN_POSITION:
                 if "high" not in orders[-1] or orders[-1]["high"] < cur_price:
                     orders[-1]["high"] = cur_price
                     orders[-1]["high_time"] = now_ts
@@ -149,7 +149,7 @@ class RealEngine(Engine):
         return
 
     def send_order_limit(
-        self, side, symbol, pst_rate, cur_price, limit_price, amount, rmk
+        self, direction, action, symbol, pst_rate, cur_price, limit_price, amount, rmk
     ):
         """ 提交委托 """
         """
@@ -182,7 +182,7 @@ class RealEngine(Engine):
         """
         # 暂时简单处理
         order_id = self.__exchange.send_order(
-            side, xq.ORDER_TYPE_LIMIT, symbol, limit_price, amount
+            direction, action, xq.ORDER_TYPE_LIMIT, symbol, limit_price, amount
         )
 
         _id = self.td_db.insert_one(
@@ -191,7 +191,8 @@ class RealEngine(Engine):
                 "create_time": self.now().timestamp(),
                 "instance_id": self.instance_id,
                 "symbol": symbol,
-                "side": side,
+                "direction": direction,
+                "action": action,
                 "pst_rate": pst_rate,
                 "type": xq.ORDER_TYPE_LIMIT,
                 "market_price": cur_price,

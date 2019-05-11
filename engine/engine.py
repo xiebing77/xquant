@@ -39,7 +39,7 @@ class Engine:
             self.db_orders_name = db_orders_name
             self.td_db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
 
-        self.can_buy_time = None
+        self.can_open_time = None
 
 
     def log_info(self, info):
@@ -60,68 +60,33 @@ class Engine:
     def get_kline_column_names(self):
         return self.kline_column_names
 
+    def get_floating_profit(self, direction, amount, value, commission, cur_price):
+        if direction == xq.DIRECTION_LONG:
+            cycle_profit = cur_price * amount + value
+        else:
+            cycle_profit = value - cur_price * amount
+
+        cycle_profit -= commission
+
+        return cycle_profit
+
     def _get_position(self, symbol, orders, cur_price):
-        info = {
-            "amount": 0,  # 数量
-            "price": 0,  # 平均价格，不包含佣金
-            "cost_price": 0,  # 分摊佣金后的成本价
-            "value": 0,  # 金额
-            "commission": 0,  # 佣金
-            "profit": 0,  # 当前利润
-            "history_profit": 0,  # 历史利润
-            "history_commission": 0,  # 历史佣金
-            "start_time": None,  # 本周期第一笔买入时间
-            "pst_rate": 0,  # 本次交易完成后要达到的持仓率
-        }
         target_coin, base_coin = xq.get_symbol_coins(symbol)
 
-        for order in orders:
-            deal_amount = order["deal_amount"]
-            deal_value = order["deal_value"]
-            commission = deal_value * self.config["commission_rate"]
+        info = self._get_position_from_orders(symbol, orders)
 
-            if order["side"] == xq.SIDE_BUY:
-                if info["amount"] == 0:
-                    info["start_time"] = datetime.fromtimestamp(order["create_time"])
+        total_profit = info["history_profit"]
+        if info["amount"] > 0:
+            cycle_profit = self.get_floating_profit(info["direction"], info["amount"], info["value"], info["commission"], cur_price)
+            total_profit + cycle_profit
 
-                info["amount"] += deal_amount
-                info["value"] += deal_value
-                info["commission"] += commission
+            open_value = self.value
+            if self.config["mode"] == 1:
+                open_value += info["history_profit"]
 
-                if "high" in order:
-                    info["high"] = order["high"]
-                    info["low"] = order["low"]
+            info["floating_profit"] = cycle_profit
+            info["floating_profit_rate"] = cycle_profit / open_value
 
-            elif order["side"] == xq.SIDE_SELL:
-                info["amount"] -= deal_amount
-                info["value"] -= deal_value
-                info["commission"] += commission
-            else:
-                self.log_error("错误的委托方向")
-                continue
-
-            info["amount"] = ts.reserve_float(info["amount"], self.config["digits"][target_coin])
-
-            if info["amount"] == 0:
-                info["history_profit"] -= info["value"] + info["commission"]
-                info["history_commission"] += info["commission"]
-                info["value"] = 0
-                info["commission"] = 0
-                info["start_time"] = None
-
-        if info["amount"] == 0:
-            pass
-        elif info["amount"] > 0:
-            info["profit"] = (
-                cur_price * info["amount"] - info["value"] - info["commission"]
-            )
-            info["price"] = info["value"] / info["amount"]
-            info["cost_price"] = (info["value"] + info["commission"]) / info["amount"]
-
-        else:
-            self.log_error("持仓数量不可能小于0")
-
-        info["limit_base_amount"] = self.value
         if orders:
             info["pst_rate"] = orders[-1]["pst_rate"]
 
@@ -136,21 +101,21 @@ class Engine:
                 info["cost_price"],
                 info["value"],
                 info["commission"],
-                info["limit_base_amount"],
-                info["profit"],
+                self.value,
+                info["floating_profit"],
             )
             if info["amount"]
             else "",
             "  profit rate: %g,"
-            % (info["profit"] / (info["value"] + info["commission"]))
+            % (info["floating_profit_rate"])
             if info["value"]
             else "",
             "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S")
-            if info["start_time"]
+            if "start_time" in info and info["start_time"]
             else "",
             info["history_profit"],
             info["history_commission"],
-            (info["profit"] + info["history_profit"]) / info["limit_base_amount"]
+            (total_profit / self.value)
             )
         )
         # print(info)
@@ -180,13 +145,13 @@ class Engine:
 
         sl_cfg = self.config["risk_control"]["stop_loss"]
 
-        if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["profit"] <= 0:
-            sl_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "  止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), ts.get_next_open_timedelta(self.now())))
+        if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["floating_profit"] <= 0:
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), ts.get_next_open_timedelta(self.now())))
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
         if pst_price > 0 and "base_price" in sl_cfg and sl_cfg["base_price"] > 0 and cur_price / pst_price  <= (1 - sl_cfg["base_price"]):
-            sl_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "  止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"])))
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), ts.get_next_open_timedelta(self.now())))
 
         return sl_signals
 
@@ -198,11 +163,23 @@ class Engine:
             return tp_cfg
 
         tp_cfg = self.config["risk_control"]["take_profit"]
-        if "base_buy" in tp_cfg and tp_cfg["base_buy"] > 0 and (position_info["high"] - cur_price) / position_info["price"] > tp_cfg["base_buy"]:
-            tp_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "  止盈", "盈利回落，基于持仓价的{:8.2%}".format(tp_cfg["base_buy"])))
 
-        if "base_high" in tp_cfg and tp_cfg["base_high"] > 0 and cur_price / position_info["high"] < (1 - tp_cfg["base_high"]):
-            tp_signals.append(xq.create_signal(xq.SIDE_SELL, 0, "  止盈", "盈利回落，基于最高价的{:8.2%}".format(tp_cfg["base_high"])))
+        if position_info["direction"] == xq.DIRECTION_LONG:
+            price_offset = position_info["high"] - cur_price
+        else:
+            price_offset = cur_price - position_info["low"]
+        #print("%s  %s"%(price_offset, position_info["price"]))
+
+        if "base_open" in tp_cfg and tp_cfg["base_open"] > 0 and price_offset / position_info["price"] > tp_cfg["base_open"]:
+            #print("%s  %s"%(price_offset, position_info["price"]))
+            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止盈", "盈利回落，基于持仓价的{:8.2%}".format(tp_cfg["base_open"])))
+
+        if position_info["direction"] == xq.DIRECTION_LONG:
+            price_rate = cur_price / position_info["high"]
+        else:
+            price_rate = position_info["low"] / cur_price
+        if "base_high" in tp_cfg and tp_cfg["base_high"] > 0 and price_rate < (1 - tp_cfg["base_high"]):
+            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止盈", "盈利回落，基于最高价的{:8.2%}".format(tp_cfg["base_high"])))
 
         return tp_signals
         """
@@ -235,45 +212,42 @@ class Engine:
         position_info = self.get_position(symbol, cur_price)
 
         rc_signals = self.risk_control(position_info, cur_price)
-        if xq.SIDE_BUY in rc_signals:
-            self.log_warning("风控方向不能为买")
-            return
-
         signals = rc_signals + check_signals
         if not signals:
             return
-
         for signal in signals:
             self.log_info("signal(%r)" % signal["describe"])
-        dcs_side, dcs_pst_rate, dcs_desc, dcs_rmk, dcs_cba = xq.decision_signals2(signals)
+
+        ds_signal = xq.decision_signals(signals)
         self.log_info(
-            "decision signal side(%s), position rate(%g), describe(%s), can buy after(%s)" % (
-            dcs_side,
-            dcs_pst_rate,
-            dcs_desc,
-            dcs_cba
+            "decision signal (%s  %s), position rate(%g), describe(%s), can buy after(%s)" % (
+            ds_signal["direction"],
+            ds_signal["action"],
+            ds_signal["pst_rate"],
+            ds_signal["describe"],
+            ds_signal["can_open_time"]
             )
         )
 
-        if dcs_side is None:
+        if ds_signal["action"] is None:
             return
 
-        if self.can_buy_time:
-            if self.now() < self.can_buy_time:
-                # 时间范围之内，只能卖，不能买
-                if dcs_side != xq.SIDE_SELL:
+        if self.can_open_time:
+            if self.now() < self.can_open_time:
+                # 限定的时间范围内，只能平仓，不能开仓
+                if ds_signal["action"] != xq.CLOSE_POSITION:
                     return
             else:
                 # 时间范围之外，恢复
-                self.can_buy_time = None
+                self.can_open_time = None
 
-        if dcs_cba:
-            if not self.can_buy_time or (self.can_buy_time and self.can_buy_time < self.now() + dcs_cba):
-                self.can_buy_time = self.now() + dcs_cba
-                self.log_info("can buy time: %s" % self.can_buy_time)
+        if ds_signal["can_open_time"]:
+            if not self.can_open_time or (self.can_open_time and self.can_open_time < self.now() + ds_signal["can_open_time"]):
+                self.can_open_time = self.now() + ds_signal["can_open_time"]
+                self.log_info("can buy time: %s" % self.can_open_time)
 
-        if dcs_pst_rate > 1 or dcs_pst_rate < 0:
-            self.log_warning("仓位率（%g）超出范围（0 ~ 1）" % dcs_pst_rate)
+        if ds_signal["pst_rate"] > 1 or ds_signal["pst_rate"] < 0:
+            self.log_warning("仓位率（%g）超出范围（0 ~ 1）" % ds_signal["pst_rate"])
             return
 
         limit_price_rate = self.config["limit_price_rate"]
@@ -287,129 +261,201 @@ class Engine:
             self.log_error("请选择额度模式，默认是0")
 
         target_coin, base_coin = xq.get_symbol_coins(symbol)
-        if dcs_side == xq.SIDE_BUY:
-            if position_info["pst_rate"] >= dcs_pst_rate:
+
+        if ds_signal["action"] == xq.OPEN_POSITION:
+            # 开仓
+            if "pst_rate" in position_info and position_info["pst_rate"] >= ds_signal["pst_rate"]:
                 return
 
-            buy_base_amount = (
-                limit_value * dcs_pst_rate
-                - position_info["value"]
-                - position_info["commission"]
-            )
-            if buy_base_amount <= 0:
+            pst_cost = abs(position_info["value"]) + position_info["commission"]
+            base_amount = limit_value * ds_signal["pst_rate"] - pst_cost
+            if base_amount <= 0:
                 return
 
-            base_balance = self.get_balances(base_coin)
-            self.log_info("base   balance:  %s" % base_balance)
-
-            buy_base_amount = min(xq.get_balance_free(base_balance), buy_base_amount)
-            self.log_info("buy_base_amount: %g" % buy_base_amount)
-            if buy_base_amount <= 0:  #
-                return
-
-            target_amount = ts.reserve_float(
-                buy_base_amount / (cur_price * (1 + self.config["commission_rate"])),
-                self.config["digits"][target_coin],
-            )
-
-            rate = limit_price_rate["buy"]
-
-        elif dcs_side == xq.SIDE_SELL:
-            if position_info["pst_rate"] <= dcs_pst_rate:
-                return
-
-            target_amount = ts.reserve_float(
-                position_info["amount"]
-                * (position_info["pst_rate"] - dcs_pst_rate)
-                / position_info["pst_rate"],
-                self.config["digits"][target_coin],
-            )
-
-            rate = limit_price_rate["sell"]
+            if ds_signal["direction"] == xq.DIRECTION_LONG:
+                # 做多开仓
+                base_balance = self.get_balances(base_coin)
+                self.log_info("base   balance:  %s" % base_balance)
+                base_amount = min(xq.get_balance_free(base_balance), base_amount)
+                self.log_info("base_amount: %g" % base_amount)
+                if base_amount <= 0:  #
+                    return
+                target_amount = base_amount / (cur_price * (1 + self.config["commission_rate"]))
+                rate = 1 + limit_price_rate["open"]
+            else:
+                # 做空开仓
+                target_balance = self.get_balances(target_coin)
+                self.log_info("target balance:  %s" % target_balance)
+                target_amount = min(xq.get_balance_free(target_balance), base_amount / cur_price)
+                self.log_info("target_amount: %g" % target_amount)
+                if target_amount <= 0:  #
+                    return
+                rate = 1 - limit_price_rate["open"]
         else:
-            return
+            # 平仓
+            if (not "pst_rate" in position_info) or position_info["pst_rate"] <= ds_signal["pst_rate"]:
+                return
 
-        self.log_info("%s target amount: %g" % (dcs_side, target_amount))
+            target_amount = abs(position_info["amount"]) * (position_info["pst_rate"] - ds_signal["pst_rate"]) / position_info["pst_rate"]
+
+            if ds_signal["direction"] == xq.DIRECTION_LONG:
+                # 做多平仓
+                rate = 1 - limit_price_rate["close"]
+            else:
+                # 做空平仓
+                rate = 1 + limit_price_rate["close"]
+
+        target_amount = ts.reserve_float(target_amount, self.config["digits"][target_coin])
+        self.log_info("%s %s target amount: %g" % (ds_signal["direction"], ds_signal["action"], target_amount))
         if target_amount <= 0:
             return
         limit_price = ts.reserve_float(cur_price * rate, self.config["digits"][base_coin])
-        order_rmk = dcs_desc+":  "+dcs_rmk
+        order_rmk = ds_signal["describe"] + ":  " + ds_signal["rmk"]
         order_id = self.send_order_limit(
-            dcs_side,
+            ds_signal["direction"],
+            ds_signal["action"],
             symbol,
-            dcs_pst_rate,
+            ds_signal["pst_rate"],
             cur_price,
             limit_price,
             target_amount,
-            "%s, timedelta: %s, can buy after: %s" % (order_rmk, dcs_cba, self.can_buy_time) if (dcs_cba or self.can_buy_time) else "%s" % (order_rmk),
+            "%s, timedelta: %s, can buy after: %s" % (order_rmk, ds_signal["can_open_time"], self.can_open_time) if (ds_signal["can_open_time"] or self.can_open_time) else "%s" % (order_rmk),
         )
         self.log_info(
             "current price: %g;  rate: %g;  order_id: %s" % (cur_price, rate, order_id)
         )
 
-    def calc_order(self, symbol, orders):
-        amount = 0
-        buy_value = 0
-        sell_value = 0
-        buy_commission = 0
-        sell_commission = 0
+    def check_order(symbol, order):
+        if order["direction"] != xq.DIRECTION_LONG and order["direction"] != xq.DIRECTION_SHORT:
+            self.log_error("错误的委托方向")
+            return False
+        if order["action"] != xq.OPEN_POSITION and order["action"] != xq.CLOSE_POSITION:
+            self.log_error("错误的委托动作")
+            return False
+        return True
 
-        total_profit = 0
+    def get_order_value(self, order):
+        if (order["action"] == xq.OPEN_POSITION and order["direction"] == xq.DIRECTION_LONG) or (order["action"] == xq.CLOSE_POSITION and order["direction"] == xq.DIRECTION_SHORT):
+            return - order["deal_value"]
+        else:
+            return order["deal_value"]
 
+    def get_order_commission(self, order):
+        return order["deal_value"] * self.config["commission_rate"]
+
+    def _get_position_from_orders(self, symbol, orders):
+        cycle_first_order = None
+
+        history_profit = 0
+        history_commission = 0
+        cycle_amount = 0
+        cycle_value = 0
+        cycle_commission = 0
         target_coin, base_coin = xq.get_symbol_coins(symbol)
-        for index ,order in enumerate(orders):
-            if index == 0:
-                order["cycle_id"] = 0
-            else:
-                pre_order = orders[index-1]
-                order["cycle_id"] = pre_order["cycle_id"]
-                if order["cycle_id"] != pre_order["side"] and order["side"] == xq.SIDE_BUY:
-                    order["cycle_id"] += 1
+        for order in orders:
+            if not self.check_order(order):
+                return None
 
-            commission = order["deal_value"] * self.config["commission_rate"]
+            if order["action"] == xq.OPEN_POSITION:
+                if cycle_amount == 0:
+                    cycle_first_order = order
+                cycle_amount += order["deal_amount"]
+            else:
+                cycle_amount -= order["deal_amount"]
+            cycle_amount = ts.reserve_float(cycle_amount, self.config["digits"][target_coin])
+            cycle_value += self.get_order_value(order)
+            cycle_commission += self.get_order_commission(order)
+
+            if cycle_amount == 0:
+                history_profit += cycle_value - cycle_commission
+                history_commission += cycle_commission
+                cycle_value = 0
+                cycle_commission = 0
+
+        # 持仓信息
+        pst_info = {
+            "amount": cycle_amount,  # 数量
+            "price": 0,  # 平均价格，不包含佣金
+            "cost_price": 0,  # 分摊佣金后的成本价
+            "value": cycle_value,  # 金额
+            "commission": cycle_commission,  # 佣金
+            "history_profit": history_profit,  # 历史利润
+            "history_commission": history_commission,  # 历史佣金
+        }
+
+        if cycle_amount > 0:
+            pst_info["price"] = abs(cycle_value) / cycle_amount
+            pst_info["cost_price"] = (abs(cycle_value) + cycle_commission) / cycle_amount
+
+            pst_info["direction"] = cycle_first_order["direction"]
+            pst_info["start_time"] = datetime.fromtimestamp(cycle_first_order["create_time"])
+            if "high" in order:
+                pst_info["high"] = cycle_first_order["high"]
+                pst_info["low"] = cycle_first_order["low"]
+
+        return pst_info
+
+
+    def stat_orders(self, symbol, orders):
+        cycle_id = 1
+
+        history_profit = 0
+        history_commission = 0
+        cycle_amount = 0
+        cycle_value = 0
+        cycle_commission = 0
+        target_coin, base_coin = xq.get_symbol_coins(symbol)
+        for order in orders:
+            if not self.check_order(order):
+                return None
+
+            order["cycle_id"] = cycle_id
+
+            if order["action"] == xq.OPEN_POSITION:
+                cycle_amount += order["deal_amount"]
+            else:
+                cycle_amount -= order["deal_amount"]
+            cycle_amount = ts.reserve_float(cycle_amount, self.config["digits"][target_coin])
+            cycle_value += self.get_order_value(order)
+            cycle_commission += self.get_order_commission(order)
+
             deal_price = order["deal_value"] / order["deal_amount"]
+            cycle_profit = self.get_floating_profit(order["direction"], cycle_amount, cycle_value, cycle_commission, deal_price)
+            order["floating_profit"] = cycle_profit
+            order["history_profit"] = history_profit
+            order["total_profit"] = cycle_profit + history_profit
 
-            if order["side"] == xq.SIDE_BUY:
-                amount += order["deal_amount"]
-                buy_value += order["deal_value"]
-                buy_commission += commission
-            else:
-                amount -= order["deal_amount"]
-                sell_value += order["deal_value"]
-                sell_commission += commission
-
-            amount = ts.reserve_float(amount, self.config["digits"][target_coin])
-
-            buy_cost = buy_value + buy_commission
-            order["profit"] = deal_price * amount + sell_value - sell_commission - buy_cost
-            order["profit_rate"] = order["profit"] / buy_cost
-            order["total_profit"] = (total_profit + order["profit"])
+            open_value = self.value
+            if self.config["mode"] == 1:
+                open_value += history_profit
+            order["floating_profit_rate"] = order["floating_profit"] / open_value
+            order["history_profit_rate"] = order["history_profit"] / self.value
             order["total_profit_rate"] = order["total_profit"] / self.value
 
-            if amount == 0:
-                total_profit += order["profit"]
-
-                buy_value = 0
-                sell_value = 0
-                buy_commission = 0
-                sell_commission = 0
+            if cycle_amount == 0:
+                history_profit += cycle_profit
+                history_commission += cycle_commission
+                cycle_value = 0
+                cycle_commission = 0
+                cycle_id += 1
 
         return orders
+
 
     def analyze(self, symbol, orders):
         if len(orders) == 0:
             return
 
-        orders = self.calc_order(symbol, orders)
+        orders = self.stat_orders(symbol, orders)
 
         print_switch_hl = True
-        print_switch_deal = False
-        print_switch_commission = False
-        print_switch_profit = False
+        print_switch_deal = True
+        print_switch_commission = True
+        print_switch_profit = True
 
         title = "  id"
         title += "  profit_rate(total)"
-        title += "          create_time  side             price"
+        title += "          create_time  direction  action      price  pst_rate"
 
         if print_switch_hl:
             title += "  (                                         )"
@@ -432,27 +478,34 @@ class Engine:
 
             info = "%4d" % (index)
             info += "  {:8.2%}({:8.2%})".format(
-                order["profit_rate"], order["total_profit_rate"]
+                order["floating_profit_rate"], order["total_profit_rate"]
             )
-            info += "  %s  %4s  %4g  %10g" % (
+            info += "  %s  %9s  %5s  %10g" % (
                     datetime.fromtimestamp(order["create_time"]),
-                    order["side"],
-                    order["pst_rate"],
+                    order["direction"],
+                    order["action"],
                     order["deal_value"]/order["deal_amount"],
                 )
+            info += "  {:8.2%}".format(order["pst_rate"])
+
             if print_switch_hl:
-                total_cost_rate = 1 + 2 * self.config["commission_rate"]
+                total_commission_rate = 2 * self.config["commission_rate"]
                 if "high" in order:
                     deal_price = order["deal_value"]/order["deal_amount"]
-                    info += "  ({:8.2%}".format(
-                        order["high"] / deal_price - total_cost_rate,
-                    )
+                    if order["direction"] == xq.DIRECTION_LONG:
+                        tmp_profit_rate = order["high"] / deal_price - 1 - total_commission_rate
+                    else:
+                        tmp_profit_rate = 1 - order["high"] / deal_price - total_commission_rate
+
+                    info += "  ({:8.2%}".format(tmp_profit_rate)
                     info += "  %10g, %s)" % (order["high"], datetime.fromtimestamp(order["high_time"]))
                 else:
                     pre_deal_price = pre_order["deal_value"]/pre_order["deal_amount"]
-                    info += "  ({:8.2%}".format(
-                        pre_order["low"] / pre_deal_price - total_cost_rate,
-                    )
+                    if order["direction"] == xq.DIRECTION_LONG:
+                        tmp_profit_rate = pre_order["low"] / pre_deal_price - 1 - total_commission_rate
+                    else:
+                        tmp_profit_rate = 1 - pre_order["low"] / pre_deal_price - total_commission_rate
+                    info += "  ({:8.2%}".format(tmp_profit_rate)
                     info += "  %10g, %s)" % (pre_order["low"], datetime.fromtimestamp(pre_order["low_time"]))
 
             if print_switch_deal:
@@ -461,12 +514,12 @@ class Engine:
                         order["deal_value"],
                     )
             if print_switch_commission:
-                info += "  %17g" % (
+                info += "  %16g" % (
                         total_commission,
                     )
             if print_switch_profit:
                 info += "  %5.2g(%6.2g)" % (
-                        order["profit"],
+                        order["floating_profit"],
                         order["total_profit"],
                     )
             info += "  %s" % (order["rmk"])
@@ -502,22 +555,22 @@ class Engine:
         if len(orders) <= 0:
             return 0, 0, 0, 0
         orders_df = pd.DataFrame(self.calc_order(symbol, orders))
-        sell_df = orders_df[(orders_df["side"]==xq.SIDE_SELL)]
+        close_df = orders_df[(orders_df["action"]==xq.CLOSE_POSITION)]
 
-        win_df = sell_df[(sell_df["profit_rate"] > 0)]
-        loss_df =sell_df[(sell_df["profit_rate"] < 0)]
+        win_df = close_df[(close_df["floating_profit_rate"] > 0)]
+        loss_df =close_df[(close_df["floating_profit_rate"] < 0)]
         win_count = len(win_df)
         loss_count = len(loss_df)
 
-        total_profit_rate = sell_df["profit"].sum() / self.value
-        sum_profit_rate = sell_df["profit_rate"].sum()
+        total_profit_rate = close_df["floating_profit"].sum() / self.value
+        sum_profit_rate = close_df["floating_profit_rate"].sum()
         return round(total_profit_rate, 4), round(sum_profit_rate, 4), win_count, loss_count
 
 
     def stat(self, signal_id, orders_df):
         print("\n signal: " + signal_id)
-        win_df = orders_df[(orders_df["side"]==xq.SIDE_SELL) & (orders_df["profit_rate"] > 0)]
-        loss_df =orders_df[(orders_df["side"]==xq.SIDE_SELL) & (orders_df["profit_rate"] < 0)]
+        win_df = orders_df[(orders_df["action"]==xq.CLOSE_POSITION) & (orders_df["floating_profit_rate"] > 0)]
+        loss_df =orders_df[(orders_df["action"]==xq.CLOSE_POSITION) & (orders_df["floating_profit_rate"] < 0)]
 
         win_count = len(win_df)
         fail_count = len(loss_df)
@@ -527,8 +580,8 @@ class Engine:
             win_rate = 0
         print("win count: %g, loss count: %g, win rate: %4.2f%%" % (win_count, fail_count, round(win_rate*100, 2)))
 
-        w_profit_rates = win_df["profit_rate"]
-        l_profit_rates = loss_df["profit_rate"]
+        w_profit_rates = win_df["floating_profit_rate"]
+        l_profit_rates = loss_df["floating_profit_rate"]
         print("profit rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(w_profit_rates.sum()*100, 2), round(w_profit_rates.max()*100, 2), round(w_profit_rates.min()*100, 2), round(w_profit_rates.mean()*100, 2)))
         print("loss   rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(l_profit_rates.sum()*100, 2), round(l_profit_rates.min()*100, 2), round(l_profit_rates.max()*100, 2), round(l_profit_rates.mean()*100, 2)))
 
@@ -602,7 +655,7 @@ class Engine:
         axes[-1].grid(True)
         #axes[-1].set_label(["position rate", "profit rate"])
         axes[-1].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
-        axes[-1].plot(trade_times ,[round(100*order["profit_rate"], 2) for order in orders], "g--", drawstyle="steps", label="profit")
+        axes[-1].plot(trade_times ,[round(100*order["floating_profit_rate"], 2) for order in orders], "g--", drawstyle="steps", label="profit")
         """
         trade_times = []
         pst_rates = []
