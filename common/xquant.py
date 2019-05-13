@@ -261,14 +261,16 @@ def decision_signals(signals):
 
         if ds_signal["action"] == signal["action"]:
             # 持仓率低的信号优先
-            if ds_signal["action"] > signal["pst_rate"]:
+            if ds_signal["pst_rate"] > signal["pst_rate"]:
                 ds_signal = signal
-            elif ds_signal["action"] == signal["pst_rate"]:
+            elif ds_signal["pst_rate"] == signal["pst_rate"]:
+                # 合并信号
                 ds_signal["describe"] += ", " + signal["describe"]
                 ds_signal["rmk"] += ", " + signal["rmk"]
                 # 限制开仓时间长的优先
-                if ds_signal["can_open_time"] < signal["can_open_time"]:
-                    ds_signal["can_open_time"] = signal["can_open_time"]
+                if signal["can_open_time"]:
+                    if (not ds_signal["can_open_time"]) or (ds_signal["can_open_time"] < signal["can_open_time"]):
+                        ds_signal["can_open_time"] = signal["can_open_time"]
         else:
             # 平仓信号优先于开仓信号
             if ds_signal["action"] == OPEN_POSITION:

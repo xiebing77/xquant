@@ -168,11 +168,13 @@ class Engine:
             price_offset = position_info["high"] - cur_price
         else:
             price_offset = cur_price - position_info["low"]
-        #print("%s  %s"%(price_offset, position_info["price"]))
 
-        if "base_open" in tp_cfg and tp_cfg["base_open"] > 0 and price_offset / position_info["price"] > tp_cfg["base_open"]:
-            #print("%s  %s"%(price_offset, position_info["price"]))
-            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止盈", "盈利回落，基于持仓价的{:8.2%}".format(tp_cfg["base_open"])))
+        if "base_open" in tp_cfg:
+            for bo_band in tp_cfg["base_open"]:
+                high_profit_rate = position_info["high"] / position_info["price"] - 1
+                cur_profit_rate = cur_price / position_info["price"] - 1
+                if high_profit_rate > bo_band[0] and (high_profit_rate - cur_profit_rate) >= bo_band[1]:
+                    tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止盈", "盈利回落，基于持仓价的{:8.2%}".format(cur_profit_rate)))
 
         if position_info["direction"] == xq.DIRECTION_LONG:
             price_rate = cur_price / position_info["high"]
@@ -375,8 +377,6 @@ class Engine:
         # 持仓信息
         pst_info = {
             "amount": cycle_amount,  # 数量
-            "price": 0,  # 平均价格，不包含佣金
-            "cost_price": 0,  # 分摊佣金后的成本价
             "value": cycle_value,  # 金额
             "commission": cycle_commission,  # 佣金
             "history_profit": history_profit,  # 历史利润
@@ -465,7 +465,7 @@ class Engine:
         if print_switch_commission:
             title += "  total_commission"
         if print_switch_profit:
-            title += "  profit(total)"
+            title += "        profit(total)"
         title += "  rmk"
         print(title)
 
@@ -486,7 +486,7 @@ class Engine:
                     order["action"],
                     order["deal_value"]/order["deal_amount"],
                 )
-            info += "  {:8.2%}".format(order["pst_rate"])
+            info += "  {:8.2f}".format(order["pst_rate"])
 
             if print_switch_hl:
                 total_commission_rate = 2 * self.config["commission_rate"]
@@ -518,7 +518,7 @@ class Engine:
                         total_commission,
                     )
             if print_switch_profit:
-                info += "  %5.2g(%6.2g)" % (
+                info += "  {:8.2f}({:9.2f})".format(
                         order["floating_profit"],
                         order["total_profit"],
                     )
