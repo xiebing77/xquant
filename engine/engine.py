@@ -173,8 +173,10 @@ class Engine:
             for bo_band in tp_cfg["base_open"]:
                 high_profit_rate = position_info["high"] / position_info["price"] - 1
                 cur_profit_rate = cur_price / position_info["price"] - 1
-                if high_profit_rate > bo_band[0] and (high_profit_rate - cur_profit_rate) >= bo_band[1]:
-                    tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止盈", "盈利回落，基于持仓价的{:8.2%}".format(cur_profit_rate)))
+                fall_profit_rate = high_profit_rate - cur_profit_rate
+                if high_profit_rate > bo_band[0] and fall_profit_rate >= bo_band[1]:
+                    tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止盈", "盈利回落(基于持仓价)  fall rate:{:8.2%} ( {:8.2%}, {:8.2%} )".format(fall_profit_rate, bo_band[0], bo_band[1])))
+                    break
 
         if position_info["direction"] == xq.DIRECTION_LONG:
             price_rate = cur_price / position_info["high"]
@@ -449,9 +451,9 @@ class Engine:
         orders = self.stat_orders(symbol, orders)
 
         print_switch_hl = True
-        print_switch_deal = True
-        print_switch_commission = True
-        print_switch_profit = True
+        print_switch_deal = False
+        print_switch_commission = False
+        print_switch_profit = False
 
         title = "  id"
         title += "  profit_rate(total)"
