@@ -150,7 +150,11 @@ class Engine:
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
-        if pst_price > 0 and "base_price" in sl_cfg and sl_cfg["base_price"] > 0 and cur_price / pst_price  <= (1 - sl_cfg["base_price"]):
+        if position_info["direction"] == xq.DIRECTION_LONG:
+            loss_rate = 1 - (cur_price / pst_price)
+        else:
+            loss_rate = (cur_price / pst_price) - 1
+        if pst_price > 0 and "base_price" in sl_cfg and sl_cfg["base_price"] > 0 and loss_rate  >= sl_cfg["base_price"]:
             sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), ts.get_next_open_timedelta(self.now())))
 
         return sl_signals
