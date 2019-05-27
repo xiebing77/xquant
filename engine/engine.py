@@ -78,7 +78,7 @@ class Engine:
         total_profit = info["history_profit"]
         if info["amount"] > 0:
             cycle_profit = self.get_floating_profit(info["direction"], info["amount"], info["value"], info["commission"], cur_price)
-            total_profit + cycle_profit
+            total_profit += cycle_profit
 
             open_value = self.value
             if self.config["mode"] == 1:
@@ -91,7 +91,7 @@ class Engine:
             info["pst_rate"] = orders[-1]["pst_rate"]
 
         self.log_info(
-            "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  history_commission: %g,  total_profit_rate: %g)" % (
+            "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  history_commission: %g,  history_profit_rate: %g,  total_profit_rate: %g)" % (
             symbol,
             cur_price,
             "amount: %f,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g,"
@@ -115,6 +115,7 @@ class Engine:
             else "",
             info["history_profit"],
             info["history_commission"],
+            (info["history_profit"] / self.value),
             (total_profit / self.value)
             )
         )
