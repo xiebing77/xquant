@@ -460,9 +460,9 @@ class Engine:
         print_switch_commission = False
         print_switch_profit = False
 
-        title = "  id"
-        title += "  profit_rate(total)"
-        title += "          create_time  direction  action      price  pst_rate"
+        title = " id"
+        title += "        profit_rate"
+        title += "          create_time  price                   pst_rate"
 
         if print_switch_hl:
             title += "  (                                         )"
@@ -483,15 +483,15 @@ class Engine:
 
             order["trade_time"] = datetime.fromtimestamp(order["create_time"])
 
-            info = "%4d" % (index)
-            info += "  {:8.2%}({:8.2%})".format(
+            info = "%3d" % (index)
+            info += "  {:7.2%}({:8.2%})".format(
                 order["floating_profit_rate"], order["total_profit_rate"]
             )
-            info += "  %s  %9s  %5s  %10g" % (
+            info += "  %s  %10g  %s,%5s" % (
                     datetime.fromtimestamp(order["create_time"]),
+                    order["deal_value"]/order["deal_amount"],
                     order["direction"],
                     order["action"],
-                    order["deal_value"]/order["deal_amount"],
                 )
             info += "  {:8.2f}".format(order["pst_rate"])
 
