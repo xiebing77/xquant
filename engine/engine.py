@@ -41,6 +41,8 @@ class Engine:
 
         self.can_open_time = None
 
+        self.tp_cc = {"base_open": 0}
+
 
     def log_info(self, info):
         log.info(info)
@@ -179,8 +181,16 @@ class Engine:
                 high_profit_rate = position_info["high"] / position_info["price"] - 1
                 cur_profit_rate = cur_price / position_info["price"] - 1
                 fall_profit_rate = high_profit_rate - cur_profit_rate
-                if high_profit_rate > bo_band[0] and fall_profit_rate >= bo_band[1]:
-                    tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止盈", "盈利回落(基于持仓价)  fall rate:{:8.2%} ( {:8.2%}, {:8.2%} )".format(fall_profit_rate, bo_band[0], bo_band[1])))
+                if high_profit_rate > bo_band[0]:
+                    self.log_info("base_open tp_cc 1 = %s" % self.tp_cc["base_open"])
+                    if fall_profit_rate >= bo_band[1]:
+                        self.tp_cc["base_open"] += 1
+                        self.log_info("base_open tp_cc 2 = %s" % self.tp_cc["base_open"])
+                        if self.tp_cc["base_open"] >= 1 :
+                            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止盈", "盈利回落(基于持仓价)  fall rate:{:8.2%} ( {:8.2%}, {:8.2%} )".format(fall_profit_rate, bo_band[0], bo_band[1])))
+                    else:
+                        self.tp_cc["base_open"] = 0
+
                     break
 
         if position_info["direction"] == xq.DIRECTION_LONG:
