@@ -16,6 +16,8 @@ secret_key = os.environ.get('BINANCE_SECRET_KEY')
 class BinanceExchange(Exchange):
     """BinanceExchange"""
     start_time = datetime(2017, 8, 17, 8)
+    min_value = 10
+    kl_bt_accuracy = xq.KLINE_INTERVAL_1MINUTE
 
     def __init__(self, debug=False):
         self.__client = Client(api_key, secret_key)
