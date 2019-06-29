@@ -7,6 +7,7 @@ import re
 from utils.email_obj import EmailObj
 from setup import *
 
+db_name = "xquant"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daily Report')
