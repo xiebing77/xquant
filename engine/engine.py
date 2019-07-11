@@ -472,10 +472,11 @@ class Engine:
 
         title = " id"
         title += "        profit_rate"
-        title += "          create_time  price                   pst_rate"
+        title += "          create_time  price"
 
         if print_switch_hl:
             title += "  (                                         )"
+        title += "                   pst_rate"
 
         if print_switch_deal:
             title += "  deal_amount  deal_value"
@@ -497,13 +498,10 @@ class Engine:
             info += "  {:7.2%}({:8.2%})".format(
                 order["floating_profit_rate"], order["total_profit_rate"]
             )
-            info += "  %s  %10g  %s,%5s" % (
+            info += "  %s  %10g" % (
                     datetime.fromtimestamp(order["create_time"]),
                     order["deal_value"]/order["deal_amount"],
-                    order["direction"],
-                    order["action"],
                 )
-            info += "  {:8.2f}".format(order["pst_rate"])
 
             if print_switch_hl:
                 total_commission_rate = 2 * self.config["commission_rate"]
@@ -524,6 +522,12 @@ class Engine:
                         tmp_profit_rate = 1 - pre_order["low"] / pre_deal_price - total_commission_rate
                     info += "  ({:8.2%}".format(tmp_profit_rate)
                     info += "  %10g, %s)" % (pre_order["low"], datetime.fromtimestamp(pre_order["low_time"]))
+
+            info += "  %s,%5s" % (
+                    order["direction"],
+                    order["action"],
+                )
+            info += "  {:8.2f}".format(order["pst_rate"])
 
             if print_switch_deal:
                 info += "  %11g  %10g" % (
