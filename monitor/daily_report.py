@@ -7,6 +7,7 @@ import re
 from utils.email_obj import EmailObj
 from setup import *
 
+db_name = db_order_name
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daily Report')
@@ -28,7 +29,7 @@ if __name__ == "__main__":
 
     template_dir = location('monitor/template')
     print(template_dir)
-    subject = 'Quant Daily Report'
+    subject = 'Quant Daily Report - ' + instance_id
 
     '''
     process = os.popen('ps aux | grep %s | grep instance_id | grep -v grep' % instance_id).read()
