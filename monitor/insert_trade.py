@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.6
 import argparse
 import time
 import db.mongodb as md
@@ -7,7 +7,7 @@ from utils.email_obj import EmailObj
 from setup import *
 
 # Example:
-# python3 insert_trade.py -i gbtc -d buy -s btc_usdt -p 11000.23 -a 1.11
+# python3.6 insert_trade.py -i gbtc -d buy -s btc_usdt -p 11000.23 -a 1.11
 
 db_name = db_order_name
 collection = 'orders'
@@ -15,7 +15,8 @@ record = {
     "create_time": time.time(),
     "instance_id": "",
     "symbol": "",
-    "side": "",
+    "direction": "LONG",
+    "action":"",
     "pst_rate": 0,
     "type": "LIMIT",
     "market_price": 0,
@@ -45,7 +46,11 @@ if __name__ == "__main__":
 
     record['instance_id'] = args.i
     record['symbol'] = args.s.lower()
-    record['side'] = args.d.upper()
+    side = args.d.upper()
+    if side == 'BUY':
+        record['action'] = 'OPEN'
+    else:
+        record['action'] = 'CLOSE'
     record['price'] = record['market_price'] = args.p
     record['amount'] = record['deal_amount'] = args.a
     record['deal_value'] = round(record['price'] * record['deal_amount'], 2)
