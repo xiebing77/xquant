@@ -226,10 +226,8 @@ class Engine:
             )
         """
 
-    def handle_order(self, symbol, cur_price, check_signals):
+    def handle_order(self, symbol, position_info, cur_price, check_signals):
         """ 处理委托 """
-        position_info = self.get_position(symbol, cur_price)
-
         rc_signals = self.risk_control(position_info, cur_price)
         signals = rc_signals + check_signals
         if not signals:
