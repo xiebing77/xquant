@@ -9,6 +9,7 @@ from importer import add_common_arguments, split_time_range
 
 if __name__ == "__main__":
     parser = add_common_arguments('check kline')
+    parser.add_argument('-d', '--display', action = 'store_true', help='display info')
     args = parser.parse_args()
     # print(args)
 
