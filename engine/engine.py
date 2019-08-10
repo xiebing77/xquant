@@ -147,9 +147,10 @@ class Engine:
             self.log_error("请选择额度模式，默认是0")
 
         sl_cfg = self.config["risk_control"]["stop_loss"]
+        sl_td_h = ts.get_next_open_timedelta(self.now())
 
         if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["floating_profit"] <= 0:
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), ts.get_next_open_timedelta(self.now())))
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), sl_td_h))
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
@@ -158,7 +159,7 @@ class Engine:
         else:
             loss_rate = (cur_price / pst_price) - 1
         if pst_price > 0 and "base_price" in sl_cfg and sl_cfg["base_price"] > 0 and loss_rate  >= sl_cfg["base_price"]:
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), ts.get_next_open_timedelta(self.now())))
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), sl_td_h))
 
         return sl_signals
 
@@ -502,7 +503,7 @@ class Engine:
                 )
 
             if print_switch_hl:
-                total_commission_rate = 2 * self.config["commission_rate"]
+                total_commission_rate = 0 # 2 * self.config["commission_rate"]
                 if "high" in order:
                     deal_price = order["deal_value"]/order["deal_amount"]
                     if order["direction"] == xq.DIRECTION_LONG:
