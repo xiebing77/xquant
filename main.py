@@ -6,12 +6,14 @@ import common.log as log
 import uuid
 from multiprocessing import cpu_count
 import utils.tools as ts
+from engine.display import Display
 from engine.realengine import RealEngine
 from engine.backtest import BackTest
 from engine.backtestsearch import BackTestSearch
 from engine.multisearch import MultiSearch
 
 def help_print():
+    print("./xp.sh config/kdjmacd_btc_usdt.jsn  display      xbtc1               db         查看，db默认是xquant")
     print("./xp.sh config/kdjmacd_btc_usdt.jsn  real         xbtc1               100  True  实盘，debug默认是关闭的")
     print("./xp.sh config/kdjmacd_btc_usdt.jsn  backtest     2018-12-1~2019-1-1             回测")
     print("./xp.sh config/kdjmacd_btc_usdt.jsn  search       2018-12-1~2019-1-1             寻优")
@@ -43,7 +45,31 @@ if __name__ == "__main__":
     params_index += 1
     print("select: ", select)
 
-    if select == "real":
+    if select == "display":
+        if len(sys.argv) > params_index:
+            instance_id = sys.argv[params_index]
+            params_index += 1
+        else:
+            help_print()
+            exit(1)
+
+        if len(sys.argv) > params_index:
+            value = float(sys.argv[params_index])
+            params_index += 1
+        else:
+            help_print()
+            exit(1)
+
+        if len(sys.argv) > params_index:
+            db_name = bool(sys.argv[params_index])
+            params_index += 1
+        else:
+            db_name = "xquant"
+
+        print("db_name: %s" % (db_name))
+        logfilename = "display_" + instance_id + ".log"
+
+    elif select == "real":
         if len(sys.argv) > params_index:
             instance_id = sys.argv[params_index]
             params_index += 1
@@ -100,7 +126,14 @@ if __name__ == "__main__":
 
     log.info("strategy name: %s;  config: %s" % (class_name, config))
 
-    if select == "real":
+    if select == "display":
+        engine = Display(instance_id, config)
+        strategy = ts.createInstance(module_name, class_name, config, engine)
+
+        engine.value = value
+        engine.run(strategy, db_name)
+
+    elif select == "real":
         engine = RealEngine(instance_id, config)
         strategy = ts.createInstance(module_name, class_name, config, engine)
 
