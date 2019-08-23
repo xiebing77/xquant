@@ -843,7 +843,7 @@ class Client(object):
         :raises: BinanceResponseException, BinanceAPIException, BinanceOrderException, BinanceOrderMinAmountException, BinanceOrderMinPriceException, BinanceOrderMinTotalException, BinanceOrderUnknownSymbolException, BinanceOrderInactiveSymbolException
 
         """
-        return self._post('order', True, data=params)
+        return self._post('order', True, data=params, version=self.PRIVATE_API_VERSION)
 
     def order_limit(self, timeInForce=TIME_IN_FORCE_GTC, **params):
         """Send in a new limit order
@@ -1054,7 +1054,7 @@ class Client(object):
 
 
         """
-        return self._post('order/test', True, data=params)
+        return self._post('order/test', True, data=params, version=self.PRIVATE_API_VERSION)
 
     def get_order(self, **params):
         """Check an order's status. Either orderId or origClientOrderId must be sent.
@@ -1093,7 +1093,7 @@ class Client(object):
         :raises: BinanceResponseException, BinanceAPIException
 
         """
-        return self._get('order', True, data=params)
+        return self._get('order', True, data=params, version=self.PRIVATE_API_VERSION)
 
     def get_all_orders(self, **params):
         """Get all account orders; active, canceled, or filled.
@@ -1134,7 +1134,7 @@ class Client(object):
         :raises: BinanceResponseException, BinanceAPIException
 
         """
-        return self._get('allOrders', True, data=params)
+        return self._get('allOrders', True, data=params, version=self.PRIVATE_API_VERSION)
 
     def cancel_order(self, **params):
         """Cancel an active order. Either orderId or origClientOrderId must be sent.
@@ -1166,7 +1166,7 @@ class Client(object):
         :raises: BinanceResponseException, BinanceAPIException
 
         """
-        return self._delete('order', True, data=params)
+        return self._delete('order', True, data=params, version=self.PRIVATE_API_VERSION)
 
     def get_open_orders(self, **params):
         """Get all open orders on a symbol.
@@ -1203,7 +1203,7 @@ class Client(object):
         :raises: BinanceResponseException, BinanceAPIException
 
         """
-        return self._get('openOrders', True, data=params)
+        return self._get('openOrders', True, data=params, version=self.PRIVATE_API_VERSION)
 
     # User Stream Endpoints
     def get_account(self, **params):
@@ -1243,7 +1243,7 @@ class Client(object):
         :raises: BinanceResponseException, BinanceAPIException
 
         """
-        return self._get('account', True, data=params)
+        return self._get('account', True, data=params, version=self.PRIVATE_API_VERSION)
 
     def get_my_trades(self, **params):
         """Get trades for a specific symbol.
@@ -1280,7 +1280,7 @@ class Client(object):
         :raises: BinanceResponseException, BinanceAPIException
 
         """
-        return self._get('myTrades', True, data=params)
+        return self._get('myTrades', True, data=params, version=self.PRIVATE_API_VERSION)
 
     # Withdraw Endpoints
 
