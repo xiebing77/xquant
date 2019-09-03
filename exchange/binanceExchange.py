@@ -159,6 +159,12 @@ class BinanceExchange(Exchange):
             return True
         return False
 
+    def get_trades(self, symbol):
+        """获取成交"""
+        exchange_symbol = self.__trans_symbol(symbol)
+        trades = self.__client.get_my_trades(symbol=exchange_symbol)
+        return trades
+
     def get_deals(self, symbol, start_time='', end_time='', from_id='', limit=''):
         """获取成交"""
         exchange_symbol = self.__trans_symbol(symbol)
