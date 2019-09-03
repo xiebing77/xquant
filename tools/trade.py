@@ -20,5 +20,5 @@ if __name__ == "__main__":
         print("exchange error!")
         exit(1)
 
-    trades = exchange.get_trades()
+    trades = exchange.get_trades(args.s)
     print("trades: %s" % trades)
