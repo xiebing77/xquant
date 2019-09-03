@@ -5,9 +5,8 @@ import argparse
 from exchange.binanceExchange import BinanceExchange
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='balance')
+    parser = argparse.ArgumentParser(description='account')
     parser.add_argument('-e', help='exchange')
-    parser.add_argument('-c', help='coins')
     args = parser.parse_args()
     # print(args)
     if not (args.e and args.c):
@@ -21,5 +20,5 @@ if __name__ == "__main__":
         exit(1)
 
     coins = args.c.split(",")
-    balances = exchange.get_balances(coins)
-    print("balances: %s" % balances)
+    account = exchange.get_account(coins)
+    print("account info: %s" % account)

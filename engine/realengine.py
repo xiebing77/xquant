@@ -40,6 +40,10 @@ class RealEngine(Engine):
         """ 获取日k线 """
         return self.__exchange.get_klines_1day(symbol, size)
 
+    def get_account(self):
+        """ 获取账户信息 """
+        return self.__exchange.get_account()
+
     def get_balances(self, *coins):
         """ 获取余额 """
         return self.__exchange.get_balances(*coins)

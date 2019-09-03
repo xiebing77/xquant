@@ -119,6 +119,12 @@ class BinanceExchange(Exchange):
         """获取分钟k线"""
         return self.__get_klines(symbol, KLINE_INTERVAL_1MINUTE, size, since)
 
+    def get_account(self):
+        """获取账户信息"""
+        coin_balances = []
+        account = self.__client.get_account()
+        return account
+
     def get_balances(self, *coins):
         """获取余额"""
         coin_balances = []
