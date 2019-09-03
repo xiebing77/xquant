@@ -9,7 +9,7 @@ if __name__ == "__main__":
     parser.add_argument('-e', help='exchange')
     args = parser.parse_args()
     # print(args)
-    if not (args.e and args.c):
+    if not (args.e):
         parser.print_help()
         exit(1)
 
@@ -19,6 +19,5 @@ if __name__ == "__main__":
         print("exchange error!")
         exit(1)
 
-    coins = args.c.split(",")
-    account = exchange.get_account(coins)
+    account = exchange.get_account()
     print("account info: %s" % account)

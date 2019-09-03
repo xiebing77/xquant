@@ -123,6 +123,13 @@ class BinanceExchange(Exchange):
         """获取账户信息"""
         coin_balances = []
         account = self.__client.get_account()
+        nb = []
+        balances = account['balances']
+        for item in balances:
+            if float(item['free'])==0 and float(item['locked'])==0:
+                continue
+            nb.append(item)
+        account['balances'] = nb
         return account
 
     def get_balances(self, *coins):
