@@ -213,14 +213,23 @@ class RealEngine(Engine):
 
         return order_id
 
+    def get_open_order_ids(self, symbol):
+        orders = self.td_db.find(
+            DB_ORDERS_NAME, {"symbol": symbol, "status": xq.ORDER_STATUS_OPEN, "instance_id": self.instance_id}
+        )
+
+        return [order["order_id"] for order in orders]
+
     def cancle_orders(self, symbol):
         """ 撤掉本策略的所有挂单委托 """
         if not self.has_open_orders(symbol):
             return
 
+        order_ids = self.get_open_order_ids(symbol)
+
         orders = self.__exchange.get_open_orders(symbol)
         for order in orders:
-            if order["instance_id"] == self.instance_id:
+            if order["order_id"] in order_ids:
                 self.td_db.update_one(
                     DB_ORDERS_NAME, order["_id"], {"status": xq.ORDER_STATUS_CANCELLING}
                 )
