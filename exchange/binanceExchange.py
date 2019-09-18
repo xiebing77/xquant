@@ -216,6 +216,10 @@ class BinanceExchange(Exchange):
         exchange_symbol = self.__trans_symbol(symbol)
         self.__client.cancel_order(symbol=exchange_symbol, orderId=order_id)
 
+    def cancel_orders(self, symbol, order_ids):
+        for order_id in order_ids:
+            self.cancel_order(symbol, order_id)
+
     def get_order_book(self, symbol, limit=100):
         """获取挂单列表"""
         exchange_symbol = self.__trans_symbol(symbol)

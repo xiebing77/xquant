@@ -84,9 +84,9 @@ class RealEngine(Engine):
 
         return self._get_position(symbol, orders, cur_price)
 
-    def has_open_orders(self, symbol):
+    def get_open_orders(self, symbol):
         """ 是否有open状态的委托 """
-        db_orders = self.td_db.find(
+        return self.td_db.find(
             DB_ORDERS_NAME,
             {
                 "instance_id": self.instance_id,
@@ -94,20 +94,9 @@ class RealEngine(Engine):
                 "status": xq.ORDER_STATUS_OPEN,
             },
         )
-        if db_orders:
-            return True
-        return False
 
     def sync_orders(self, symbol):
-        """ 同步委托。注意：触发是本策略有未完成的委托，但同步是account下所有委托，避免重复查询成交 """
-        if not self.has_open_orders(symbol):
-            return
-        orders = self.td_db.find(
-            DB_ORDERS_NAME, {"symbol": symbol, "status": xq.ORDER_STATUS_OPEN}
-        )
-        if not orders:
-            return
-
+        orders = self.get_open_orders(symbol)
         df_amount, df_value = self.__exchange.get_deals(symbol)
         for order in orders:
             self.log_debug("order: %r" % order)
@@ -213,27 +202,16 @@ class RealEngine(Engine):
 
         return order_id
 
-    def get_open_order_ids(self, symbol):
-        orders = self.td_db.find(
-            DB_ORDERS_NAME, {"symbol": symbol, "status": xq.ORDER_STATUS_OPEN, "instance_id": self.instance_id}
-        )
-
-        return [order["order_id"] for order in orders]
 
     def cancle_orders(self, symbol):
         """ 撤掉本策略的所有挂单委托 """
-        if not self.has_open_orders(symbol):
-            return
-
-        order_ids = self.get_open_order_ids(symbol)
-
-        orders = self.__exchange.get_open_orders(symbol)
+        orders = self.get_open_orders(symbol)
+        self.__exchange.cancel_orders(symbol, [order["order_id"] for order in orders])
         for order in orders:
-            if order["order_id"] in order_ids:
-                self.td_db.update_one(
-                    DB_ORDERS_NAME, order["_id"], {"status": xq.ORDER_STATUS_CANCELLING}
-                )
-                self.__exchange.cancel_order(symbol, order["order_id"])
+            self.td_db.update_one(
+                DB_ORDERS_NAME, order["_id"], {"status": xq.ORDER_STATUS_CANCELLING}
+            )
+
 
     def run(self, strategy, debug):
         """ run """
