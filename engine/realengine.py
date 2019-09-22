@@ -97,6 +97,9 @@ class RealEngine(Engine):
 
     def sync_orders(self, symbol):
         orders = self.get_open_orders(symbol)
+        if not orders:
+            return
+
         df_amount, df_value = self.__exchange.get_deals(symbol)
         for order in orders:
             self.log_debug("order: %r" % order)
