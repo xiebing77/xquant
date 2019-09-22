@@ -211,6 +211,11 @@ class BinanceExchange(Exchange):
         orders = self.__client.get_open_orders(symbol=exchange_symbol)
         return orders
 
+    def get_open_order_ids(self, symbol):
+        """获取挂单id"""
+        orders = self.get_open_orders(symbol)
+        return [order["orderId"] for order in orders]
+
     def cancel_order(self, symbol, order_id):
         """撤单"""
         exchange_symbol = self.__trans_symbol(symbol)

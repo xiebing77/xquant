@@ -206,8 +206,16 @@ class RealEngine(Engine):
     def cancle_orders(self, symbol):
         """ 撤掉本策略的所有挂单委托 """
         orders = self.get_open_orders(symbol)
-        self.__exchange.cancel_orders(symbol, [order["order_id"] for order in orders])
+        if not orders:
+            return
+
+        e_order_ids = self.__exchange.get_open_order_ids(symbol)
+
         for order in orders:
+            order_id = order["order_id"]
+            if order_id not in e_order_ids:
+                continue
+            self.__exchange.cancel_order(symbol, order_id)
             self.td_db.update_one(
                 DB_ORDERS_NAME, order["_id"], {"status": xq.ORDER_STATUS_CANCELLING}
             )
