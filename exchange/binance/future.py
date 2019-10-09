@@ -648,7 +648,7 @@ class Future(object):
     # Account Endpoints
 
     def transfer(self, **params):
-        """Execute transfer between spot account and margin account
+        """Execute transfer between spot account and future account
 
         https://binanceapitest.github.io/Binance-Futures-API-doc/trade_and_account/#new-future-account-transfer
         :param asset: required
