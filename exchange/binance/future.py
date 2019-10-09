@@ -18,12 +18,9 @@ class Future(object):
 
     API_URL = 'https://fapi.binance.com/fapi'
     TRANSFER_API_URL = 'https://api.binance.com/wapi'
-    # WEBSITE_URL = 'https://www.binance.com'
     PUBLIC_API_VERSION = 'v1'
-    PRIVATE_API_VERSION = 'v3'
+    PRIVATE_API_VERSION = 'v1'
     TRANSFER_API_VERSION = 'v1'
-
-    SYMBOL_TYPE_SPOT = 'SPOT'
 
     ORDER_STATUS_NEW = 'NEW'
     ORDER_STATUS_PARTIALLY_FILLED = 'PARTIALLY_FILLED'
@@ -100,9 +97,6 @@ class Future(object):
     def _create_transfer_api_uri(self, path):
         return self.TRANSFER_API_URL + '/' + self.TRANSFER_API_VERSION + '/' + path
 
-    def _create_website_uri(self, path):
-        return self.WEBSITE_URL + '/' + path
-
     def _generate_signature(self, data):
 
         query_string = urlencode(data)
@@ -153,17 +147,6 @@ class Future(object):
 
     def _request_transfer_api(self, method, path, signed=False, version=TRANSFER_API_VERSION, **kwargs):
         uri = self._create_transfer_api_uri(path, signed, version)
-
-        return self._request(method, uri, signed, **kwargs)
-
-    def _request_withdraw_api(self, method, path, signed=False, **kwargs):
-        uri = self._create_withdraw_api_uri(path)
-
-        return self._request(method, uri, signed, True, **kwargs)
-
-    def _request_website(self, method, path, signed=False, **kwargs):
-
-        uri = self._create_website_uri(path)
 
         return self._request(method, uri, signed, **kwargs)
 
@@ -344,68 +327,12 @@ class Future(object):
 
     def get_server_time(self):
         """Test connectivity to the Rest API and get the current server time.
-        
+
         https://binanceapitest.github.io/Binance-Futures-API-doc/market_data/#check-server-time
         """
         return self._get('time')
 
     # Market Data Endpoints
-
-    def get_all_tickers(self):
-        """Latest price for all symbols.
-
-        https://www.binance.com/restapipub.html#symbols-price-ticker
-
-        :returns: List of market tickers
-
-        .. code-block:: python
-
-            [
-                {
-                    "symbol": "LTCBTC",
-                    "price": "4.00000200"
-                },
-                {
-                    "symbol": "ETHBTC",
-                    "price": "0.07946600"
-                }
-            ]
-
-        :raises: BinanceResponseException, BinanceAPIException
-
-        """
-        return self._get('ticker/allPrices')
-
-    def get_orderbook_tickers(self):
-        """Best price/qty on the order book for all symbols.
-
-        https://www.binance.com/restapipub.html#symbols-order-book-ticker
-
-        :returns: List of order book market entries
-
-        .. code-block:: python
-
-            [
-                {
-                    "symbol": "LTCBTC",
-                    "bidPrice": "4.00000000",
-                    "bidQty": "431.00000000",
-                    "askPrice": "4.00000200",
-                    "askQty": "9.00000000"
-                },
-                {
-                    "symbol": "ETHBTC",
-                    "bidPrice": "0.07946700",
-                    "bidQty": "9.00000000",
-                    "askPrice": "100000.00000000",
-                    "askQty": "1000.00000000"
-                }
-            ]
-
-        :raises: BinanceResponseException, BinanceAPIException
-
-        """
-        return self._get('ticker/allBookTickers')
 
     def get_order_book(self, **params):
         """Get the Order Book for the market
@@ -445,7 +372,7 @@ class Future(object):
     def get_recent_trades(self, **params):
         """Get recent trades (up to last 500).
 
-        https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#recent-trades-list
+        https://binanceapitest.github.io/Binance-Futures-API-doc/market_data/#recent-trades-list
 
         :param symbol: required
         :type symbol: str
@@ -457,14 +384,14 @@ class Future(object):
         .. code-block:: python
 
             [
-            {
-                "id": 28457,
-                "price": "4.00000100",
-                "qty": "12.00000000",
-                "quoteQty": "8000.00",
-                "time": 1499865549590,
-                "isBuyerMaker": true,
-            }
+                {
+                    "id": 28457,
+                    "price": "4.00000100",
+                    "qty": "12.00000000",
+                    "quoteQty": "8000.00",
+                    "time": 1499865549590,
+                    "isBuyerMaker": true,
+                }
             ]
 
         :raises: BinanceResponseException, BinanceAPIException
@@ -473,9 +400,9 @@ class Future(object):
         return self._get('trades', data=params)
 
     def get_historical_trades(self, **params):
-        """Get older trades.
+        """Get older market historical trades.
 
-        https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#recent-trades-list
+        https://binanceapitest.github.io/Binance-Futures-API-doc/market_data/#old-trades-lookup
 
         :param symbol: required
         :type symbol: str
@@ -493,9 +420,9 @@ class Future(object):
                     "id": 28457,
                     "price": "4.00000100",
                     "qty": "12.00000000",
+                    "quoteQty": "8000.00",
                     "time": 1499865549590,
                     "isBuyerMaker": true,
-                    "isBestMatch": true
                 }
             ]
 
@@ -508,7 +435,7 @@ class Future(object):
         """Get compressed, aggregate trades. Trades that fill at the time,
         from the same order, with the same price will have the quantity aggregated.
 
-        https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#compressedaggregate-trades-list
+        https://binanceapitest.github.io/Binance-Futures-API-doc/market_data/#compressedaggregate-trades-list
 
         :param symbol: required
         :type symbol: str
@@ -546,16 +473,18 @@ class Future(object):
     def get_klines(self, **params):
         """Kline/candlestick bars for a symbol. Klines are uniquely identified by their open time.
 
+        https://binanceapitest.github.io/Binance-Futures-API-doc/market_data/#klinecandlestick-data
+
         :param symbol: required
         :type symbol: str
-        :param interval: -
+        :param interval: required
         :type interval: enum
-        :param limit: - Default 500; max 500.
-        :type limit: int
         :param startTime:
         :type startTime: int
         :param endTime:
         :type endTime: int
+        :param limit: - Default 500; max 1500.
+        :type limit: int
 
         :returns: API response
 
@@ -586,6 +515,8 @@ class Future(object):
     def get_mark_price(self, **params):
         """mark price and funding rate.
 
+        https://binanceapitest.github.io/Binance-Futures-API-doc/market_data/#mark-price
+
         :param symbol: required
         :type symbol: str
 
@@ -608,6 +539,8 @@ class Future(object):
 
     def get_ticker(self, **params):
         """24 hour price change statistics.
+
+        https://binanceapitest.github.io/Binance-Futures-API-doc/market_data/#24hr-ticker-price-change-statistics
 
         :param symbol:
         :type symbol: str
@@ -668,6 +601,8 @@ class Future(object):
     def get_symbol_ticker(self, **params):
         """Latest price for a symbol or symbols.
 
+        https://binanceapitest.github.io/Binance-Futures-API-doc/market_data/#symbol-price-ticker
+
         :param symbol: required
         :type symbol: str
 
@@ -686,9 +621,9 @@ class Future(object):
         return self._get('ticker/price', data=params)
 
     def get_orderbook_ticker(self, **params):
-        """Latest price for a symbol or symbols.
+        """Best price/qty on the order book for a symbol or symbols.
 
-        https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#symbol-order-book-ticker
+        https://binanceapitest.github.io/Binance-Futures-API-doc/market_data/#symbol-order-book-ticker
 
         :param symbol: required
         :type symbol: str
@@ -778,6 +713,8 @@ class Future(object):
 
     def create_order(self, **params):
         """Send in a new order
+
+        https://binanceapitest.github.io/Binance-Futures-API-doc/trade_and_account/#new-order-trade
 
         Any order with an icebergQty MUST have timeInForce set to GTC.
 
@@ -1029,6 +966,9 @@ class Future(object):
 
     def get_order(self, **params):
         """Check an order's status. Either orderId or origClientOrderId must be sent.
+        Either orderId or origClientOrderId must be sent.
+
+        https://binanceapitest.github.io/Binance-Futures-API-doc/trade_and_account/#query-order-user_data
 
         :param symbol: required
         :type symbol: str
@@ -1044,40 +984,73 @@ class Future(object):
         .. code-block:: python
 
             {
-                "symbol": "LTCBTC",
+                "symbol": "BTCUSDT",
                 "orderId": 1,
                 "clientOrderId": "myOrder1",
                 "price": "0.1",
                 "origQty": "1.0",
                 "executedQty": "0.0",
+                "cumQuote": "0.0",
                 "status": "NEW",
                 "timeInForce": "GTC",
                 "type": "LIMIT",
                 "side": "BUY",
                 "stopPrice": "0.0",
-                "icebergQty": "0.0",
-                "time": 1499827319559
+                "time": 1499827319559,
+                "updateTime": 1499827319559
             }
-
         :raises: BinanceResponseException, BinanceAPIException
 
         """
         return self._get('order', True, data=params)
 
-    def get_all_orders(self, **params):
-        """Get all account orders; active, canceled, or filled. 
-        If orderId is set, it will get orders >= that orderId. Otherwise most recent orders are returned.
+    def cancel_order(self, **params):
+        """Cancel an active order. Either orderId or origClientOrderId must be sent.
+
+        https://binanceapitest.github.io/Binance-Futures-API-doc/trade_and_account/#cancel-order-trade
 
         :param symbol: required
         :type symbol: str
         :param orderId: The unique order id
         :type orderId: int
-        :param startTime: 
-        :type startTime: long
-        :param endTime: 
-        :type endTime: long
-        :param limit: Default 500; max 500.
-        :type limit: int
+        :param origClientOrderId: optional
+        :type origClientOrderId: str
+        :param newClientOrderId: Used to uniquely identify this cancel. Automatically generated by default.
+        :type newClientOrderId: str
+        :param recvWindow: the number of milliseconds the request is valid for
+        :type recvWindow: int
+
+        :returns: API response
+
+        .. code-block:: python
+
+            {
+                "symbol": "BTCUSDT",
+                "orderId": 28,
+                "origClientOrderId": "myOrder1",
+                "clientOrderId": "cancelMyOrder1",
+                "transactTime": 1507725176595,
+                "price": "1.00000000",
+                "origQty": "10.00000000",
+                "executedQty": "8.00000000",
+                "cumQuote": "8.00000000",
+                "status": "CANCELED",
+                "timeInForce": "GTC",
+                "type": "LIMIT",
+                "side": "SELL"
+            }
+        :raises: BinanceResponseException, BinanceAPIException
+
+        """
+        return self._delete('order', True, data=params)
+
+    def get_open_orders(self, **params):
+        """Get all open orders on a symbol.
+
+        https://binanceapitest.github.io/Binance-Futures-API-doc/trade_and_account/#current-open-orders-user_data
+
+        :param symbol: required
+        :type symbol: str
         :param recvWindow: the number of milliseconds the request is valid for
         :type recvWindow: int
 
@@ -1102,79 +1075,83 @@ class Future(object):
                     "updateTime": 1499827319559
                 }
             ]
-        :raises: BinanceResponseException, BinanceAPIException
-
-        """
-        return self._get('allOrders', True, data=params)
-
-    def cancel_order(self, **params):
-        """Cancel an active order. Either orderId or origClientOrderId must be sent.
-
-        :param symbol: required
-        :type symbol: str
-        :param orderId: The unique order id
-        :type orderId: int
-        :param origClientOrderId: optional
-        :type origClientOrderId: str
-        :param newClientOrderId: Used to uniquely identify this cancel. Automatically generated by default.
-        :type newClientOrderId: str
-        :param recvWindow: the number of milliseconds the request is valid for
-        :type recvWindow: int
-
-        :returns: API response
-
-        .. code-block:: python
-
-            {
-                "symbol": "LTCBTC",
-                "origClientOrderId": "myOrder1",
-                "orderId": 1,
-                "clientOrderId": "cancelMyOrder1"
-            }
-
-        :raises: BinanceResponseException, BinanceAPIException
-
-        """
-        return self._delete('order', True, data=params)
-
-    def get_open_orders(self, **params):
-        """Get all open orders on a symbol.
-
-        :param symbol: required
-        :type symbol: str
-        :param recvWindow: the number of milliseconds the request is valid for
-        :type recvWindow: int
-
-        :returns: API response
-
-        .. code-block:: python
-
-            [
-                {
-                    "symbol": "LTCBTC",
-                    "orderId": 1,
-                    "clientOrderId": "myOrder1",
-                    "price": "0.1",
-                    "origQty": "1.0",
-                    "executedQty": "0.0",
-                    "status": "NEW",
-                    "timeInForce": "GTC",
-                    "type": "LIMIT",
-                    "side": "BUY",
-                    "stopPrice": "0.0",
-                    "icebergQty": "0.0",
-                    "time": 1499827319559
-                }
-            ]
 
         :raises: BinanceResponseException, BinanceAPIException
 
         """
         return self._get('openOrders', True, data=params)
 
+    def get_all_orders(self, **params):
+        """Get all account orders; active, canceled, or filled. 
+        If orderId is set, it will get orders >= that orderId. Otherwise most recent orders are returned.
+
+        https://binanceapitest.github.io/Binance-Futures-API-doc/trade_and_account/#all-orders-user_data
+
+        :param symbol: required
+        :type symbol: str
+        :param orderId: The unique order id
+        :type orderId: int
+        :param startTime: 
+        :type startTime: long
+        :param endTime: 
+        :type endTime: long
+        :param limit: Default 500; max 500.
+        :type limit: int
+        :param recvWindow: the number of milliseconds the request is valid for
+        :type recvWindow: int
+
+        :returns: API response
+
+        .. code-block:: python
+            [
+                {
+                    "symbol": "BTCUSDT",
+                    "orderId": 1,
+                    "clientOrderId": "myOrder1",
+                    "price": "0.1",
+                    "origQty": "1.0",
+                    "executedQty": "1.0",
+                    "cumQuote": "10.0",
+                    "status": "NEW",
+                    "timeInForce": "GTC",
+                    "type": "LIMIT",
+                    "side": "BUY",
+                    "stopPrice": "0.0",
+                    "updateTime": 1499827319559
+                }
+            ]
+        :raises: BinanceResponseException, BinanceAPIException
+
+        """
+        return self._get('allOrders', True, data=params)
+
     # User Stream Endpoints
+    def get_balance(self, **params):
+        """Get future account balance.
+
+        https://binanceapitest.github.io/Binance-Futures-API-doc/trade_and_account/#future-account-balance-user_data
+        
+        :param recvWindow: the number of milliseconds the request is valid for
+        :type recvWindow: int
+
+        :returns: API response
+
+        .. code-block:: python
+        {
+            "accountId": 26
+            "asset": "USDT"
+            "balance": "122607.35137903"
+            "withdrawAvailable": "102333.54137903"
+        }
+        :raises: BinanceResponseException, BinanceAPIException
+
+        """
+        return self._get('balance', True, data=params)
+
     def get_account(self, **params):
         """Get current account information.
+
+        https://binanceapitest.github.io/Binance-Futures-API-doc/trade_and_account/#account-information-user_data
 
         :param recvWindow: the number of milliseconds the request is valid for
         :type recvWindow: int
@@ -1216,28 +1193,6 @@ class Future(object):
         """
         return self._get('account', True, data=params)
 
-    def get_balance(self, **params):
-        """Get future account balance.
-
-        https://binanceapitest.github.io/Binance-Futures-API-doc/trade_and_account/#future-account-balance-user_data
-        
-        :param recvWindow: the number of milliseconds the request is valid for
-        :type recvWindow: int
-
-        :returns: API response
-
-        .. code-block:: python
-        {
-            "accountId": 26
-            "asset": "USDT"
-            "balance": "122607.35137903"
-            "withdrawAvailable": "102333.54137903"
-        }
-        :raises: BinanceResponseException, BinanceAPIException
-
-        """
-        return self._get('balance', True, data=params)
-
     def get_position_risk(self, **params):
         """Get position information.
 
@@ -1266,6 +1221,8 @@ class Future(object):
 
     def get_my_trades(self, **params):
         """Get trades for a specific account and symbol.
+
+        https://binanceapitest.github.io/Binance-Futures-API-doc/trade_and_account/#account-trade-list-user_data
 
         :param symbol: required
         :type symbol: str
