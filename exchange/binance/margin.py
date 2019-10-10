@@ -15,7 +15,7 @@ elif six.PY3:
 
 # https://github.com/binance-exchange/binance-official-api-docs/blob/master/margin-api.md
 
-class Margin(object):
+class Client(object):
 
     API_URL = 'https://api.binance.com/sapi'
     PUBLIC_API_VERSION = 'v1'
@@ -64,7 +64,7 @@ class Margin(object):
     ORDER_RESP_TYPE_FULL = 'FULL'
 
     def __init__(self, api_key, api_secret):
-        """Binance API Margin constructor
+        """Binance API Client constructor
 
         :param api_key: Api Key
         :type api_key: str.
@@ -78,7 +78,7 @@ class Margin(object):
         self.session = self._init_session()
 
         # init DNS and SSL cert
-        self.ping()
+        # self.ping()
 
     def _init_session(self):
 
