@@ -302,7 +302,7 @@ class Client(object):
         """
         return self._get('margin/order', True, data=params)
 
-    def get_open_order(self, **params):
+    def get_open_orders(self, **params):
         """Query open order
         """
         return self._get('margin/openOrders', True, data=params)

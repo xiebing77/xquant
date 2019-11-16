@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # print(ret)
     # ret = client.cancel_order(symbol='ETHUSDT', orderId='445856389')
     # ret = client.get_order(symbol='ETHUSDT', orderId='445862537')
-    # ret = client.get_open_order()
+    # ret = client.get_open_orders()
     # ret = client.get_all_orders(symbol='ETHUSDT')
     # ret = client.get_loan(asset='USDT', startTime=1570700000000)
     # ret = client.get_repay(asset='USDT', startTime=1570700000000)
