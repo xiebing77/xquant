@@ -93,3 +93,55 @@ def cacl_period_fall_rate(klines, start_time, cur_price):
         % (period_high_price, period_fall_rate, start_time)
     )
     return period_fall_rate
+
+
+def is_increment(arr):
+    for i in range(1, len(arr)):
+        if arr[i-1] >= arr[i]:
+            return False
+    return True
+
+def is_decrement(arr):
+    for i in range(1, len(arr)):
+        if arr[i-1] <= arr[i]:
+            return False
+    return True
+
+def get_inc_step(arr):
+    i = -1
+    while i >= -len(arr)+1:
+        if arr[i-1] > arr[i]:
+            break
+        i -= 1
+
+    return -i-1
+
+
+def is_more(arr, c=2):
+    for i in range(c, len(arr)):
+        if min(arr[i-c:i]) > arr[i]:
+            return False
+    return True
+
+def is_less(arr, c=2):
+    for i in range(c, len(arr)):
+        if max(arr[i-c:i]) < arr[i]:
+            return False
+    return True
+
+def get_more_step(arr, c=2):
+    i = -1
+    while i >= -len(arr)+c:
+        if min(arr[i-c:i]) > arr[i]:
+            break
+        i -= 1
+
+    if i == -1:
+        return 0
+
+    return -1-i
+    """
+    if arr[i+2] < arr[i+1]:
+        return -1-i+c
+    else:
+    """

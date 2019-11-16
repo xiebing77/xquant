@@ -168,7 +168,7 @@ class Engine:
         tp_signals = []
 
         if "high" not in position_info:
-            return tp_cfg
+            return tp_signals
 
         tp_cfg = self.config["risk_control"]["take_profit"]
 
@@ -612,8 +612,40 @@ class Engine:
         print("Kelly Criterion: %.2f%%" % round(kelly*100, 2))
 
 
-    def display(self, symbol, orders, klines):
+    def display(self, symbol, orders, klines, display_count):
 
+        klines_df = pd.DataFrame(klines, columns=self.kline_column_names)
+
+        atrs = talib.ATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+        natrs = talib.NATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+        tranges = talib.TRANGE(klines_df["high"], klines_df["low"], klines_df["close"])
+ 
+
+        e_p  = 26
+        emas = talib.EMA(klines_df["close"], timeperiod=e_p)
+        s_emas = talib.EMA(klines_df["close"], timeperiod=e_p/2)
+        ks, ds, js = ic.pd_kdj(klines_df)
+
+
+        # display
+        atrs = atrs[-display_count:]
+        natrs = natrs[-display_count:]
+        tranges = tranges[-display_count:]
+        emas = emas[-display_count:]
+        s_emas = s_emas[-display_count:]
+        ks = ks[-display_count:]
+        ds = ds[-display_count:]
+        js = js[-display_count:]
+
+
+        opens = klines_df["open"][-display_count:]
+        closes = klines_df["close"][-display_count:]
+        opens = pd.to_numeric(opens)
+        closes = pd.to_numeric(closes)
+        base_close = closes.values[0]
+
+        open_times = [datetime.fromtimestamp((float(open_time)/1000)) for open_time in klines_df["open_time"][-display_count:]]
+        close_times = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_df["close_time"][-display_count:]]
         """
         gs = gridspec.GridSpec(8, 1)
         gs.update(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
@@ -624,58 +656,76 @@ class Engine:
             plt.subplot(gs[-1, :])
         ]
         """
-        fig, axes = plt.subplots(5,1, sharex=True)
+        fig, axes = plt.subplots(2, 1, sharex=True)
         fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
 
         trade_times = [order["trade_time"] for order in orders]
 
         quotes = []
-        for k in klines:
+        for k in klines[-display_count:]:
             d = datetime.fromtimestamp(k[0]/1000)
             quote = (dts.date2num(d), float(k[1]), float(k[4]), float(k[2]), float(k[3]))
             quotes.append(quote)
 
-        mpf.candlestick_ochl(axes[0], quotes, width=0.2, colorup='g', colordown='r')
-        axes[0].set_ylabel('price')
-        axes[0].grid(True)
-        axes[0].autoscale_view()
-        axes[0].xaxis_date()
-        axes[0].plot(trade_times, [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
+        i = 0
+        mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
+        axes[i].set_ylabel('price')
+        axes[i].grid(True)
+        axes[i].autoscale_view()
+        axes[i].xaxis_date()
+        axes[i].plot(trade_times, [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
 
-        klines_df = pd.DataFrame(klines, columns=self.kline_column_names)
-        open_times = [datetime.fromtimestamp((open_time/1000)) for open_time in klines_df["open_time"]]
-        klines_df["close"] = pd.to_numeric(klines_df["close"])
-        base_close = klines_df["close"].values[0]
+        axes[i].plot(close_times, emas, "b--", label="%sEMA" % (e_p))
+        axes[i].plot(close_times, s_emas, "c--", label="%sEMA" % (e_p/2))
 
-        klines_df["ATR"] = talib.ATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
-        klines_df["NATR"] = talib.NATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
-        klines_df["TRANGE"] = talib.TRANGE(klines_df["high"], klines_df["low"], klines_df["close"])
+        axes[i].plot(close_times, emas + atrs, "y--", label="1ATR")
+        axes[i].plot(close_times, emas - atrs, "y--", label="1ATR")
+        #axes[i].plot(close_times, emas + 2*atrs, "y--", label="2ATR")
+        #axes[i].plot(close_times, emas - 2*atrs, "y--", label="2ATR")
+        axes[i].plot(close_times, emas + 3*atrs, "y--", label="3ATR")
+        axes[i].plot(close_times, emas - 3*atrs, "y--", label="3ATR")
 
-        # axes[0].plot(open_times, klines_df["ATR"]*10, "y:", label="ATR")
+        #axes[i].plot(close_times, emas + 4*atrs, "m--", label="4ATR")
+        #axes[i].plot(close_times, emas - 4*atrs, "m--", label="4ATR")
+        #axes[i].plot(close_times, emas + 5*atrs, "m--", label="5ATR")
+        #axes[i].plot(close_times, emas - 5*atrs, "m--", label="5ATR")
+        ts = 6
+        label = "%d ATR" % (ts)
+        #axes[i].plot(close_times, emas + ts*atrs, "m--", label="6ATR")
+        #axes[i].plot(close_times, emas - ts*atrs, "m--", label="6ATR")
 
-        axes[1].set_ylabel('volatility')
-        axes[1].grid(True)
-        axes[1].plot(open_times, klines_df["ATR"], "y:", label="ATR")
-        axes[1].plot(open_times, klines_df["NATR"], "k--", label="NATR")
-        axes[1].plot(open_times, klines_df["TRANGE"], "c--", label="TRANGE")
+        ts = 12
+        label = "%d ATR" % (ts)
+        #axes[i].plot(close_times, emas + ts*atrs, "g--", label=label)
+        #axes[i].plot(close_times, emas - ts*atrs, "g--", label=label)
 
-        ks, ds, js = ic.pd_kdj(klines_df)
-        axes[2].set_ylabel('kdj')
-        axes[2].grid(True)
-        axes[2].plot(open_times, ks, "b", label="k")
-        axes[2].plot(open_times, ds, "y", label="d")
-        axes[2].plot(open_times, js, "m", label="j")
+        """
+        i += 1
+        axes[i].set_ylabel('volatility')
+        axes[i].grid(True)
+        axes[i].plot(close_times, atrs, "y:", label="ATR")
+        axes[i].plot(close_times, natrs, "k--", label="NATR")
+        axes[i].plot(close_times, tranges, "c--", label="TRANGE")
 
-        axes[-2].set_ylabel('total profit rate')
+        i += 1
+        axes[i].set_ylabel('kdj')
+        axes[i].grid(True)
+        axes[i].plot(close_times, ks, "b", label="k")
+        axes[i].plot(close_times, ds, "y", label="d")
+        axes[i].plot(close_times, js, "m", label="j")
+
+        axes[-2].set_ylabel('rate')
         axes[-2].grid(True)
-        axes[-2].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "go--")
-        axes[-2].plot(open_times, [round(100*((close/base_close)-1), 2) for close in klines_df["close"]], "r--")
+        #axes[-2].set_label(["position rate", "profit rate"])
+        axes[-2].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
+        axes[-2].plot(trade_times ,[round(100*order["floating_profit_rate"], 2) for order in orders], "g--", drawstyle="steps", label="profit")
+        """
 
-        axes[-1].set_ylabel('rate')
+        axes[-1].set_ylabel('total profit rate')
         axes[-1].grid(True)
-        #axes[-1].set_label(["position rate", "profit rate"])
-        axes[-1].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
-        axes[-1].plot(trade_times ,[round(100*order["floating_profit_rate"], 2) for order in orders], "g--", drawstyle="steps", label="profit")
+        axes[-1].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "go--")
+        axes[-1].plot(close_times, [round(100*((close/base_close)-1), 2) for close in closes], "r--")
+
         """
         trade_times = []
         pst_rates = []

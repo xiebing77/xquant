@@ -2,6 +2,7 @@
 """各种指标"""
 import numpy as np
 import pandas as pd
+import talib
 
 def py_ma(klines, index, period):
     """
@@ -21,6 +22,31 @@ def py_mas(klines, index, period):
             vs.pop(0)
         vs.append(float(kline[index]))
         arr.append(sum(vs)/len(vs))
+
+    return arr
+
+def py_emas(klines, index, period):
+    arr = []
+
+    for i in range(period):
+        if i==0:
+            ema = float(klines[0][index])
+        else:
+            k = 2 / (i + 2)
+            v = float(klines[i][index])
+            ema = v * k + ema_y * (1 - k)
+
+        arr.append(ema)
+        ema_y = ema
+
+
+    k = 2 / (period + 1)
+    for kline in klines[period:]:
+        v = float(kline[index])
+        ema = v * k + ema_y * (1 - k)
+
+        arr.append(ema)
+        ema_y = ema
 
     return arr
 
@@ -161,6 +187,12 @@ def pd_kdj(klines_df, period=9, ksgn="close"):
     #print(klines_df)
     return k, d, j
 
+
+def ta_kdj(klines_df, period=9, ksgn="close"):
+    kd = talib.STOCH(high=klines_df["high"], low=klines_df["low"], close=klines_df[ksgn],
+        fastk_period=period, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
+
+    return kd
 
 def py_macd(klines, closeindex, fastperiod=12, slowperiod=26, signalperiod=9):
     arr = []

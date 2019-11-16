@@ -401,5 +401,7 @@ class BackTest(Engine):
 
         if display_switch:
             interval = strategy.config["kline"]["interval"]
-            klines = self.get_klines(symbol, interval, (end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
-            self.display(symbol, self.orders, klines)
+            display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
+            print("display_count: %s", display_count)
+            klines = self.get_klines(symbol, interval, 150+display_count)
+            self.display(symbol, self.orders, klines, display_count)
