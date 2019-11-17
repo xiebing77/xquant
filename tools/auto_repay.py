@@ -31,4 +31,4 @@ if __name__ == "__main__":
             repay = min(debt, asset)
             now = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             print("%s Repay %s: %s" % (now, i['asset'], repay))
-            # exchange.repay(i['asset'], repay)
+            exchange.repay(i['asset'], repay)
