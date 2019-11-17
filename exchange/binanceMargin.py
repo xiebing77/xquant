@@ -160,7 +160,7 @@ class BinanceMargin(Exchange):
         nb = []
         balances = account['userAssets']
         for item in balances:
-            if float(item['netAsset']) == 0:
+            if float(item['free']) == 0 and float(item['locked']) == 0 and float(item['borrowed']) == 0 and float(item['interest']) == 0:
                 continue
             nb.append(item)
         account['balances'] = nb
@@ -214,7 +214,7 @@ class BinanceMargin(Exchange):
                 """TODO:需要考虑精度问题"""
                 loan_amount = float(Decimal(amount) * Decimal(price) - balance)
                 self.loan(base_coin, loan_amount)
-                
+
         elif binance_side is SIDE_SELL:
             balance = Decimal(self.get_balances(target_coin)['free'])
             if balance < Decimal(amount):
