@@ -4,6 +4,7 @@ sys.path.append('../')
 import argparse
 from exchange.binanceMargin import BinanceMargin
 from decimal import Decimal
+import time
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='account')
@@ -28,5 +29,6 @@ if __name__ == "__main__":
         asset = Decimal(i['free'])
         if debt > 0 and asset > 0:
             repay = min(debt, asset)
-            print("Repay %s: %s" % (i['asset'], repay))
+            now = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            print("%s Repay %s: %s" % (now, i['asset'], repay))
             # exchange.repay(i['asset'], repay)
