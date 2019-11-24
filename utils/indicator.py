@@ -222,10 +222,12 @@ def pd_macd(klines_df, fastperiod=12, slowperiod=26, signalperiod=9):
 
     klines_df["12ema"] = fast_ema
     klines_df["26ema"] = slow_ema
-    klines_df["macd dif"] = fast_ema - slow_ema
-    klines_df["macd dea"] = klines_df["macd dif"].ewm(span=signalperiod, adjust=False).mean()
+    klines_df["dif"] = fast_ema - slow_ema
+    klines_df["dea"] = klines_df["dif"].ewm(span=signalperiod, adjust=False).mean()
+    klines_df["macd"] = klines_df["dif"] - klines_df["dea"]
 
     #print(klines_df)
+    return klines_df
 
 def py_hl(klines, highindex, lowindex, opentimeindex, period):
 
@@ -275,3 +277,18 @@ def py_wrs(klines, highindex, lowindex, closeindex, period=14):
 
     #print(arr)
     return arr
+
+def py_ad(k, highindex, lowindex, openindex, closeindex, volumeindex):
+    m = float(k[highindex]) - float(k[lowindex])
+    if m==0:
+        return 0
+
+    l = float(k[volumeindex])
+    ad = (float(k[closeindex]) - float(k[openindex])) / m * l
+    return ad
+
+def py_ads(klines, highindex, lowindex, openindex, closeindex, volumeindex):
+    ads = []
+    for k in klines:
+        ads.append(py_ad(k, highindex, lowindex, openindex, closeindex, volumeindex))
+    return ads

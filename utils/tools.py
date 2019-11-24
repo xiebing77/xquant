@@ -116,6 +116,14 @@ def get_inc_step(arr):
 
     return -i-1
 
+def get_dec_step(arr):
+    i = -1
+    while i >= -len(arr)+1:
+        if arr[i-1] < arr[i]:
+            break
+        i -= 1
+
+    return -i-1
 
 def is_more(arr, c=2):
     for i in range(c, len(arr)):
