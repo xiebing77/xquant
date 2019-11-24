@@ -51,21 +51,6 @@ def str_to_float(string, float_digits=0, flag=MATH_FLOOR):
         return None
 
 
-def get_next_open_time(dt):
-    if dt.hour < 8:
-        open_time = datetime.combine(dt.date(), time(8, 0, 0))
-    else:
-        open_time = datetime.combine(dt.date() + timedelta(days=1), time(8, 0, 0))
-    return open_time
-
-def get_next_open_timedelta(dt):
-    if dt.hour < 8:
-        ts = datetime.combine(dt.date(), time(8, 0, 0)) - dt
-    else:
-        ts = datetime.combine(dt.date() + timedelta(days=1), time(8, 0, 0)) - dt
-    return ts
-
-
 def cacl_today_fall_rate(klines, cur_price):
     """ 计算当天最高价的回落比例 """
     today_high_price = pd.to_numeric(klines["high"].values[-1])

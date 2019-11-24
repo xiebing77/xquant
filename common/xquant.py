@@ -199,6 +199,13 @@ def get_interval_seconds(interval):
     else:
         return None
 
+def get_next_open_time(interval, dt):
+    return get_open_time(interval, dt) + get_interval_timedelta(interval)
+
+def get_next_open_timedelta(interval, dt):
+    return get_next_open_time(interval, dt) - dt
+
+
 
 def creat_symbol(target_coin, base_coin):
     """create symbol"""

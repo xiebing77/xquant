@@ -43,6 +43,8 @@ class Engine:
 
         self.tp_cc = {"base_open": 0}
 
+        self.kline_interval = config["kline"]["interval"]
+
 
     def log_info(self, info):
         log.info(info)
@@ -147,7 +149,7 @@ class Engine:
             self.log_error("请选择额度模式，默认是0")
 
         sl_cfg = self.config["risk_control"]["stop_loss"]
-        sl_td_h = ts.get_next_open_timedelta(self.now())
+        sl_td_h = xq.get_next_open_timedelta(self.kline_interval, self.now())
 
         if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["floating_profit"] <= 0:
             sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), sl_td_h))
@@ -619,18 +621,27 @@ class Engine:
         atrs = talib.ATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
         natrs = talib.NATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
         tranges = talib.TRANGE(klines_df["high"], klines_df["low"], klines_df["close"])
- 
+
+        #ads = talib.AD(klines_df["high"], klines_df["low"], klines_df["close"], klines_df["volume"])
 
         e_p  = 26
         emas = talib.EMA(klines_df["close"], timeperiod=e_p)
         s_emas = talib.EMA(klines_df["close"], timeperiod=e_p/2)
         ks, ds, js = ic.pd_kdj(klines_df)
 
+        klines_df = ic.pd_macd(klines_df)
+        difs = [round(a, 2) for a in klines_df["dif"]]
+        deas = [round(a, 2) for a in klines_df["dea"]]
+        macds = [round(a, 2) for a in klines_df["macd"]]
+        difs = difs[-display_count:]
+        deas = deas[-display_count:]
+        macds = macds[-display_count:]
 
         # display
         atrs = atrs[-display_count:]
         natrs = natrs[-display_count:]
         tranges = tranges[-display_count:]
+        #ads = ads[-display_count:]
         emas = emas[-display_count:]
         s_emas = s_emas[-display_count:]
         ks = ks[-display_count:]
@@ -656,7 +667,7 @@ class Engine:
             plt.subplot(gs[-1, :])
         ]
         """
-        fig, axes = plt.subplots(2, 1, sharex=True)
+        fig, axes = plt.subplots(3, 1, sharex=True)
         fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
 
         trade_times = [order["trade_time"] for order in orders]
@@ -699,7 +710,19 @@ class Engine:
         #axes[i].plot(close_times, emas + ts*atrs, "g--", label=label)
         #axes[i].plot(close_times, emas - ts*atrs, "g--", label=label)
 
+        i += 1
+        axes[i].set_ylabel('macd')
+        axes[i].grid(True)
+        axes[i].plot(close_times, difs, "y", label="dif")
+        axes[i].plot(close_times, deas, "b", label="dea")
+        axes[i].plot(close_times, macds, "m", drawstyle="steps", label="macd")
+
         """
+        i += 1
+        axes[i].set_ylabel('AD')
+        axes[i].grid(True)
+        axes[i].plot(close_times, ads, "y:", label="AD")
+
         i += 1
         axes[i].set_ylabel('volatility')
         axes[i].grid(True)
