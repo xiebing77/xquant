@@ -39,7 +39,8 @@ class Engine:
             self.db_orders_name = db_orders_name
             self.td_db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
 
-        self.can_open_time = None
+        self.can_open_long_time = None
+        self.can_open_short_time = None
 
         self.tp_cc = {"base_open": 0}
 
@@ -149,10 +150,10 @@ class Engine:
             self.log_error("请选择额度模式，默认是0")
 
         sl_cfg = self.config["risk_control"]["stop_loss"]
-        sl_td_h = xq.get_next_open_timedelta(self.kline_interval, self.now())
-
+        #sl_t = xq.get_next_open_time(self.kline_interval, self.now())
+        sl_t = xq.get_next_open_time(xq.KLINE_INTERVAL_1DAY, self.now())
         if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["floating_profit"] <= 0:
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), sl_td_h))
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), sl_t))
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
@@ -161,7 +162,7 @@ class Engine:
         else:
             loss_rate = (cur_price / pst_price) - 1
         if pst_price > 0 and "base_price" in sl_cfg and sl_cfg["base_price"] > 0 and loss_rate  >= sl_cfg["base_price"]:
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), sl_td_h))
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), sl_t))
 
         return sl_signals
 
@@ -252,19 +253,27 @@ class Engine:
         if ds_signal["action"] is None:
             return
 
-        if self.can_open_time:
-            if self.now() < self.can_open_time:
-                # 限定的时间范围内，只能平仓，不能开仓
-                if ds_signal["action"] != xq.CLOSE_POSITION:
-                    return
+        # 限定的时间范围内，不能开仓
+        if ds_signal["action"] == xq.OPEN_POSITION:
+            if ds_signal["direction"] == xq.DIRECTION_LONG:
+                if self.can_open_long_time and self.now() < self.can_open_long_time:
+                        return
             else:
-                # 时间范围之外，恢复
-                self.can_open_time = None
+                if self.can_open_short_time and self.now() < self.can_open_short_time:
+                        return
 
-        if ds_signal["can_open_time"]:
-            if not self.can_open_time or (self.can_open_time and self.can_open_time < self.now() + ds_signal["can_open_time"]):
-                self.can_open_time = self.now() + ds_signal["can_open_time"]
-                self.log_info("can buy time: %s" % self.can_open_time)
+        can_open_time_info = ""
+        can_open_time = ds_signal["can_open_time"]
+        if can_open_time:
+            if ds_signal["direction"] == xq.DIRECTION_LONG:
+                if not self.can_open_long_time or self.can_open_long_time < can_open_time:
+                    self.can_open_long_time = can_open_time
+                    can_open_time_info = "can open long time: %s" % self.can_open_long_time
+            else:
+                if not self.can_open_short_time or self.can_open_short_time < can_open_time:
+                    self.can_open_short_time = can_open_time
+                    can_open_time_info = "can open short time: %s" % self.can_open_short_time
+            self.log_info(can_open_time_info)
 
         if ds_signal["pst_rate"] > 1 or ds_signal["pst_rate"] < 0:
             self.log_warning("仓位率（%g）超出范围（0 ~ 1）" % ds_signal["pst_rate"])
@@ -339,7 +348,7 @@ class Engine:
             cur_price,
             limit_price,
             target_amount,
-            "%s, timedelta: %s, can buy after: %s" % (order_rmk, ds_signal["can_open_time"], self.can_open_time) if (ds_signal["can_open_time"] or self.can_open_time) else "%s" % (order_rmk),
+            "%s, time: %s,  %s" % (order_rmk, ds_signal["can_open_time"], can_open_time_info) if (ds_signal["can_open_time"] or can_open_time_info) else "%s" % (order_rmk),
         )
         self.log_info(
             "current price: %g;  rate: %g;  order_id: %s" % (cur_price, rate, order_id)
