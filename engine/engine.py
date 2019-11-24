@@ -153,7 +153,7 @@ class Engine:
         #sl_t = xq.get_next_open_time(self.kline_interval, self.now())
         sl_t = xq.get_next_open_time(xq.KLINE_INTERVAL_1DAY, self.now())
         if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["floating_profit"] <= 0:
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), sl_t))
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), sl_t))
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
@@ -162,7 +162,7 @@ class Engine:
         else:
             loss_rate = (cur_price / pst_price) - 1
         if pst_price > 0 and "base_price" in sl_cfg and sl_cfg["base_price"] > 0 and loss_rate  >= sl_cfg["base_price"]:
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止损", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), sl_t))
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), sl_t))
 
         return sl_signals
 
@@ -191,7 +191,7 @@ class Engine:
                         self.tp_cc["base_open"] += 1
                         self.log_info("base_open tp_cc 2 = %s" % self.tp_cc["base_open"])
                         if self.tp_cc["base_open"] >= 1 :
-                            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止盈", "盈利回落(基于持仓价)  fall rate:{:8.2%} ( {:8.2%}, {:8.2%} )".format(fall_profit_rate, bo_band[0], bo_band[1])))
+                            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "take profit", "盈利回落(基于持仓价)  fall rate:{:8.2%} ( {:8.2%}, {:8.2%} )".format(fall_profit_rate, bo_band[0], bo_band[1])))
                     else:
                         self.tp_cc["base_open"] = 0
 
@@ -202,7 +202,7 @@ class Engine:
         else:
             price_rate = position_info["low"] / cur_price
         if "base_high" in tp_cfg and tp_cfg["base_high"] > 0 and price_rate < (1 - tp_cfg["base_high"]):
-            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "  止盈", "盈利回落，基于最高价的{:8.2%}".format(tp_cfg["base_high"])))
+            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "take profit", "盈利回落，基于最高价的{:8.2%}".format(tp_cfg["base_high"])))
 
         return tp_signals
         """
@@ -573,6 +573,7 @@ class Engine:
         #print(orders_df)
         self.stat("total", orders_df)
 
+        orders_df = orders_df.sort_values(by=['signal_id'])
         for signal_id in orders_df["signal_id"].drop_duplicates().values:
             #print(signal_id)
 
