@@ -151,7 +151,7 @@ class Engine:
 
         sl_cfg = self.config["risk_control"]["stop_loss"]
         #sl_t = xq.get_next_open_time(self.kline_interval, self.now())
-        sl_t = xq.get_next_open_time(xq.KLINE_INTERVAL_1DAY, self.now())
+        sl_t = self.now() + max(xq.get_next_open_timedelta(xq.KLINE_INTERVAL_1DAY, self.now()), timedelta(hours=4))
         if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["floating_profit"] <= 0:
             sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), sl_t))
 
