@@ -138,3 +138,25 @@ def get_more_step(arr, c=2):
         return -1-i+c
     else:
     """
+def get_min_seat(arr):
+    i_min  = -len(arr)
+    v_min = arr[i_min]
+    for i in range(i_min+1, -1):
+        v = arr[i]
+        if v_min > v:
+            v_min = v
+            i_min = i
+    return i_min
+
+def get_bottoms(arr):
+    bottoms = []
+    c = 10
+    #print(arr)
+    for i in range(-len(arr)+c, -1):
+        ei = i + c
+        if ei > -1:
+            ei = -1
+        if arr[i] == min(arr[i-c : ei]):
+            bottoms.append(i)
+    return bottoms
+

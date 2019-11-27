@@ -233,25 +233,27 @@ def get_balance_frozen(balance):
     return ts.str_to_float(balance["frozen"])
 
 
-def create_signal(direction, action, pst_rate, describe, rmk, can_open_time=None):
+def create_signal(direction, action, pst_rate, describe, rmk, can_open_time=None, stop_loss_price=None):
     """创建交易信号"""
-    return {"direction": direction, "action": action, "pst_rate": pst_rate, "describe": describe, "rmk": rmk, "can_open_time": can_open_time}
+    return {"direction": direction, "action": action, "pst_rate": pst_rate, "describe": describe, "rmk": rmk, "can_open_time": can_open_time,
+        "stop_loss_price": stop_loss_price
+    }
 
-def open_long_signal(pst_rate, describe, rmk, can_open_time=None):
+def open_long_signal(pst_rate, describe, rmk, can_open_time=None, stop_loss_price=None):
     """创建买信号"""
-    return create_signal(DIRECTION_LONG, OPEN_POSITION, pst_rate, describe, rmk, can_open_time)
+    return create_signal(DIRECTION_LONG, OPEN_POSITION, pst_rate, describe, rmk, can_open_time, stop_loss_price)
 
-def close_long_signal(pst_rate, describe, rmk, can_open_time=None):
+def close_long_signal(pst_rate, describe, rmk, can_open_time=None, stop_loss_price=None):
     """创建卖信号"""
-    return create_signal(DIRECTION_LONG, CLOSE_POSITION, pst_rate, describe, rmk, can_open_time)
+    return create_signal(DIRECTION_LONG, CLOSE_POSITION, pst_rate, describe, rmk, can_open_time, stop_loss_price)
 
-def open_short_signal(pst_rate, describe, rmk, can_open_time=None):
+def open_short_signal(pst_rate, describe, rmk, can_open_time=None, stop_loss_price=None):
     """创建买信号"""
-    return create_signal(DIRECTION_SHORT, OPEN_POSITION, pst_rate, describe, rmk, can_open_time)
+    return create_signal(DIRECTION_SHORT, OPEN_POSITION, pst_rate, describe, rmk, can_open_time, stop_loss_price)
 
-def close_short_signal(pst_rate, describe, rmk, can_open_time=None):
+def close_short_signal(pst_rate, describe, rmk, can_open_time=None, stop_loss_price=None):
     """创建卖信号"""
-    return create_signal(DIRECTION_SHORT, CLOSE_POSITION, pst_rate, describe, rmk, can_open_time)
+    return create_signal(DIRECTION_SHORT, CLOSE_POSITION, pst_rate, describe, rmk, can_open_time, stop_loss_price)
 
 def is_long_signal(signal):
     return signal["direction"] == DIRECTION_LONG
@@ -289,3 +291,31 @@ def decision_signals(signals):
                 ds_signal = signal
 
     return ds_signal
+
+def down_area(ss, ls):
+    total_len = len(ss)
+
+    ei = -1
+    i = -2
+    while i >= -total_len:
+        v = ss[i]-ls[i]
+        if v > 0:
+            return -1, -1, -1
+        if v < ss[ei]-ls[ei]:
+            break
+        ei = i
+        i -= 1
+
+    mi = i
+    bi = i
+    while i >= -total_len:
+        v = ss[i]-ls[i]
+        if v > 0:
+            break
+
+        if ss[mi] - ls[mi] > v:
+            mi = i
+        bi = i
+        i -= 1
+
+    return bi, mi, ei

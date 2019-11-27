@@ -164,6 +164,11 @@ class Engine:
         if pst_price > 0 and "base_price" in sl_cfg and sl_cfg["base_price"] > 0 and loss_rate  >= sl_cfg["base_price"]:
             sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), sl_t))
 
+        stop_loss_price = position_info["stop_loss_price"]
+        if stop_loss_price:
+            if (position_info["direction"] == xq.DIRECTION_LONG and cur_price <= stop_loss_price) or (position_info["direction"] == xq.DIRECTION_SHORT and cur_price >= stop_loss_price):
+                sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达指定的止损价格: %f" % (stop_loss_price), sl_t))
+
         return sl_signals
 
     def take_profit(self, position_info, cur_price):
@@ -241,12 +246,13 @@ class Engine:
 
         ds_signal = xq.decision_signals(signals)
         self.log_info(
-            "decision signal (%s  %s), position rate(%g), describe(%s), can buy after(%s)" % (
+            "decision signal (%s  %s), position rate(%g), describe(%s), can buy after(%s), stop_loss_price(%s)" % (
             ds_signal["direction"],
             ds_signal["action"],
             ds_signal["pst_rate"],
             ds_signal["describe"],
-            ds_signal["can_open_time"]
+            ds_signal["can_open_time"],
+            ds_signal["stop_loss_price"]
             )
         )
 
@@ -348,6 +354,7 @@ class Engine:
             cur_price,
             limit_price,
             target_amount,
+            ds_signal["stop_loss_price"],
             "%s, time: %s,  %s" % (order_rmk, ds_signal["can_open_time"], can_open_time_info) if (ds_signal["can_open_time"] or can_open_time_info) else "%s" % (order_rmk),
         )
         self.log_info(
@@ -413,6 +420,7 @@ class Engine:
         if cycle_amount > 0:
             pst_info["price"] = abs(cycle_value) / cycle_amount
             pst_info["cost_price"] = (abs(cycle_value) + cycle_commission) / cycle_amount
+            pst_info["stop_loss_price"] = cycle_first_order["stop_loss_price"]
 
             pst_info["direction"] = cycle_first_order["direction"]
             pst_info["start_time"] = datetime.fromtimestamp(cycle_first_order["create_time"])

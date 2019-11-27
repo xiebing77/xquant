@@ -331,7 +331,7 @@ class BackTest(Engine):
         return self._get_position(symbol, self.orders, cur_price)
 
     def send_order_limit(
-        self, direction, action, symbol, pst_rate, cur_price, limit_price, amount, rmk
+        self, direction, action, symbol, pst_rate, cur_price, limit_price, amount, stop_loss_price, rmk
     ):
         """ 提交委托，回测默认以当前价全部成交 """
         # order_id = uuid.uuid1()
@@ -347,6 +347,7 @@ class BackTest(Engine):
             "market_price": cur_price,
             "price": limit_price,
             "amount": amount,
+            "stop_loss_price": stop_loss_price,
             "status": xq.ORDER_STATUS_CLOSE,
             "order_id": order_id,
             "cancle_amount": 0,
