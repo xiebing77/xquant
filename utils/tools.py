@@ -148,9 +148,8 @@ def get_min_seat(arr):
             i_min = i
     return i_min
 
-def get_bottoms(arr):
+def get_bottoms(arr, c):
     bottoms = []
-    c = 10
     #print(arr)
     for i in range(-len(arr)+c, -1):
         ei = i + c
@@ -160,3 +159,19 @@ def get_bottoms(arr):
             bottoms.append(i)
     return bottoms
 
+def get_macd_bottoms(arr):
+    bottoms = []
+    bi = -len(arr)
+    for i in range(bi+1, -1):
+        v = arr[i]
+        if v < 0:
+            if arr[bi] > v:
+                bi = i
+        else:
+            if arr[bi] < 0:
+                bottoms.append(bi)
+                bi = i
+    if arr[bi] < 0:
+        bottoms.append(bi)
+
+    return bottoms
