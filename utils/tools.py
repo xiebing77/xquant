@@ -151,18 +151,21 @@ def get_min_seat(arr):
 def get_bottoms(arr, c):
     bottoms = []
     #print(arr)
-    for i in range(-len(arr)+c, -1):
-        ei = i + c
-        if ei > -1:
-            ei = -1
-        if arr[i] == min(arr[i-c : ei]):
+    for i in range(-len(arr)+c, 0):
+        ei = i + 1 + c
+        if ei >= 0:
+            sub_arr = arr[i-c:]
+        else:
+            sub_arr = arr[i-c:ei]
+
+        if arr[i] == min(sub_arr):
             bottoms.append(i)
     return bottoms
 
 def get_macd_bottoms(arr):
     bottoms = []
     bi = -len(arr)
-    for i in range(bi+1, -1):
+    for i in range(bi+1, 0):
         v = arr[i]
         if v < 0:
             if arr[bi] > v:
