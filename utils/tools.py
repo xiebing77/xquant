@@ -133,11 +133,19 @@ def get_more_step(arr, c=2):
         return 0
 
     return -1-i
-    """
-    if arr[i+2] < arr[i+1]:
-        return -1-i+c
-    else:
-    """
+
+def get_less_step(arr, c=2):
+    i = -1
+    while i >= -len(arr)+c:
+        if max(arr[i-c:i]) < arr[i]:
+            break
+        i -= 1
+
+    if i == -1:
+        return 0
+
+    return -1-i
+
 def get_min_seat(arr):
     i_min  = -len(arr)
     v_min = arr[i_min]
