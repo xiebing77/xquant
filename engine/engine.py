@@ -169,6 +169,27 @@ class Engine:
             if (position_info["direction"] == xq.DIRECTION_LONG and cur_price <= stop_loss_price) or (position_info["direction"] == xq.DIRECTION_SHORT and cur_price >= stop_loss_price):
                 sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达指定的止损价格: %f" % (stop_loss_price), sl_t))
 
+        cost_price = position_info["price"]
+        if position_info["direction"] == xq.DIRECTION_LONG:
+            top_rate = (position_info["high"] / pst_price) - 1
+            cur_rate = (cur_price / pst_price) - 1
+        else:
+            top_rate = 1 - (cur_price / position_info["high"])
+            cur_rate = 1 - (cur_price / pst_price)
+
+        if "defalut" in sl_cfg:
+            defalut_slr = sl_cfg["defalut"]
+        else:
+            defalut_slr = -0.1 # 强制默认
+
+        if cur_rate <= defalut_slr:
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达默认的止损点{:8.2%}".format(defalut_slr), sl_t))
+
+        for csl in sl_cfg["condition"]:
+            if top_rate >= csl["c"] and cur_rate < csl["r"]:
+                c_sl_t = xq.get_next_open_time(xq.KLINE_INTERVAL_1HOUR, self.now()) + timedelta(minutes=1)
+                sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达条件止损点{:8.2%}".format(csl["r"]), sl_t))
+
         return sl_signals
 
     def take_profit(self, position_info, cur_price):
@@ -262,10 +283,10 @@ class Engine:
         # 限定的时间范围内，不能开仓
         if ds_signal["action"] == xq.OPEN_POSITION:
             if ds_signal["direction"] == xq.DIRECTION_LONG:
-                if self.can_open_long_time and self.now() < self.can_open_long_time:
+                if self.can_open_long_time and self.now() <= self.can_open_long_time:
                         return
             else:
-                if self.can_open_short_time and self.now() < self.can_open_short_time:
+                if self.can_open_short_time and self.now() <= self.can_open_short_time:
                         return
 
         can_open_time_info = ""
