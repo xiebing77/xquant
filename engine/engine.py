@@ -136,6 +136,16 @@ class Engine:
         tp_signals = self.take_profit(position_info, cur_price)
         return sl_signals + tp_signals
 
+    def get_rates(self, position_info, cur_price):
+        pst_price = position_info["price"]
+        if position_info["direction"] == xq.DIRECTION_LONG:
+            top_rate = (position_info["high"] / pst_price) - 1
+            cur_rate = (cur_price / pst_price) - 1
+        else:
+            top_rate = 1 - (position_info["low"] / pst_price)
+            cur_rate = 1 - (cur_price / pst_price)
+        return top_rate, cur_rate
+
     def stop_loss(self, position_info, cur_price):
         """ 止损 """
         sl_signals = []
@@ -169,14 +179,7 @@ class Engine:
             if (position_info["direction"] == xq.DIRECTION_LONG and cur_price <= stop_loss_price) or (position_info["direction"] == xq.DIRECTION_SHORT and cur_price >= stop_loss_price):
                 sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达指定的止损价格: %f" % (stop_loss_price), sl_t))
 
-        cost_price = position_info["price"]
-        if position_info["direction"] == xq.DIRECTION_LONG:
-            top_rate = (position_info["high"] / pst_price) - 1
-            cur_rate = (cur_price / pst_price) - 1
-        else:
-            top_rate = 1 - (cur_price / position_info["high"])
-            cur_rate = 1 - (cur_price / pst_price)
-
+        top_rate, cur_rate = self.get_rates(position_info, cur_price)
         if "defalut" in sl_cfg:
             defalut_slr = sl_cfg["defalut"]
         else:
@@ -201,23 +204,18 @@ class Engine:
 
         tp_cfg = self.config["risk_control"]["take_profit"]
 
-        if position_info["direction"] == xq.DIRECTION_LONG:
-            price_offset = position_info["high"] - cur_price
-        else:
-            price_offset = cur_price - position_info["low"]
+        top_rate, cur_rate = self.get_rates(position_info, cur_price)
+        fall_rate = top_rate - cur_rate
 
         if "base_open" in tp_cfg:
             for bo_band in tp_cfg["base_open"]:
-                high_profit_rate = position_info["high"] / position_info["price"] - 1
-                cur_profit_rate = cur_price / position_info["price"] - 1
-                fall_profit_rate = high_profit_rate - cur_profit_rate
-                if high_profit_rate > bo_band[0]:
+                if top_rate > bo_band[0]:
                     self.log_info("base_open tp_cc 1 = %s" % self.tp_cc["base_open"])
-                    if fall_profit_rate >= bo_band[1]:
+                    if fall_rate >= bo_band[1]:
                         self.tp_cc["base_open"] += 1
                         self.log_info("base_open tp_cc 2 = %s" % self.tp_cc["base_open"])
                         if self.tp_cc["base_open"] >= 1 :
-                            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "take profit", "盈利回落(基于持仓价)  fall rate:{:8.2%} ( {:8.2%}, {:8.2%} )".format(fall_profit_rate, bo_band[0], bo_band[1])))
+                            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "take profit", "盈利回落(基于持仓价)  fall rate:{:8.2%} ( {:8.2%}, {:8.2%} )".format(fall_rate, bo_band[0], bo_band[1])))
                     else:
                         self.tp_cc["base_open"] = 0
 
