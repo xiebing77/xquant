@@ -438,7 +438,12 @@ class Engine:
 
         if cycle_amount > 0:
             pst_info["price"] = abs(cycle_value) / cycle_amount
-            pst_info["cost_price"] = (abs(cycle_value) + cycle_commission) / cycle_amount
+
+            if cycle_first_order["direction"] == xq.DIRECTION_LONG:
+                pst_info["cost_price"] = (abs(cycle_value) + cycle_commission) / cycle_amount
+            else:
+                pst_info["cost_price"] = (abs(cycle_value) - cycle_commission) / cycle_amount
+
             pst_info["stop_loss_price"] = cycle_first_order["stop_loss_price"]
 
             pst_info["direction"] = cycle_first_order["direction"]
