@@ -67,7 +67,7 @@ if __name__ == "__main__":
             db_name = "xquant"
 
         print("db_name: %s" % (db_name))
-        logfilename = "display_" + instance_id + ".log"
+        logfilename = instance_id + ".log"
 
     elif select == "real":
         if len(sys.argv) > params_index:
@@ -104,9 +104,7 @@ if __name__ == "__main__":
             exit(1)
 
         logfilename = (
-            select
-            +"_"
-            + class_name
+            class_name
             + "_"
             + config["symbol"]
             + "_"
@@ -122,7 +120,7 @@ if __name__ == "__main__":
         exit(1)
 
     print(logfilename)
-    log.init(logfilename)
+    log.init(select, logfilename)
 
     log.info("strategy name: %s;  config: %s" % (class_name, config))
 
