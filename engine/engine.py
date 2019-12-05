@@ -186,12 +186,12 @@ class Engine:
             defalut_slr = -0.1 # 强制默认
 
         if cur_rate <= defalut_slr:
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达默认的止损点{:8.2%}".format(defalut_slr), sl_t))
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "defalut stop loss", "到达默认的止损点{:8.2%}".format(defalut_slr), sl_t))
 
         for csl in sl_cfg["condition"]:
             if top_rate >= csl["c"] and cur_rate < csl["r"]:
                 c_sl_t = xq.get_next_open_time(xq.KLINE_INTERVAL_1HOUR, self.now()) + timedelta(minutes=1)
-                sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达条件止损点{:8.2%}".format(csl["r"]), sl_t))
+                sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "condition stop loss", "到达条件止损点{:8.2%}".format(csl["r"]), sl_t))
 
         return sl_signals
 
@@ -735,8 +735,8 @@ class Engine:
         axes[i].plot(close_times, emas - atrs, "y--", label="1ATR")
         #axes[i].plot(close_times, emas + 2*atrs, "y--", label="2ATR")
         #axes[i].plot(close_times, emas - 2*atrs, "y--", label="2ATR")
-        axes[i].plot(close_times, emas + 3*atrs, "y--", label="3ATR")
-        axes[i].plot(close_times, emas - 3*atrs, "y--", label="3ATR")
+        #axes[i].plot(close_times, emas + 3*atrs, "y--", label="3ATR")
+        #axes[i].plot(close_times, emas - 3*atrs, "y--", label="3ATR")
 
         #axes[i].plot(close_times, emas + 4*atrs, "m--", label="4ATR")
         #axes[i].plot(close_times, emas - 4*atrs, "m--", label="4ATR")
