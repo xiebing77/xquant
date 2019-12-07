@@ -255,6 +255,12 @@ def close_short_signal(pst_rate, describe, rmk, can_open_time=None, stop_loss_pr
     """创建卖信号"""
     return create_signal(DIRECTION_SHORT, CLOSE_POSITION, pst_rate, describe, rmk, can_open_time, stop_loss_price)
 
+def is_open_signal(signal):
+    return signal["action"] == OPEN_POSITION
+
+def is_close_signal(signal):
+    return signal["action"] == CLOSE_POSITION
+
 def is_long_signal(signal):
     return signal["direction"] == DIRECTION_LONG
 
