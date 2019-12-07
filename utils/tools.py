@@ -159,13 +159,16 @@ def get_min_seat(arr):
 def get_tops(arr, c):
     tops = []
     #print(arr)
-    for i in range(-len(arr)+c, 0):
+    for i in range(-len(arr), 0):
+        bi = i-c
+        if bi < -len(arr):
+            bi = -len(arr)
+
         ei = i + 1 + c
         if ei >= 0:
-            sub_arr = arr[i-c:]
+            sub_arr = arr[bi:]
         else:
-            sub_arr = arr[i-c:ei]
-
+            sub_arr = arr[bi:ei]
         if arr[i] == max(sub_arr):
             tops.append(i)
     return tops
@@ -173,12 +176,16 @@ def get_tops(arr, c):
 def get_bottoms(arr, c):
     bottoms = []
     #print(arr)
-    for i in range(-len(arr)+c, 0):
+    for i in range(-len(arr), 0):
+        bi = i-c
+        if bi < -len(arr):
+            bi = -len(arr)
+
         ei = i + 1 + c
         if ei >= 0:
-            sub_arr = arr[i-c:]
+            sub_arr = arr[bi:]
         else:
-            sub_arr = arr[i-c:ei]
+            sub_arr = arr[bi:ei]
 
         if arr[i] == min(sub_arr):
             bottoms.append(i)
