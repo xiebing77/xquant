@@ -180,13 +180,40 @@ class Engine:
                 sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达指定的止损价格: %f" % (stop_loss_price), sl_t))
 
         top_rate, cur_rate = self.get_rates(position_info, cur_price)
-        if "defalut" in sl_cfg:
-            defalut_slr = sl_cfg["defalut"]
-        else:
-            defalut_slr = -0.1 # 强制默认
 
+        next_open_time_cfg_name = "n_o_t"
+        delay_timedelta_cfg_name = "d_td"
+        if "defalut" in sl_cfg:
+            d_sl_cfg = sl_cfg["defalut"]
+        else:
+            # 强制默认
+            #d_sl_cfg = {"r": -0.1, next_open_time_cfg_name: "1d", delay_timedelta_cfg_name: "4h"}
+            d_sl_cfg = {"r": -0.1}
+
+        defalut_slr = d_sl_cfg["r"]
         if cur_rate <= defalut_slr:
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "defalut stop loss", "到达默认的止损点{:8.2%}".format(defalut_slr), sl_t))
+            if next_open_time_cfg_name in d_sl_cfg:
+                default_sl_t1 = xq.get_next_open_time(d_sl_cfg[next_open_time_cfg_name], self.now())
+            else:
+                default_sl_t1 = None
+
+            if delay_timedelta_cfg_name in d_sl_cfg:
+                default_sl_t2 = self.now() + xq.get_interval_timedelta(d_sl_cfg[delay_timedelta_cfg_name])
+            else:
+                default_sl_t2 = None
+
+            if default_sl_t1 and default_sl_t2:
+                default_sl_t = max(default_sl_t1, default_sl_t2)
+            else:
+                if default_sl_t1:
+                    default_sl_t = default_sl_t1
+                elif default_sl_t2:
+                    default_sl_t = default_sl_t2
+                else:
+                    default_sl_t = None
+
+
+            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "defalut stop loss", "到达默认的止损点{:8.2%}".format(defalut_slr), default_sl_t))
 
         for csl in sl_cfg["condition"]:
             if top_rate >= csl["c"] and cur_rate < csl["r"]:
