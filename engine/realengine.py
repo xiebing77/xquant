@@ -145,7 +145,7 @@ class RealEngine(Engine):
         return
 
     def send_order_limit(
-        self, direction, action, symbol, pst_rate, cur_price, limit_price, amount, rmk
+        self, direction, action, symbol, pst_rate, cur_price, limit_price, amount, stop_loss_price, rmk
     ):
         """ 提交委托 """
         """
@@ -194,6 +194,7 @@ class RealEngine(Engine):
                 "market_price": cur_price,
                 "price": limit_price,
                 "amount": amount,
+                "stop_loss_price": stop_loss_price,
                 "status": xq.ORDER_STATUS_OPEN,
                 "order_id": order_id,
                 "cancle_amount": 0,
