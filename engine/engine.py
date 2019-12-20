@@ -146,6 +146,30 @@ class Engine:
             cur_rate = 1 - (cur_price / pst_price)
         return top_rate, cur_rate
 
+    def get_can_open_time(self, cfg):
+        next_open_time_cfg_name = "n_o_t"
+        delay_timedelta_cfg_name = "d_td"
+
+        if next_open_time_cfg_name in cfg:
+            _t1 = xq.get_next_open_time(cfg[next_open_time_cfg_name], self.now())
+        else:
+            _t1 = None
+
+        if delay_timedelta_cfg_name in cfg:
+            _t2 = self.now() + xq.get_interval_timedelta(cfg[delay_timedelta_cfg_name])
+        else:
+            _t2 = None
+
+        if _t1 and _t2:
+            return max(_t1, _t2)
+
+        if _t1:
+            return _t1
+        elif _t2:
+            return _t2
+        else:
+            return None
+
     def stop_loss(self, position_info, cur_price):
         """ 止损 """
         sl_signals = []
@@ -192,33 +216,13 @@ class Engine:
 
         defalut_slr = d_sl_cfg["r"]
         if cur_rate <= defalut_slr:
-            if next_open_time_cfg_name in d_sl_cfg:
-                default_sl_t1 = xq.get_next_open_time(d_sl_cfg[next_open_time_cfg_name], self.now())
-            else:
-                default_sl_t1 = None
-
-            if delay_timedelta_cfg_name in d_sl_cfg:
-                default_sl_t2 = self.now() + xq.get_interval_timedelta(d_sl_cfg[delay_timedelta_cfg_name])
-            else:
-                default_sl_t2 = None
-
-            if default_sl_t1 and default_sl_t2:
-                default_sl_t = max(default_sl_t1, default_sl_t2)
-            else:
-                if default_sl_t1:
-                    default_sl_t = default_sl_t1
-                elif default_sl_t2:
-                    default_sl_t = default_sl_t2
-                else:
-                    default_sl_t = None
-
-
+            default_sl_t = self.get_can_open_time(d_sl_cfg)
             sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "defalut stop loss", "到达默认的止损点{:8.2%}".format(defalut_slr), default_sl_t))
 
         for csl in sl_cfg["condition"]:
             if top_rate >= csl["c"] and cur_rate < csl["r"]:
-                c_sl_t = xq.get_next_open_time(xq.KLINE_INTERVAL_1HOUR, self.now()) + timedelta(minutes=1)
-                sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "condition stop loss", "到达条件止损点{:8.2%}".format(csl["r"]), sl_t))
+                c_sl_t = self.get_can_open_time(csl)
+                sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "condition stop loss", "到达条件止损点{:8.2%}".format(csl["r"]), c_sl_t))
 
         return sl_signals
 
