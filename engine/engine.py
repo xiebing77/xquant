@@ -481,7 +481,9 @@ class Engine:
             pst_info["start_time"] = datetime.fromtimestamp(cycle_first_order["create_time"])
             if "high" in order:
                 pst_info["high"] = cycle_first_order["high"]
+                pst_info["high_time"] = datetime.fromtimestamp(cycle_first_order["high_time"])
                 pst_info["low"] = cycle_first_order["low"]
+                pst_info["low_time"] = datetime.fromtimestamp(cycle_first_order["low_time"])
 
         return pst_info
 
