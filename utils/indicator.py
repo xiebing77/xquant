@@ -31,6 +31,8 @@ def py_emas(klines, index, period):
     for i in range(period):
         if i==0:
             ema = float(klines[0][index])
+        elif i >= len(klines):
+            return arr
         else:
             k = 2 / (i + 2)
             v = float(klines[i][index])
