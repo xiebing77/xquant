@@ -19,14 +19,6 @@ def help_print():
     print("./xp.sh config/kdjmacd_btc_usdt.jsn  search       2018-12-1~2019-1-1             寻优")
     print("./xp.sh config/kdjmacd_btc_usdt.jsn  multisearch  2018-12-1~2019-1-1             多进程寻优")
 
-def parse_date_range(date_range):
-    print("time range: [ %s )" % date_range)
-    dates = date_range.split("~")
-
-    start_time = datetime.strptime(dates[0], "%Y-%m-%d")
-    end_time = datetime.strptime(dates[1], "%Y-%m-%d")
-    return start_time, end_time
-
 
 if __name__ == "__main__":
 
@@ -113,7 +105,7 @@ if __name__ == "__main__":
             + instance_id
             + ".log"
         )
-        start_time, end_time = parse_date_range(date_range)
+        start_time, end_time = ts.parse_date_range(date_range)
 
     else:
         help_print()

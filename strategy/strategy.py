@@ -8,7 +8,7 @@ class Strategy:
         self.config = strategy_config
         self.engine = engine
 
-        for index, value in enumerate(self.engine.get_kline_column_names()):
+        for index, value in enumerate(self.engine.md.get_kline_column_names()):
             if value == "high":
                 self.highindex = index
             if value == "low":

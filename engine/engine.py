@@ -24,13 +24,6 @@ class Engine:
         self.instance_id = instance_id
         self.config = config
 
-        exchange = config["exchange"]
-        if exchange == "binance":
-            self.kline_column_names = BinanceExchange.get_kline_column_names()
-        elif exchange == "okex":
-            self.kline_column_names = OkexExchange.get_kline_column_names()
-
-        self.md_db = md.MongoDB(mongo_user, mongo_pwd, exchange, db_url)
         self.td_db = md.MongoDB(mongo_user, mongo_pwd, "xquant", db_url)
 
         self.value = 100
@@ -62,8 +55,6 @@ class Engine:
     def log_debug(self, info):
         log.debug(info)
 
-    def get_kline_column_names(self):
-        return self.kline_column_names
 
     def get_floating_profit(self, direction, amount, value, commission, cur_price):
         if direction == xq.DIRECTION_LONG:
@@ -702,6 +693,7 @@ class Engine:
         e_p  = 26
         emas = talib.EMA(klines_df["close"], timeperiod=e_p)
         s_emas = talib.EMA(klines_df["close"], timeperiod=e_p/2)
+        t_emas = talib.EMA(klines_df["close"], timeperiod=30)
         ks, ds, js = ic.pd_kdj(klines_df)
 
         klines_df = ic.pd_macd(klines_df)
@@ -719,6 +711,7 @@ class Engine:
         #ads = ads[-display_count:]
         emas = emas[-display_count:]
         s_emas = s_emas[-display_count:]
+        t_emas = t_emas[-display_count:]
         ks = ks[-display_count:]
         ds = ds[-display_count:]
         js = js[-display_count:]
@@ -742,7 +735,7 @@ class Engine:
             plt.subplot(gs[-1, :])
         ]
         """
-        fig, axes = plt.subplots(3, 1, sharex=True)
+        fig, axes = plt.subplots(4, 1, sharex=True)
         fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
 
         trade_times = [order["trade_time"] for order in orders]
@@ -753,7 +746,8 @@ class Engine:
             quote = (dts.date2num(d), float(k[1]), float(k[4]), float(k[2]), float(k[3]))
             quotes.append(quote)
 
-        i = 0
+        i = -1
+        i += 1
         mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
         axes[i].set_ylabel('price')
         axes[i].grid(True)
@@ -763,9 +757,11 @@ class Engine:
 
         axes[i].plot(close_times, emas, "b--", label="%sEMA" % (e_p))
         axes[i].plot(close_times, s_emas, "c--", label="%sEMA" % (e_p/2))
+        axes[i].plot(close_times, t_emas, "m--", label="%sEMA" % (30))
 
         axes[i].plot(close_times, emas + atrs, "y--", label="1ATR")
         axes[i].plot(close_times, emas - atrs, "y--", label="1ATR")
+
         #axes[i].plot(close_times, emas + 2*atrs, "y--", label="2ATR")
         #axes[i].plot(close_times, emas - 2*atrs, "y--", label="2ATR")
         #axes[i].plot(close_times, emas + 3*atrs, "y--", label="3ATR")
@@ -786,11 +782,38 @@ class Engine:
         #axes[i].plot(close_times, emas - ts*atrs, "g--", label=label)
 
         i += 1
+        mrs = [round(a, 4) for a in (klines_df["macd"][-display_count:] / closes)]
+        mrs = mrs[-display_count:]
+        axes[i].set_ylabel('mr')
+        axes[i].grid(True)
+        axes[i].plot(close_times, mrs, "r--", label="mr")
+
+        leam_mrs = klines_df["macd"] / emas
+        seam_mrs = klines_df["macd"] / s_emas
+        leam_mrs = leam_mrs[-display_count:]
+        seam_mrs = seam_mrs[-display_count:]
+        axes[i].plot(close_times, leam_mrs, "y--", label="leam_mr")
+        axes[i].plot(close_times, seam_mrs, "m--", label="seam_mr")
+
+
+        """
+        i += 1
+        difrs = [round(a, 2) for a in (klines_df["dif"][-display_count:] / closes)]
+        dears = [round(a, 2) for a in (klines_df["dea"][-display_count:] / closes)]
+        difrs = difrs[-display_count:]
+        dears = dears[-display_count:]
+        axes[i].set_ylabel('r')
+        axes[i].grid(True)
+        axes[i].plot(close_times, difrs, "m--", label="difr")
+        axes[i].plot(close_times, dears, "m--", label="dear")
+        """
+
+        i += 1
         axes[i].set_ylabel('macd')
         axes[i].grid(True)
         axes[i].plot(close_times, difs, "y", label="dif")
         axes[i].plot(close_times, deas, "b", label="dea")
-        axes[i].plot(close_times, macds, "m", drawstyle="steps", label="macd")
+        axes[i].plot(close_times, macds, "r", drawstyle="steps", label="macd")
 
         """
         i += 1

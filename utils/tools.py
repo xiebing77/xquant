@@ -9,6 +9,14 @@ MATH_FLOOR = 0  # 向下，舍去多余
 MATH_CEIL = 1  # 向上，
 MATH_ROUND = 2  # 四舍五入
 
+def parse_date_range(date_range):
+    print("time range: [ %s )" % date_range)
+    dates = date_range.split("~")
+
+    start_time = datetime.strptime(dates[0], "%Y-%m-%d")
+    end_time = datetime.strptime(dates[1], "%Y-%m-%d")
+    return start_time, end_time
+
 
 def createInstance(module_name, class_name, *args, **kwargs):
     # print("args  :", args)
