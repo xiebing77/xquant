@@ -16,7 +16,7 @@ from exchange.binanceExchange import BinanceExchange
 from exchange.okexExchange import OkexExchange
 
 
-class MarktingData:
+class MarketingData:
     """市场数据"""
 
     def __init__(self, exchange):

@@ -6,11 +6,11 @@ import uuid
 import utils.tools as ts
 import common.xquant as xq
 import db.mongodb as md
-from .md import MarktingData
+from .md import MarketingData
 from setup import mongo_user, mongo_pwd, db_url
 
 
-class DBMD(MarktingData):
+class DBMD(MarketingData):
     """来源于本地数据库的市场数据"""
 
     def __init__(self, exchange):
@@ -83,8 +83,9 @@ class DBMD(MarktingData):
             s_time = tick_open_time - td
             e_time = tick_open_time
         else:
-            s_time = xq.get_open_time(since)
+            s_time = xq.get_open_time(interval, since)
             e_time = s_time + td
+            #print("%s~%s"%(s_time, e_time))
 
         ks = self.__get_klines_cache(symbol, interval, s_time, e_time)
 

@@ -16,7 +16,7 @@ import talib
 
 from datetime import datetime,timedelta
 
-def show(klines, kline_column_names, display_count):
+def show(klines, kline_column_names, display_count, tp):
     klines_df = pd.DataFrame(klines, columns=kline_column_names)
     open_times = [datetime.fromtimestamp((float(open_time)/1000)) for open_time in klines_df["open_time"][-display_count:]]
     close_times = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_df["close_time"][-display_count:]]
@@ -31,6 +31,8 @@ def show(klines, kline_column_names, display_count):
         quotes.append(quote)
 
     i = -1
+
+    # k line
     i += 1
     mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
     axes[i].set_ylabel('price')
@@ -46,10 +48,11 @@ def show(klines, kline_column_names, display_count):
     axes[i].plot(close_times, emas, "b--", label="%sEMA" % (e_p))
     axes[i].plot(close_times, s_emas, "c--", label="%sEMA" % (e_p/2))
 
-    t_emas = talib.EMA(klines_df["close"], timeperiod=30)
+    t_emas = talib.EMA(klines_df["close"], timeperiod=tp)
     t_emas = t_emas[-display_count:]
-    axes[i].plot(close_times, t_emas, "m--", label="%sEMA" % (30))
+    axes[i].plot(close_times, t_emas, "m--", label="%sEMA" % (tp))
 
+    # macd
     klines_df = ic.pd_macd(klines_df)
     difs = [round(a, 2) for a in klines_df["dif"]]
     deas = [round(a, 2) for a in klines_df["dea"]]
@@ -73,6 +76,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', help='symbol (btc_usdt)')
     parser.add_argument('-i', help='interval')
     parser.add_argument('-r', help='time range')
+    parser.add_argument('-tp', help='trend period')
     args = parser.parse_args()
     # print(args)
 
@@ -82,8 +86,15 @@ if __name__ == "__main__":
 
     if not args.e:
         exchange = "binance"
+        open_hour = 8
     else:
         exchange = args.e
+        open_hour = 8
+
+    if not args.tp:
+        tp = 40
+    else:
+        tp = int(args.tp)
 
     interval = args.i
     start_time, end_time = ts.parse_date_range(args.r)
@@ -93,7 +104,8 @@ if __name__ == "__main__":
 
     md = DBMD(exchange)
     md.tick_time = datetime.now()
-    klines = md.get_klines(args.s, interval, 150+display_count)
+    pre_count = 150
+    klines = md.get_klines(args.s, interval, pre_count+display_count, start_time-xq.get_timedelta(interval, pre_count))
 
-    show(klines, md.kline_column_names, display_count)
+    show(klines, md.kline_column_names, display_count, tp)
 
