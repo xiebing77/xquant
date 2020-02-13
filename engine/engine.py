@@ -682,7 +682,7 @@ class Engine:
 
     def display(self, symbol, orders, klines, display_count):
 
-        klines_df = pd.DataFrame(klines, columns=self.kline_column_names)
+        klines_df = pd.DataFrame(klines, columns=self.md.kline_column_names)
 
         atrs = talib.ATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
         natrs = talib.NATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
