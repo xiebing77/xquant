@@ -7,6 +7,7 @@ import common.xquant as xq
 from .engine import Engine
 from exchange.binanceExchange import BinanceExchange
 from exchange.okexExchange import OkexExchange
+from md.exmd import ExchangeMD
 
 
 DB_ORDERS_NAME = "orders"
@@ -29,16 +30,11 @@ class RealEngine(Engine):
             print("Wrong exchange name: %s" % exchange)
             exit(1)
 
+        self.md = ExchangeMD(self.__exchange)
+
+
     def now(self):
         return datetime.datetime.now()
-
-    def get_klines(self, symbol, interval, size):
-        """ 获取日k线 """
-        return self.__exchange.get_klines(symbol, interval, size)
-
-    def get_klines_1day(self, symbol, size):
-        """ 获取日k线 """
-        return self.__exchange.get_klines_1day(symbol, size)
 
     def get_account(self):
         """ 获取账户信息 """

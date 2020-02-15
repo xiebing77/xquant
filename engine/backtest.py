@@ -18,17 +18,6 @@ class BackTest(Engine):
 
         self.md = DBMD(config["exchange"])
 
-        self.k1ms_cache = {}
-        self.k1ms_cache_s_time = {}
-
-        '''
-        self.k1ds_cache = None
-        self.k1ds_cache_s_time = None
-        self.k1ds_cache_e_time = None
-        '''
-
-        self.klines_cache = {}
-
         self.orders = []
 
     def now(self):
