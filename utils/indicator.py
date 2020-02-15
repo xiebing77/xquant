@@ -231,6 +231,60 @@ def pd_macd(klines_df, fastperiod=12, slowperiod=26, signalperiod=9):
     #print(klines_df)
     return klines_df
 
+def py_rsi2(klines, closeindex, period=14):
+    closes = [kline[closeindex] for kline in klines[-period:]]
+    ur = []
+    dr = []
+    pre_close = float(closes[0])
+    for close in closes[1:]:
+        close = float(close)
+        r = close / pre_close
+        pre_close = close
+        if r > 1:
+            ur.append(r-1)
+        else:
+            dr.append(1-r)
+    if ur:
+        ua = sum(ur)/len(ur)
+    else:
+        ua = 0
+    if dr:
+        da = sum(dr)/len(dr)
+    else:
+        da = 0
+    return 100*ua/(ua+da)
+
+def py_rsi(klines, closeindex, period=14):
+    closes = [kline[closeindex] for kline in klines[-period:]]
+    us = []
+    ds = []
+    pre_close = float(closes[0])
+    for close in closes[1:]:
+        close = float(close)
+        if close > pre_close:
+            us.append(close-pre_close)
+        else:
+            ds.append(pre_close-close)
+        pre_close = close
+    if us:
+        ua = sum(us)/len(us)
+    else:
+        ua = 0
+    if ds:
+        da = sum(ds)/len(ds)
+    else:
+        da = 0
+    return 100*ua/(ua+da)
+    #rs = ua / da
+    #return 100*(1-1/(1+rs))
+
+def py_rsis(klines, closeindex, period=14):
+    arr = []
+    for i in range(2, len(klines)):
+        rsi = py_rsi(klines[:i], closeindex, period)
+        arr.append(rsi)
+    return arr
+
 def py_hl(klines, highindex, lowindex, opentimeindex, period):
 
     max_high = float(klines[-1][highindex])

@@ -16,12 +16,27 @@ import talib
 
 from datetime import datetime,timedelta
 
-def show(klines, kline_column_names, display_count, tp):
+def show(args, klines, kline_column_names, display_count):
+    for index, value in enumerate(kline_column_names):
+        if value == "high":
+            highindex = index
+        if value == "low":
+            lowindex = index
+        if value == "open":
+            openindex = index
+        if value == "close":
+            closeindex = index
+        if value == "volume":
+            volumeindex = index
+        if value == "open_time":
+            opentimeindex = index
+
+
     klines_df = pd.DataFrame(klines, columns=kline_column_names)
     open_times = [datetime.fromtimestamp((float(open_time)/1000)) for open_time in klines_df["open_time"][-display_count:]]
     close_times = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_df["close_time"][-display_count:]]
 
-    fig, axes = plt.subplots(2, 1, sharex=True)
+    fig, axes = plt.subplots(4, 1, sharex=True)
     fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
 
     quotes = []
@@ -48,6 +63,10 @@ def show(klines, kline_column_names, display_count, tp):
     axes[i].plot(close_times, emas, "b--", label="%sEMA" % (e_p))
     axes[i].plot(close_times, s_emas, "c--", label="%sEMA" % (e_p/2))
 
+    if not args.tp:
+        tp = 40
+    else:
+        tp = int(args.tp)
     t_emas = talib.EMA(klines_df["close"], timeperiod=tp)
     t_emas = t_emas[-display_count:]
     axes[i].plot(close_times, t_emas, "m--", label="%sEMA" % (tp))
@@ -66,6 +85,52 @@ def show(klines, kline_column_names, display_count, tp):
     axes[i].plot(close_times, difs, "y", label="dif")
     axes[i].plot(close_times, deas, "b", label="dea")
     axes[i].plot(close_times, macds, "r", drawstyle="steps", label="macd")
+
+    # rsi
+    i += 1
+    axes[i].set_ylabel('rsi')
+    axes[i].grid(True)
+    rsis = talib.RSI(klines_df["close"], timeperiod=14)
+    rsis = [round(a, 2) for a in rsis][-display_count:]
+    axes[i].plot(close_times, rsis, "r", label="rsi")
+
+
+    rs2 = ic.py_rsis(klines, closeindex, period=14)
+    rs2 = [round(a, 2) for a in rs2][-display_count:]
+    axes[i].plot(close_times, rs2, "y", label="rsi2")
+    """
+    fastk, fastd = talib.STOCHRSI(klines_df["close"], timeperiod=14)
+    rsifks = [round(a, 2) for a in fastk][-display_count:]
+    rsifds = [round(a, 2) for a in fastd][-display_count:]
+    axes[i].plot(close_times, rsifks, "b", label="rsi")
+    axes[i].plot(close_times, rsifds, "y", label="rsi")
+    """
+    # kdj
+    i += 1
+    axes[i].set_ylabel('kdj')
+    axes[i].grid(True)
+    """
+    ks, ds = talib.STOCH(klines_df["high"], klines_df["low"], klines_df["close"],
+        fastk_period=9, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
+    js = ks - ds
+    """
+    ks, ds, js = ic.pd_kdj(klines_df)
+    ks = [round(a, 2) for a in ks][-display_count:]
+    ds = [round(a, 2) for a in ds][-display_count:]
+    js = [round(a, 2) for a in js][-display_count:]
+    axes[i].plot(close_times, ks, "b", label="k")
+    axes[i].plot(close_times, ds, "y", label="d")
+    axes[i].plot(close_times, js, "m", label="j")
+
+    """
+    # willr
+    willrs = talib.WILLR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+    willrs = [round(a, 2) for a in willrs][-display_count:]
+    i += 1
+    axes[i].set_ylabel('willr')
+    axes[i].grid(True)
+    axes[i].plot(close_times, willrs, "y", label="willrs")
+    """
 
     plt.show()
 
@@ -91,11 +156,6 @@ if __name__ == "__main__":
         exchange = args.e
         open_hour = 8
 
-    if not args.tp:
-        tp = 40
-    else:
-        tp = int(args.tp)
-
     interval = args.i
     start_time, end_time = ts.parse_date_range(args.r)
     display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
@@ -107,5 +167,5 @@ if __name__ == "__main__":
     pre_count = 150
     klines = md.get_klines(args.s, interval, pre_count+display_count, start_time-xq.get_timedelta(interval, pre_count))
 
-    show(klines, md.kline_column_names, display_count, tp)
+    show(args, klines, md.kline_column_names, display_count)
 
