@@ -4,6 +4,7 @@ import time
 import datetime
 import utils.tools as ts
 import common.xquant as xq
+from .md import MarketingData
 
 
 class ExchangeMD(MarketingData):

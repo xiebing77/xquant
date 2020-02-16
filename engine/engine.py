@@ -735,7 +735,7 @@ class Engine:
             plt.subplot(gs[-1, :])
         ]
         """
-        fig, axes = plt.subplots(4, 1, sharex=True)
+        fig, axes = plt.subplots(3, 1, sharex=True)
         fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
 
         trade_times = [order["trade_time"] for order in orders]
@@ -781,6 +781,7 @@ class Engine:
         #axes[i].plot(close_times, emas + ts*atrs, "g--", label=label)
         #axes[i].plot(close_times, emas - ts*atrs, "g--", label=label)
 
+        """
         i += 1
         mrs = [round(a, 4) for a in (klines_df["macd"][-display_count:] / closes)]
         mrs = mrs[-display_count:]
@@ -794,7 +795,7 @@ class Engine:
         seam_mrs = seam_mrs[-display_count:]
         axes[i].plot(close_times, leam_mrs, "y--", label="leam_mr")
         axes[i].plot(close_times, seam_mrs, "m--", label="seam_mr")
-
+        """
 
         """
         i += 1
