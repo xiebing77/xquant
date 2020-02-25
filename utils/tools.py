@@ -17,6 +17,15 @@ def parse_date_range(date_range):
     end_time = datetime.strptime(dates[1], "%Y-%m-%d")
     return start_time, end_time
 
+def parse_ic_keys(ss):
+    print("keys: [ %s )" % ss)
+    keys = {}
+
+    if not ss:
+        return keys
+    for key in ss.split(","):
+        keys[key] = True
+    return keys
 
 def createInstance(module_name, class_name, *args, **kwargs):
     # print("args  :", args)

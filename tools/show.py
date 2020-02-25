@@ -142,16 +142,6 @@ def show(args, klines, kline_column_names, display_count, disp_ic_keys):
     plt.show()
 
 
-def parse_ic_keys(ss):
-    print("keys: [ %s )" % ss)
-    keys = {}
-
-    if not ss:
-        return keys
-    for key in ss.split(","):
-        keys[key] = True
-    return keys
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='show')
     parser.add_argument('-e', help='exchange')
@@ -185,5 +175,5 @@ if __name__ == "__main__":
     pre_count = 150
     klines = md.get_klines(args.s, interval, pre_count+display_count, start_time-xq.get_timedelta(interval, pre_count))
 
-    show(args, klines, md.kline_column_names, display_count, parse_ic_keys(args.di))
+    show(args, klines, md.kline_column_names, display_count, ts.parse_ic_keys(args.di))
 
