@@ -681,6 +681,21 @@ class Engine:
 
 
     def display(self, symbol, orders, klines, display_count):
+        disp_ic_keys = ts.parse_ic_keys("macd")
+
+        for index, value in enumerate(self.md.kline_column_names):
+            if value == "high":
+                highindex = index
+            if value == "low":
+                lowindex = index
+            if value == "open":
+                openindex = index
+            if value == "close":
+                closeindex = index
+            if value == "volume":
+                volumeindex = index
+            if value == "open_time":
+                opentimeindex = index
 
         klines_df = pd.DataFrame(klines, columns=self.md.kline_column_names)
 
@@ -735,7 +750,7 @@ class Engine:
             plt.subplot(gs[-1, :])
         ]
         """
-        fig, axes = plt.subplots(3, 1, sharex=True)
+        fig, axes = plt.subplots(len(disp_ic_keys)+2, 1, sharex=True)
         fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
 
         trade_times = [order["trade_time"] for order in orders]
@@ -771,71 +786,97 @@ class Engine:
         #axes[i].plot(close_times, emas - 4*atrs, "m--", label="4ATR")
         #axes[i].plot(close_times, emas + 5*atrs, "m--", label="5ATR")
         #axes[i].plot(close_times, emas - 5*atrs, "m--", label="5ATR")
-        ts = 6
-        label = "%d ATR" % (ts)
+        ats = 6
+        label = "%d ATR" % (ats)
         #axes[i].plot(close_times, emas + ts*atrs, "m--", label="6ATR")
         #axes[i].plot(close_times, emas - ts*atrs, "m--", label="6ATR")
 
-        ts = 12
-        label = "%d ATR" % (ts)
+        ats = 12
+        label = "%d ATR" % (ats)
         #axes[i].plot(close_times, emas + ts*atrs, "g--", label=label)
         #axes[i].plot(close_times, emas - ts*atrs, "g--", label=label)
 
+        ic_key = 'mr'
+        if ic_key in disp_ic_keys:
+            i += 1
+            mrs = [round(a, 4) for a in (klines_df["macd"][-display_count:] / closes)]
+            mrs = mrs[-display_count:]
+            axes[i].set_ylabel('mr')
+            axes[i].grid(True)
+            axes[i].plot(close_times, mrs, "r--", label="mr")
+
+            leam_mrs = klines_df["macd"] / emas
+            seam_mrs = klines_df["macd"] / s_emas
+            leam_mrs = leam_mrs[-display_count:]
+            seam_mrs = seam_mrs[-display_count:]
+            axes[i].plot(close_times, leam_mrs, "y--", label="leam_mr")
+            axes[i].plot(close_times, seam_mrs, "m--", label="seam_mr")
+
+        ic_key = 'difr'
+        if ic_key in disp_ic_keys:
+            i += 1
+            difrs = [round(a, 2) for a in (klines_df["dif"][-display_count:] / closes)]
+            dears = [round(a, 2) for a in (klines_df["dea"][-display_count:] / closes)]
+            difrs = difrs[-display_count:]
+            dears = dears[-display_count:]
+            axes[i].set_ylabel('r')
+            axes[i].grid(True)
+            axes[i].plot(close_times, difrs, "m--", label="difr")
+            axes[i].plot(close_times, dears, "m--", label="dear")
+
+        ic_key = 'macd'
+        if ic_key in disp_ic_keys:
+            i += 1
+            axes[i].set_ylabel('macd')
+            axes[i].grid(True)
+            axes[i].plot(close_times, difs, "y", label="dif")
+            axes[i].plot(close_times, deas, "b", label="dea")
+            axes[i].plot(close_times, macds, "r", drawstyle="steps", label="macd")
+
+        ic_key = 'rsi'
+        if ic_key in disp_ic_keys:
+            i += 1
+            axes[i].set_ylabel('rsi')
+            axes[i].grid(True)
+            rsis = talib.RSI(klines_df["close"], timeperiod=14)
+            rsis = [round(a, 3) for a in rsis][-display_count:]
+            axes[i].plot(close_times, rsis, "r", label="rsi")
+
+
+            rs2 = ic.py_rsis(klines, closeindex, period=14)
+            rs2 = [round(a, 3) for a in rs2][-display_count:]
+            axes[i].plot(close_times, rs2, "y", label="rsi2")
+
+            rs3 = ic.py_rsis2(klines, closeindex, period=14)
+            rs3 = [round(a, 3) for a in rs3][-display_count:]
+            axes[i].plot(close_times, rs3, "m", label="rsi3")
+
+        ic_key = 'AD'
+        if ic_key in disp_ic_keys:
+            i += 1
+            axes[i].set_ylabel('AD')
+            axes[i].grid(True)
+            axes[i].plot(close_times, ads, "y:", label="AD")
+
+        ic_key = 'volatility'
+        if ic_key in disp_ic_keys:
+            i += 1
+            axes[i].set_ylabel('volatility')
+            axes[i].grid(True)
+            axes[i].plot(close_times, atrs, "y:", label="ATR")
+            axes[i].plot(close_times, natrs, "k--", label="NATR")
+            axes[i].plot(close_times, tranges, "c--", label="TRANGE")
+
+        ic_key = 'kdj'
+        if ic_key in disp_ic_keys:
+            i += 1
+            axes[i].set_ylabel('kdj')
+            axes[i].grid(True)
+            axes[i].plot(close_times, ks, "b", label="k")
+            axes[i].plot(close_times, ds, "y", label="d")
+            axes[i].plot(close_times, js, "m", label="j")
+
         """
-        i += 1
-        mrs = [round(a, 4) for a in (klines_df["macd"][-display_count:] / closes)]
-        mrs = mrs[-display_count:]
-        axes[i].set_ylabel('mr')
-        axes[i].grid(True)
-        axes[i].plot(close_times, mrs, "r--", label="mr")
-
-        leam_mrs = klines_df["macd"] / emas
-        seam_mrs = klines_df["macd"] / s_emas
-        leam_mrs = leam_mrs[-display_count:]
-        seam_mrs = seam_mrs[-display_count:]
-        axes[i].plot(close_times, leam_mrs, "y--", label="leam_mr")
-        axes[i].plot(close_times, seam_mrs, "m--", label="seam_mr")
-        """
-
-        """
-        i += 1
-        difrs = [round(a, 2) for a in (klines_df["dif"][-display_count:] / closes)]
-        dears = [round(a, 2) for a in (klines_df["dea"][-display_count:] / closes)]
-        difrs = difrs[-display_count:]
-        dears = dears[-display_count:]
-        axes[i].set_ylabel('r')
-        axes[i].grid(True)
-        axes[i].plot(close_times, difrs, "m--", label="difr")
-        axes[i].plot(close_times, dears, "m--", label="dear")
-        """
-
-        i += 1
-        axes[i].set_ylabel('macd')
-        axes[i].grid(True)
-        axes[i].plot(close_times, difs, "y", label="dif")
-        axes[i].plot(close_times, deas, "b", label="dea")
-        axes[i].plot(close_times, macds, "r", drawstyle="steps", label="macd")
-
-        """
-        i += 1
-        axes[i].set_ylabel('AD')
-        axes[i].grid(True)
-        axes[i].plot(close_times, ads, "y:", label="AD")
-
-        i += 1
-        axes[i].set_ylabel('volatility')
-        axes[i].grid(True)
-        axes[i].plot(close_times, atrs, "y:", label="ATR")
-        axes[i].plot(close_times, natrs, "k--", label="NATR")
-        axes[i].plot(close_times, tranges, "c--", label="TRANGE")
-
-        i += 1
-        axes[i].set_ylabel('kdj')
-        axes[i].grid(True)
-        axes[i].plot(close_times, ks, "b", label="k")
-        axes[i].plot(close_times, ds, "y", label="d")
-        axes[i].plot(close_times, js, "m", label="j")
-
         axes[-2].set_ylabel('rate')
         axes[-2].grid(True)
         #axes[-2].set_label(["position rate", "profit rate"])
