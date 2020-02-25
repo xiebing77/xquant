@@ -16,7 +16,7 @@ import talib
 
 from datetime import datetime,timedelta
 
-def show(args, klines, kline_column_names, display_count):
+def show(args, klines, kline_column_names, display_count, disp_ic_keys):
     for index, value in enumerate(kline_column_names):
         if value == "high":
             highindex = index
@@ -36,7 +36,7 @@ def show(args, klines, kline_column_names, display_count):
     open_times = [datetime.fromtimestamp((float(open_time)/1000)) for open_time in klines_df["open_time"][-display_count:]]
     close_times = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_df["close_time"][-display_count:]]
 
-    fig, axes = plt.subplots(4, 1, sharex=True)
+    fig, axes = plt.subplots(len(disp_ic_keys)+1, 1, sharex=True)
     fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
 
     quotes = []
@@ -47,7 +47,7 @@ def show(args, klines, kline_column_names, display_count):
 
     i = -1
 
-    # k line
+    # kine
     i += 1
     mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
     axes[i].set_ylabel('price')
@@ -71,33 +71,38 @@ def show(args, klines, kline_column_names, display_count):
     t_emas = t_emas[-display_count:]
     axes[i].plot(close_times, t_emas, "m--", label="%sEMA" % (tp))
 
-    # macd
-    klines_df = ic.pd_macd(klines_df)
-    difs = [round(a, 2) for a in klines_df["dif"]]
-    deas = [round(a, 2) for a in klines_df["dea"]]
-    macds = [round(a, 2) for a in klines_df["macd"]]
-    difs = difs[-display_count:]
-    deas = deas[-display_count:]
-    macds = macds[-display_count:]
-    i += 1
-    axes[i].set_ylabel('macd')
-    axes[i].grid(True)
-    axes[i].plot(close_times, difs, "y", label="dif")
-    axes[i].plot(close_times, deas, "b", label="dea")
-    axes[i].plot(close_times, macds, "r", drawstyle="steps", label="macd")
 
-    # rsi
-    i += 1
-    axes[i].set_ylabel('rsi')
-    axes[i].grid(True)
-    rsis = talib.RSI(klines_df["close"], timeperiod=14)
-    rsis = [round(a, 2) for a in rsis][-display_count:]
-    axes[i].plot(close_times, rsis, "r", label="rsi")
+    ic_key = 'macd'
+    if ic_key in disp_ic_keys:
+        i += 1
+        axes[i].set_ylabel('macd')
+        axes[i].grid(True)
+
+        klines_df = ic.pd_macd(klines_df)
+        difs = [round(a, 2) for a in klines_df["dif"]]
+        deas = [round(a, 2) for a in klines_df["dea"]]
+        macds = [round(a, 2) for a in klines_df["macd"]]
+        difs = difs[-display_count:]
+        deas = deas[-display_count:]
+        macds = macds[-display_count:]
+        axes[i].plot(close_times, difs, "y", label="dif")
+        axes[i].plot(close_times, deas, "b", label="dea")
+        axes[i].plot(close_times, macds, "r", drawstyle="steps", label="macd")
+
+    ic_key = 'rsi'
+    if ic_key in disp_ic_keys:
+        i += 1
+        axes[i].set_ylabel('rsi')
+        axes[i].grid(True)
+        rsis = talib.RSI(klines_df["close"], timeperiod=14)
+        rsis = [round(a, 2) for a in rsis][-display_count:]
+        axes[i].plot(close_times, rsis, "r", label="rsi")
 
 
-    rs2 = ic.py_rsis(klines, closeindex, period=14)
-    rs2 = [round(a, 2) for a in rs2][-display_count:]
-    axes[i].plot(close_times, rs2, "y", label="rsi2")
+        rs2 = ic.py_rsis(klines, closeindex, period=14)
+        rs2 = [round(a, 2) for a in rs2][-display_count:]
+        axes[i].plot(close_times, rs2, "y", label="rsi2")
+
     """
     fastk, fastd = talib.STOCHRSI(klines_df["close"], timeperiod=14)
     rsifks = [round(a, 2) for a in fastk][-display_count:]
@@ -105,22 +110,24 @@ def show(args, klines, kline_column_names, display_count):
     axes[i].plot(close_times, rsifks, "b", label="rsi")
     axes[i].plot(close_times, rsifds, "y", label="rsi")
     """
-    # kdj
-    i += 1
-    axes[i].set_ylabel('kdj')
-    axes[i].grid(True)
-    """
-    ks, ds = talib.STOCH(klines_df["high"], klines_df["low"], klines_df["close"],
-        fastk_period=9, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
-    js = ks - ds
-    """
-    ks, ds, js = ic.pd_kdj(klines_df)
-    ks = [round(a, 2) for a in ks][-display_count:]
-    ds = [round(a, 2) for a in ds][-display_count:]
-    js = [round(a, 2) for a in js][-display_count:]
-    axes[i].plot(close_times, ks, "b", label="k")
-    axes[i].plot(close_times, ds, "y", label="d")
-    axes[i].plot(close_times, js, "m", label="j")
+
+    ic_key = 'kdj'
+    if ic_key in disp_ic_keys:
+        i += 1
+        axes[i].set_ylabel('kdj')
+        axes[i].grid(True)
+        """
+        ks, ds = talib.STOCH(klines_df["high"], klines_df["low"], klines_df["close"],
+            fastk_period=9, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
+        js = ks - ds
+        """
+        ks, ds, js = ic.pd_kdj(klines_df)
+        ks = [round(a, 2) for a in ks][-display_count:]
+        ds = [round(a, 2) for a in ds][-display_count:]
+        js = [round(a, 2) for a in js][-display_count:]
+        axes[i].plot(close_times, ks, "b", label="k")
+        axes[i].plot(close_times, ds, "y", label="d")
+        axes[i].plot(close_times, js, "m", label="j")
 
     """
     # willr
@@ -135,6 +142,16 @@ def show(args, klines, kline_column_names, display_count):
     plt.show()
 
 
+def parse_ic_keys(ss):
+    print("keys: [ %s )" % ss)
+    keys = {}
+
+    if not ss:
+        return keys
+    for key in ss.split(","):
+        keys[key] = True
+    return keys
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='show')
     parser.add_argument('-e', help='exchange')
@@ -142,10 +159,11 @@ if __name__ == "__main__":
     parser.add_argument('-i', help='interval')
     parser.add_argument('-r', help='time range')
     parser.add_argument('-tp', help='trend period')
+    parser.add_argument('-di', help='display indicators,egg: macd,kdj,rsi')
     args = parser.parse_args()
     # print(args)
 
-    if not (args.r and args.i and args.s):
+    if not (args.r and args.i and args.s and args.di):
         parser.print_help()
         exit(1)
 
@@ -167,5 +185,5 @@ if __name__ == "__main__":
     pre_count = 150
     klines = md.get_klines(args.s, interval, pre_count+display_count, start_time-xq.get_timedelta(interval, pre_count))
 
-    show(args, klines, md.kline_column_names, display_count)
+    show(args, klines, md.kline_column_names, display_count, parse_ic_keys(args.di))
 
