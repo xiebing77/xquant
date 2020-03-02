@@ -26,8 +26,6 @@ class Engine:
 
         self.td_db = md.MongoDB(mongo_user, mongo_pwd, "xquant", db_url)
 
-        self.value = 100
-
         if db_orders_name:
             self.db_orders_name = db_orders_name
             self.td_db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
@@ -192,7 +190,7 @@ class Engine:
         stop_loss_price = position_info["stop_loss_price"]
         if stop_loss_price:
             if (position_info["direction"] == xq.DIRECTION_LONG and cur_price <= stop_loss_price) or (position_info["direction"] == xq.DIRECTION_SHORT and cur_price >= stop_loss_price):
-                sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达指定的止损价格: %f" % (stop_loss_price), sl_t))
+                sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达指定的止损价格: %f" % (stop_loss_price)))
 
         top_rate, cur_rate = self.get_rates(position_info, cur_price)
 
@@ -681,7 +679,7 @@ class Engine:
 
 
     def display(self, symbol, orders, klines, display_count):
-        disp_ic_keys = ts.parse_ic_keys("macd")
+        disp_ic_keys = ts.parse_ic_keys("macd,rsi")
 
         for index, value in enumerate(self.md.kline_column_names):
             if value == "high":
@@ -841,6 +839,8 @@ class Engine:
             rsis = talib.RSI(klines_df["close"], timeperiod=14)
             rsis = [round(a, 3) for a in rsis][-display_count:]
             axes[i].plot(close_times, rsis, "r", label="rsi")
+            axes[i].plot(close_times, [70]*len(rsis), '-', color='r')
+            axes[i].plot(close_times, [30]*len(rsis), '-', color='r')
 
 
             rs2 = ic.py_rsis(klines, closeindex, period=14)

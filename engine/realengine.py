@@ -31,7 +31,7 @@ class RealEngine(Engine):
             exit(1)
 
         self.md = ExchangeMD(self.__exchange)
-
+        self.value = 0
 
     def now(self):
         return datetime.datetime.now()

@@ -18,6 +18,7 @@ class BackTest(Engine):
 
         self.md = DBMD(config["exchange"])
 
+        self.value = 10000
         self.orders = []
 
     def now(self):
