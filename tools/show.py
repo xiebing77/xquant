@@ -16,6 +16,7 @@ import talib
 
 from datetime import datetime,timedelta
 
+
 def show(args, klines, kline_column_names, display_count, disp_ic_keys):
     for index, value in enumerate(kline_column_names):
         if value == "high":
@@ -97,6 +98,8 @@ def show(args, klines, kline_column_names, display_count, disp_ic_keys):
         rsis = talib.RSI(klines_df["close"], timeperiod=14)
         rsis = [round(a, 2) for a in rsis][-display_count:]
         axes[i].plot(close_times, rsis, "r", label="rsi")
+        axes[i].plot(close_times, [70]*len(rsis), '-', color='r')
+        axes[i].plot(close_times, [30]*len(rsis), '-', color='r')
 
 
         rs2 = ic.py_rsis(klines, closeindex, period=14)
@@ -128,6 +131,32 @@ def show(args, klines, kline_column_names, display_count, disp_ic_keys):
         axes[i].plot(close_times, ks, "b", label="k")
         axes[i].plot(close_times, ds, "y", label="d")
         axes[i].plot(close_times, js, "m", label="j")
+
+    ic_key = 'AD'
+    if ic_key in disp_ic_keys:
+        ads = talib.AD(klines_df["high"], klines_df["low"], klines_df["close"], klines_df["volume"])
+        ads = ads[-display_count:]
+        i += 1
+        axes[i].set_ylabel(ic_key)
+        axes[i].grid(True)
+        axes[i].plot(close_times, ads, "y:", label=ic_key)
+
+    ic_key = 'WILLR'
+    if ic_key in disp_ic_keys:
+        ws = talib.WILLR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+        ws = ws[-display_count:]
+        i += 1
+        ts.ax(axes[i], ic_key, close_times, ws, "y:")
+
+    ic_key = 'ADX'
+    if ic_key in disp_ic_keys:
+        adxs = talib.ADX(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+        adxs = adxs[-display_count:]
+        adxrs = talib.ADXR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+        adxrs = adxrs[-display_count:]
+        i += 1
+        ts.ax(axes[i], ic_key, close_times, adxs, "y:")
+        ts.ax(axes[i], ic_key, close_times, adxrs, "k:")
 
     """
     # willr

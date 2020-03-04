@@ -27,6 +27,11 @@ def parse_ic_keys(ss):
         keys[key] = True
     return keys
 
+def ax(ax, ic_key, x, y, c):
+    ax.set_ylabel(ic_key)
+    ax.grid(True)
+    ax.plot(x, y, c, label=ic_key)
+
 def createInstance(module_name, class_name, *args, **kwargs):
     # print("args  :", args)
     # print("kwargs:", kwargs)

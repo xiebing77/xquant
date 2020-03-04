@@ -701,8 +701,6 @@ class Engine:
         natrs = talib.NATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
         tranges = talib.TRANGE(klines_df["high"], klines_df["low"], klines_df["close"])
 
-        #ads = talib.AD(klines_df["high"], klines_df["low"], klines_df["close"], klines_df["volume"])
-
         e_p  = 26
         emas = talib.EMA(klines_df["close"], timeperiod=e_p)
         s_emas = talib.EMA(klines_df["close"], timeperiod=e_p/2)
@@ -853,10 +851,21 @@ class Engine:
 
         ic_key = 'AD'
         if ic_key in disp_ic_keys:
+            ads = talib.AD(klines_df["high"], klines_df["low"], klines_df["close"], klines_df["volume"])
             i += 1
             axes[i].set_ylabel('AD')
             axes[i].grid(True)
             axes[i].plot(close_times, ads, "y:", label="AD")
+
+        ic_key = 'ADX'
+        if ic_key in disp_ic_keys:
+            adxs = talib.ADX(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+            adxs = adxs[-display_count:]
+            adxrs = talib.ADXR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+            adxrs = adxrs[-display_count:]
+            i += 1
+            ts.ax(axes[i], ic_key, close_times, adxs, "y:")
+            ts.ax(axes[i], ic_key, close_times, adxrs, "k:")
 
         ic_key = 'volatility'
         if ic_key in disp_ic_keys:
