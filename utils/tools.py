@@ -27,10 +27,10 @@ def parse_ic_keys(ss):
         keys[key] = True
     return keys
 
-def ax(ax, ic_key, x, y, c):
+def ax(ax, ic_key, x, y, c, drawstyle="default"):
     ax.set_ylabel(ic_key)
     ax.grid(True)
-    ax.plot(x, y, c, label=ic_key)
+    ax.plot(x, y, c, label=ic_key, drawstyle=drawstyle)
 
 def createInstance(module_name, class_name, *args, **kwargs):
     # print("args  :", args)

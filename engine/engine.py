@@ -853,19 +853,38 @@ class Engine:
         if ic_key in disp_ic_keys:
             ads = talib.AD(klines_df["high"], klines_df["low"], klines_df["close"], klines_df["volume"])
             i += 1
-            axes[i].set_ylabel('AD')
+            axes[i].set_ylabel(ic_key)
             axes[i].grid(True)
-            axes[i].plot(close_times, ads, "y:", label="AD")
+            axes[i].plot(close_times, ads, "y:", label=ic_key)
 
-        ic_key = 'ADX'
+        ic_key = 'DX'
         if ic_key in disp_ic_keys:
+            dxs = talib.DX(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+            dxs = dxs[-display_count:]
             adxs = talib.ADX(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
             adxs = adxs[-display_count:]
             adxrs = talib.ADXR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
             adxrs = adxrs[-display_count:]
             i += 1
+            ts.ax(axes[i], ic_key, close_times, dxs, "r:")
             ts.ax(axes[i], ic_key, close_times, adxs, "y:")
             ts.ax(axes[i], ic_key, close_times, adxrs, "k:")
+
+        ic_key = 'PLUS_DM'
+        if ic_key in disp_ic_keys:
+            real = talib.PLUS_DM(klines_df["high"], klines_df["low"])
+            i += 1
+            axes[i].set_ylabel(ic_key)
+            axes[i].grid(True)
+            axes[i].plot(close_times, real[-display_count:], "y:", label=ic_key)
+
+        ic_key = 'MINUS_DM'
+        if ic_key in disp_ic_keys:
+            real = talib.MINUS_DM(klines_df["high"], klines_df["low"])
+            i += 1
+            axes[i].set_ylabel(ic_key)
+            axes[i].grid(True)
+            axes[i].plot(close_times, real[-display_count:], "y:", label=ic_key)
 
         ic_key = 'volatility'
         if ic_key in disp_ic_keys:

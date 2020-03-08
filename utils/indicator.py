@@ -254,6 +254,13 @@ def py_rsi2(klines, closeindex, period=14):
         da = 0
     return 100*ua/(ua+da)
 
+def py_rsis2(klines, closeindex, period=14):
+    arr = []
+    for i in range(2, len(klines)):
+        rsi = py_rsi2(klines[:i], closeindex, period)
+        arr.append(rsi)
+    return arr
+
 def py_rsi(klines, closeindex, period=14):
     closes = [kline[closeindex] for kline in klines[-period:]]
     us = []
