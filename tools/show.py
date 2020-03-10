@@ -82,6 +82,11 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
         ts.ax(axes[i], os_key+' middleband', close_times, middleband[-display_count:], "b")
         ts.ax(axes[i], os_key+' lowerband', close_times, lowerband[-display_count:], "y")
 
+    os_key = 'DEMA'
+    if os_key in os_keys:
+        real = talib.DEMA(klines_df["close"], timeperiod=30)
+        ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
+
     os_key = 'HT_TRENDLINE'
     if os_key in os_keys:
         real = talib.HT_TRENDLINE(klines_df["close"])

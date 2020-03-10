@@ -679,6 +679,7 @@ class Engine:
 
 
     def display(self, symbol, orders, klines, display_count):
+        os_keys = ts.parse_ic_keys("EMA")
         disp_ic_keys = ts.parse_ic_keys("macd,rsi")
 
         for index, value in enumerate(self.md.kline_column_names):
@@ -705,6 +706,9 @@ class Engine:
         emas = talib.EMA(klines_df["close"], timeperiod=e_p)
         s_emas = talib.EMA(klines_df["close"], timeperiod=e_p/2)
         t_emas = talib.EMA(klines_df["close"], timeperiod=30)
+
+        demas = talib.DEMA(klines_df["close"], timeperiod=30)
+
         ks, ds, js = ic.pd_kdj(klines_df)
 
         klines_df = ic.pd_macd(klines_df)
@@ -723,6 +727,7 @@ class Engine:
         emas = emas[-display_count:]
         s_emas = s_emas[-display_count:]
         t_emas = t_emas[-display_count:]
+        demas = demas[-display_count:]
         ks = ks[-display_count:]
         ds = ds[-display_count:]
         js = js[-display_count:]
@@ -766,31 +771,45 @@ class Engine:
         axes[i].xaxis_date()
         axes[i].plot(trade_times, [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
 
-        axes[i].plot(close_times, emas, "b--", label="%sEMA" % (e_p))
-        axes[i].plot(close_times, s_emas, "c--", label="%sEMA" % (e_p/2))
-        axes[i].plot(close_times, t_emas, "m--", label="%sEMA" % (30))
+        os_key = 'EMA'
+        if os_key in os_keys:
+            axes[i].plot(close_times, emas, "b--", label="%sEMA" % (e_p))
+            axes[i].plot(close_times, s_emas, "c--", label="%sEMA" % (e_p/2))
+            axes[i].plot(close_times, t_emas, "m--", label="%sEMA" % (30))
 
-        axes[i].plot(close_times, emas + atrs, "y--", label="1ATR")
-        axes[i].plot(close_times, emas - atrs, "y--", label="1ATR")
+        os_key = 'DEMA'
+        if os_key in os_keys:
+            real = talib.DEMA(klines_df["close"], timeperiod=30)
+            ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
-        #axes[i].plot(close_times, emas + 2*atrs, "y--", label="2ATR")
-        #axes[i].plot(close_times, emas - 2*atrs, "y--", label="2ATR")
-        #axes[i].plot(close_times, emas + 3*atrs, "y--", label="3ATR")
-        #axes[i].plot(close_times, emas - 3*atrs, "y--", label="3ATR")
+        os_key = 'ATR'
+        if os_key in os_keys:
+            axes[i].plot(close_times, emas + atrs, "y--", label="1ATR")
+            axes[i].plot(close_times, emas - atrs, "y--", label="1ATR")
 
-        #axes[i].plot(close_times, emas + 4*atrs, "m--", label="4ATR")
-        #axes[i].plot(close_times, emas - 4*atrs, "m--", label="4ATR")
-        #axes[i].plot(close_times, emas + 5*atrs, "m--", label="5ATR")
-        #axes[i].plot(close_times, emas - 5*atrs, "m--", label="5ATR")
-        ats = 6
-        label = "%d ATR" % (ats)
-        #axes[i].plot(close_times, emas + ts*atrs, "m--", label="6ATR")
-        #axes[i].plot(close_times, emas - ts*atrs, "m--", label="6ATR")
+            axes[i].plot(close_times, s_emas + atrs, "m--", label="1ATR")
+            axes[i].plot(close_times, demas + atrs, "b--", label="1ATR")
 
-        ats = 12
-        label = "%d ATR" % (ats)
-        #axes[i].plot(close_times, emas + ts*atrs, "g--", label=label)
-        #axes[i].plot(close_times, emas - ts*atrs, "g--", label=label)
+
+
+            #axes[i].plot(close_times, emas + 2*atrs, "y--", label="2ATR")
+            #axes[i].plot(close_times, emas - 2*atrs, "y--", label="2ATR")
+            #axes[i].plot(close_times, emas + 3*atrs, "y--", label="3ATR")
+            #axes[i].plot(close_times, emas - 3*atrs, "y--", label="3ATR")
+
+            #axes[i].plot(close_times, emas + 4*atrs, "m--", label="4ATR")
+            #axes[i].plot(close_times, emas - 4*atrs, "m--", label="4ATR")
+            #axes[i].plot(close_times, emas + 5*atrs, "m--", label="5ATR")
+            #axes[i].plot(close_times, emas - 5*atrs, "m--", label="5ATR")
+            ats = 6
+            label = "%d ATR" % (ats)
+            #axes[i].plot(close_times, emas + ts*atrs, "m--", label="6ATR")
+            #axes[i].plot(close_times, emas - ts*atrs, "m--", label="6ATR")
+
+            ats = 12
+            label = "%d ATR" % (ats)
+            #axes[i].plot(close_times, emas + ts*atrs, "g--", label=label)
+            #axes[i].plot(close_times, emas - ts*atrs, "g--", label=label)
 
         ic_key = 'mr'
         if ic_key in disp_ic_keys:
