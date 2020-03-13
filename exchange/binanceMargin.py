@@ -18,6 +18,7 @@ secret_key = os.environ.get('BINANCE_SECRET_KEY')
 
 class BinanceMargin(Exchange):
     """binanceMargin"""
+    name = 'binance_margin'
     start_time = datetime(2017, 8, 17, 8)
     min_value = 10
     kl_bt_accuracy = xq.KLINE_INTERVAL_1MINUTE
