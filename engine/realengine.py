@@ -6,6 +6,7 @@ import utils.tools as ts
 import common.xquant as xq
 from .engine import Engine
 from exchange.binanceExchange import BinanceExchange
+from exchange.binanceMargin import BinanceMargin
 from exchange.okexExchange import OkexExchange
 from md.exmd import ExchangeMD
 
@@ -22,6 +23,9 @@ class RealEngine(Engine):
         exchange = config["exchange"]
         if exchange == "binance":
             self.__exchange = BinanceExchange(debug=True)
+
+        elif exchange == "binance_margin":
+            self.__exchange = BinanceMargin(debug=True)
 
         elif exchange == "okex":
             self.__exchange = OkexExchange(debug=True)

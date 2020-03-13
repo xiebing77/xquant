@@ -3,6 +3,7 @@ import sys
 sys.path.append('../')
 import argparse
 from exchange.binanceExchange import BinanceExchange
+from exchange.binanceMargin import BinanceMargin
 import common.xquant as xq
 
 if __name__ == "__main__":
@@ -19,6 +20,8 @@ if __name__ == "__main__":
 
     if args.e == "binance":
         exchange = BinanceExchange(debug=True)
+    elif args.e == "binance_margin":
+        exchange = BinanceMargin(debug=True)
     else:
         print("exchange error!")
         exit(1)

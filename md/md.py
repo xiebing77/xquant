@@ -13,6 +13,7 @@ import utils.indicator as ic
 import common.xquant as xq
 import db.mongodb as md
 from exchange.binanceExchange import BinanceExchange
+from exchange.binanceMargin import BinanceMargin
 from exchange.okexExchange import OkexExchange
 
 
@@ -22,6 +23,8 @@ class MarketingData:
     def __init__(self, exchange):
         if exchange == "binance":
             self.kline_column_names = BinanceExchange.get_kline_column_names()
+        elif exchange == "binance_margin":
+            self.kline_column_names = BinanceMargin.get_kline_column_names()
         elif exchange == "okex":
             self.kline_column_names = OkexExchange.get_kline_column_names()
 

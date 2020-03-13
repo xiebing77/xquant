@@ -473,8 +473,8 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
         slowk, slowd = talib.STOCH(klines_df["high"], klines_df["low"], klines_df["close"],
             fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
         i += 1
-        ts.ax(axes[i], ic_key, close_times, slowk[-display_count:], "y:")
-        ts.ax(axes[i], ic_key, close_times, slowd[-display_count:], "b:")
+        ts.ax(axes[i], ic_key, close_times, slowk[-display_count:], "b")
+        ts.ax(axes[i], ic_key, close_times, slowd[-display_count:], "y")
 
     ic_key = 'STOCHF'
     if ic_key in disp_ic_keys:
