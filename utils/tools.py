@@ -4,6 +4,7 @@ import math
 from datetime import datetime, timedelta, time
 import logging
 import pandas as pd
+from decimal import Decimal
 
 MATH_FLOOR = 0  # 向下，舍去多余
 MATH_CEIL = 1  # 向上，
@@ -40,6 +41,8 @@ def createInstance(module_name, class_name, *args, **kwargs):
     obj = class_meta(*args, **kwargs)
     return obj
 
+def get_decimal(number):
+    return len(str(Decimal(str(number))-Decimal(number).to_integral()).split('.')[1])
 
 def reserve_float_ceil(flo, float_digits=0):
     return reserve_float(flo, float_digits, MATH_CEIL)
@@ -48,7 +51,7 @@ def reserve_float_ceil(flo, float_digits=0):
 def reserve_float(flo, float_digits=0, flag=MATH_FLOOR):
     """调整精度"""
     value_str = "%.11f" % flo
-    return str_to_float(value_str, float_digits, flag=MATH_FLOOR)
+    return str_to_float(value_str, float_digits, flag)
 
 
 def str_to_float(string, float_digits=0, flag=MATH_FLOOR):
