@@ -11,7 +11,7 @@ class ExchangeMD(MarketingData):
     """交易所实盘数据"""
 
     def __init__(self, exchange):
-        super().__init__(exchange)
+        super().__init__(exchange.name)
 
         self.__exchange = exchange
 
