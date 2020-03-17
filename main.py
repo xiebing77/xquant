@@ -126,7 +126,7 @@ if __name__ == "__main__":
     server_ip = os.environ.get('LOG_SERVER_IP')
     server_port = os.environ.get('LOG_SERVER_PORT')
     print('Log server IP: %s, Log server port: %s' % (server_ip, server_port))
-    log.init(select, logfilename, server_ip, server_port)
+    log.init(logfilename, server_ip, server_port)
 
     log.info("strategy name: %s;  config: %s" % (class_name, config))
 
