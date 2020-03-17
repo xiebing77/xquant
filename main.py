@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import sys
+import os
 import json
 from datetime import datetime
 import common.log as log
@@ -112,7 +113,10 @@ if __name__ == "__main__":
         exit(1)
 
     print(logfilename)
-    log.init(select, logfilename)
+    server_ip = os.environ.get('LOG_SERVER_IP')
+    server_port = os.environ.get('LOG_SERVER_PORT')
+    print('Log server IP: %s, Log server port: %s' % (server_ip, server_port))
+    log.init(select, logfilename, server_ip, server_port)
 
     log.info("strategy name: %s;  config: %s" % (class_name, config))
 
