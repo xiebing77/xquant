@@ -47,6 +47,13 @@ def get_decimal(number):
 def reserve_float_ceil(flo, float_digits=0):
     return reserve_float(flo, float_digits, MATH_CEIL)
 
+def multiply_ceil(var, const):
+    decimal = get_decimal(var)
+    return reserve_float_ceil(var * const, decimal)
+
+def multiply_floor(var, const):
+    decimal = get_decimal(var)
+    return reserve_float(var * const, decimal)
 
 def reserve_float(flo, float_digits=0, flag=MATH_FLOOR):
     """调整精度"""
