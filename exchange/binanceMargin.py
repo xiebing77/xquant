@@ -5,6 +5,7 @@ from datetime import datetime
 import common.log as log
 import pandas as pd
 import common.xquant as xq
+import common.bill as bl
 from .exchange import Exchange
 from .binance.margin import Client
 from .binance.client import Client as spotClient
@@ -38,15 +39,15 @@ class BinanceMargin(Exchange):
 
     def __trans_side(self, direction, action):
         """转换为binance格式的side"""
-        if direction == xq.DIRECTION_LONG:
-            if action == xq.OPEN_POSITION:
+        if direction == bl.DIRECTION_LONG:
+            if action == bl.OPEN_POSITION:
                 return SIDE_BUY
-            elif action == xq.CLOSE_POSITION:
+            elif action == bl.CLOSE_POSITION:
                 return SIDE_SELL
-        elif direction == xq.DIRECTION_SHORT:
-            if action == xq.OPEN_POSITION:
+        elif direction == bl.DIRECTION_SHORT:
+            if action == bl.OPEN_POSITION:
                 return SIDE_SELL
-            elif action == xq.CLOSE_POSITION:
+            elif action == bl.CLOSE_POSITION:
                 return SIDE_BUY
         return None
 

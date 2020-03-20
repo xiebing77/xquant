@@ -12,6 +12,7 @@ import utils.tools as ts
 import utils.indicator as ic
 from setup import mongo_user, mongo_pwd, db_url
 import common.xquant as xq
+import common.bill as bl
 import db.mongodb as md
 from exchange.binanceExchange import BinanceExchange
 from exchange.okexExchange import OkexExchange
@@ -55,7 +56,7 @@ class Engine:
 
 
     def get_floating_profit(self, direction, amount, value, commission, cur_price):
-        if direction == xq.DIRECTION_LONG:
+        if direction == bl.DIRECTION_LONG:
             cycle_profit = cur_price * amount + value
         else:
             cycle_profit = value - cur_price * amount
@@ -121,13 +122,13 @@ class Engine:
         if position_info["amount"] == 0:
             return []
 
-        sl_signals = self.stop_loss(position_info, cur_price)
-        tp_signals = self.take_profit(position_info, cur_price)
-        return sl_signals + tp_signals
+        sl_bills = self.stop_loss(position_info, cur_price)
+        tp_bills = self.take_profit(position_info, cur_price)
+        return sl_bills + tp_bills
 
     def get_rates(self, position_info, cur_price):
         pst_price = position_info["price"]
-        if position_info["direction"] == xq.DIRECTION_LONG:
+        if position_info["direction"] == bl.DIRECTION_LONG:
             top_rate = (position_info["high"] / pst_price) - 1
             cur_rate = (cur_price / pst_price) - 1
         else:
@@ -161,7 +162,7 @@ class Engine:
 
     def stop_loss(self, position_info, cur_price):
         """ 止损 """
-        sl_signals = []
+        sl_bills = []
         # 风控第一条：亏损金额超过额度的10%，如额度1000，亏损金额超过100即刻清仓
         limit_mode = self.config["mode"]
         limit_value = self.value
@@ -176,21 +177,21 @@ class Engine:
         #sl_t = xq.get_next_open_time(self.kline_interval, self.now())
         sl_t = self.now() + max(xq.get_next_open_timedelta(xq.KLINE_INTERVAL_1DAY, self.now()), timedelta(hours=4))
         if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["floating_profit"] <= 0:
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), sl_t))
+            sl_bills.append(bl.create_bill(position_info["direction"], bl.CLOSE_POSITION, 0, "stop loss", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), sl_t))
 
         # 风控第二条：当前价格低于持仓均价的90%，即刻清仓
         pst_price = position_info["price"]
-        if position_info["direction"] == xq.DIRECTION_LONG:
+        if position_info["direction"] == bl.DIRECTION_LONG:
             loss_rate = 1 - (cur_price / pst_price)
         else:
             loss_rate = (cur_price / pst_price) - 1
         if pst_price > 0 and "base_price" in sl_cfg and sl_cfg["base_price"] > 0 and loss_rate  >= sl_cfg["base_price"]:
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), sl_t))
+            sl_bills.append(bl.create_bill(position_info["direction"], bl.CLOSE_POSITION, 0, "stop loss", "下跌了持仓均价的{:8.2%}".format(sl_cfg["base_price"]), sl_t))
 
         stop_loss_price = position_info["stop_loss_price"]
         if stop_loss_price:
-            if (position_info["direction"] == xq.DIRECTION_LONG and cur_price <= stop_loss_price) or (position_info["direction"] == xq.DIRECTION_SHORT and cur_price >= stop_loss_price):
-                sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "stop loss", "到达指定的止损价格: %f" % (stop_loss_price)))
+            if (position_info["direction"] == bl.DIRECTION_LONG and cur_price <= stop_loss_price) or (position_info["direction"] == bl.DIRECTION_SHORT and cur_price >= stop_loss_price):
+                sl_bills.append(bl.create_bill(position_info["direction"], bl.CLOSE_POSITION, 0, "stop loss", "到达指定的止损价格: %f" % (stop_loss_price)))
 
         top_rate, cur_rate = self.get_rates(position_info, cur_price)
 
@@ -206,21 +207,21 @@ class Engine:
         defalut_slr = d_sl_cfg["r"]
         if cur_rate <= defalut_slr:
             default_sl_t = self.get_can_open_time(d_sl_cfg)
-            sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "defalut stop loss", "到达默认的止损点{:8.2%}".format(defalut_slr), default_sl_t))
+            sl_bills.append(bl.create_bill(position_info["direction"], bl.CLOSE_POSITION, 0, "defalut stop loss", "到达默认的止损点{:8.2%}".format(defalut_slr), default_sl_t))
 
         for csl in sl_cfg["condition"]:
             if top_rate >= csl["c"] and cur_rate < csl["r"]:
                 c_sl_t = self.get_can_open_time(csl)
-                sl_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "condition stop loss", "到达条件止损点{:8.2%}".format(csl["r"]), c_sl_t))
+                sl_bills.append(bl.create_bill(position_info["direction"], bl.CLOSE_POSITION, 0, "condition stop loss", "到达条件止损点{:8.2%}".format(csl["r"]), c_sl_t))
 
-        return sl_signals
+        return sl_bills
 
     def take_profit(self, position_info, cur_price):
         """ 止盈 """
-        tp_signals = []
+        tp_bills = []
 
         if "high" not in position_info:
-            return tp_signals
+            return tp_bills
 
         tp_cfg = self.config["risk_control"]["take_profit"]
 
@@ -235,27 +236,27 @@ class Engine:
                         self.tp_cc["base_open"] += 1
                         self.log_info("base_open tp_cc 2 = %s" % self.tp_cc["base_open"])
                         if self.tp_cc["base_open"] >= 1 :
-                            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "take profit", "盈利回落(基于持仓价)  fall rate:{:8.2%} ( {:8.2%}, {:8.2%} )".format(fall_rate, bo_band[0], bo_band[1])))
+                            tp_bills.append(bl.create_bill(position_info["direction"], bl.CLOSE_POSITION, 0, "take profit", "盈利回落(基于持仓价)  fall rate:{:8.2%} ( {:8.2%}, {:8.2%} )".format(fall_rate, bo_band[0], bo_band[1])))
                     else:
                         self.tp_cc["base_open"] = 0
 
                     break
 
-        if position_info["direction"] == xq.DIRECTION_LONG:
+        if position_info["direction"] == bl.DIRECTION_LONG:
             price_rate = cur_price / position_info["high"]
         else:
             price_rate = position_info["low"] / cur_price
         if "base_high" in tp_cfg and tp_cfg["base_high"] > 0 and price_rate < (1 - tp_cfg["base_high"]):
-            tp_signals.append(xq.create_signal(position_info["direction"], xq.CLOSE_POSITION, 0, "take profit", "盈利回落，基于最高价的{:8.2%}".format(tp_cfg["base_high"])))
+            tp_bills.append(bl.create_bill(position_info["direction"], bl.CLOSE_POSITION, 0, "take profit", "盈利回落，基于最高价的{:8.2%}".format(tp_cfg["base_high"])))
 
-        return tp_signals
+        return tp_bills
         """
             if position_info["amount"] > 0:
         today_fall_rate = ts.cacl_today_fall_rate(klines, cur_price)
         if today_fall_rate > 0.1:
             # 清仓卖出
             check_signals.append(
-                xq.create_signal(xq.SIDE_SELL, 0, "平仓：当前价距离当天最高价回落10%")
+                bl.create_bill(xq.SIDE_SELL, 0, "平仓：当前价距离当天最高价回落10%")
             )
 
         period_start_time = position_info["start_time"]
@@ -265,42 +266,42 @@ class Engine:
         if period_fall_rate > 0.1:
             # 清仓卖出
             check_signals.append(
-                xq.create_signal(xq.SIDE_SELL, 0, "平仓：当前价距离周期内最高价回落10%")
+                bl.create_bill(xq.SIDE_SELL, 0, "平仓：当前价距离周期内最高价回落10%")
             )
         elif period_fall_rate > 0.05:
             # 减仓一半
             check_signals.append(
-                xq.create_signal(xq.SIDE_SELL, 0.5, "减仓：当前价距离周期内最高价回落5%")
+                bl.create_bill(xq.SIDE_SELL, 0.5, "减仓：当前价距离周期内最高价回落5%")
             )
         """
 
-    def handle_order(self, symbol, position_info, cur_price, check_signals):
+    def handle_order(self, symbol, position_info, cur_price, check_bills):
         """ 处理委托 """
-        rc_signals = self.risk_control(position_info, cur_price)
-        signals = rc_signals + check_signals
-        if not signals:
+        rc_bills = self.risk_control(position_info, cur_price)
+        bills = rc_bills + check_bills
+        if not bills:
             return
-        for signal in signals:
-            self.log_info("signal(%r)" % signal["describe"])
+        for bill in bills:
+            self.log_info("bill(%r)" % bill["describe"])
 
-        ds_signal = xq.decision_signals(signals)
+        ds_bill = bl.decision_bills(bills)
         self.log_info(
-            "decision signal (%s  %s), position rate(%g), describe(%s), can buy after(%s), stop_loss_price(%s)" % (
-            ds_signal["direction"],
-            ds_signal["action"],
-            ds_signal["pst_rate"],
-            ds_signal["describe"],
-            ds_signal["can_open_time"],
-            ds_signal["stop_loss_price"]
+            "decision bill (%s  %s), position rate(%g), describe(%s), can buy after(%s), stop_loss_price(%s)" % (
+            ds_bill["direction"],
+            ds_bill["action"],
+            ds_bill["pst_rate"],
+            ds_bill["describe"],
+            ds_bill["can_open_time"],
+            ds_bill["stop_loss_price"]
             )
         )
 
-        if ds_signal["action"] is None:
+        if ds_bill["action"] is None:
             return
 
         # 限定的时间范围内，不能开仓
-        if ds_signal["action"] == xq.OPEN_POSITION:
-            if ds_signal["direction"] == xq.DIRECTION_LONG:
+        if ds_bill["action"] == bl.OPEN_POSITION:
+            if ds_bill["direction"] == bl.DIRECTION_LONG:
                 if self.can_open_long_time and self.now() <= self.can_open_long_time:
                         return
             else:
@@ -308,9 +309,9 @@ class Engine:
                         return
 
         can_open_time_info = ""
-        can_open_time = ds_signal["can_open_time"]
+        can_open_time = ds_bill["can_open_time"]
         if can_open_time:
-            if ds_signal["direction"] == xq.DIRECTION_LONG:
+            if ds_bill["direction"] == bl.DIRECTION_LONG:
                 if not self.can_open_long_time or self.can_open_long_time < can_open_time:
                     self.can_open_long_time = can_open_time
                     can_open_time_info = "can open long time: %s" % self.can_open_long_time
@@ -320,8 +321,8 @@ class Engine:
                     can_open_time_info = "can open short time: %s" % self.can_open_short_time
             self.log_info(can_open_time_info)
 
-        if ds_signal["pst_rate"] > 1 or ds_signal["pst_rate"] < 0:
-            self.log_warning("仓位率（%g）超出范围（0 ~ 1）" % ds_signal["pst_rate"])
+        if ds_bill["pst_rate"] > 1 or ds_bill["pst_rate"] < 0:
+            self.log_warning("仓位率（%g）超出范围（0 ~ 1）" % ds_bill["pst_rate"])
             return
 
         limit_price_rate = self.config["limit_price_rate"]
@@ -336,17 +337,17 @@ class Engine:
 
         target_coin, base_coin = xq.get_symbol_coins(symbol)
 
-        if ds_signal["action"] == xq.OPEN_POSITION:
+        if ds_bill["action"] == bl.OPEN_POSITION:
             # 开仓
-            if "pst_rate" in position_info and position_info["pst_rate"] >= ds_signal["pst_rate"]:
+            if "pst_rate" in position_info and position_info["pst_rate"] >= ds_bill["pst_rate"]:
                 return
 
             pst_cost = abs(position_info["value"]) + position_info["commission"]
-            base_amount = limit_value * ds_signal["pst_rate"] - pst_cost
+            base_amount = limit_value * ds_bill["pst_rate"] - pst_cost
             if base_amount <= 0:
                 return
 
-            if ds_signal["direction"] == xq.DIRECTION_LONG:
+            if ds_bill["direction"] == bl.DIRECTION_LONG:
                 # 做多开仓
                 base_balance = self.get_balances(base_coin)
                 self.log_info("base   balance:  %s" % base_balance)
@@ -367,12 +368,12 @@ class Engine:
                 rate = 1 - limit_price_rate["open"]
         else:
             # 平仓
-            if (not "pst_rate" in position_info) or position_info["pst_rate"] <= ds_signal["pst_rate"]:
+            if (not "pst_rate" in position_info) or position_info["pst_rate"] <= ds_bill["pst_rate"]:
                 return
 
-            target_amount = abs(position_info["amount"]) * (position_info["pst_rate"] - ds_signal["pst_rate"]) / position_info["pst_rate"]
+            target_amount = abs(position_info["amount"]) * (position_info["pst_rate"] - ds_bill["pst_rate"]) / position_info["pst_rate"]
 
-            if ds_signal["direction"] == xq.DIRECTION_LONG:
+            if ds_bill["direction"] == bl.DIRECTION_LONG:
                 # 做多平仓
                 rate = 1 - limit_price_rate["close"]
             else:
@@ -380,37 +381,37 @@ class Engine:
                 rate = 1 + limit_price_rate["close"]
 
         target_amount = ts.reserve_float(target_amount, self.config["digits"][target_coin])
-        self.log_info("%s %s target amount: %g" % (ds_signal["direction"], ds_signal["action"], target_amount))
+        self.log_info("%s %s target amount: %g" % (ds_bill["direction"], ds_bill["action"], target_amount))
         if target_amount <= 0:
             return
         limit_price = ts.reserve_float(cur_price * rate, self.config["digits"][base_coin])
-        order_rmk = ds_signal["describe"] + ":  " + ds_signal["rmk"]
+        order_rmk = ds_bill["describe"] + ":  " + ds_bill["rmk"]
         order_id = self.send_order_limit(
-            ds_signal["direction"],
-            ds_signal["action"],
+            ds_bill["direction"],
+            ds_bill["action"],
             symbol,
-            ds_signal["pst_rate"],
+            ds_bill["pst_rate"],
             cur_price,
             limit_price,
             target_amount,
-            ds_signal["stop_loss_price"],
-            "%s, time: %s,  %s" % (order_rmk, ds_signal["can_open_time"], can_open_time_info) if (ds_signal["can_open_time"] or can_open_time_info) else "%s" % (order_rmk),
+            ds_bill["stop_loss_price"],
+            "%s, time: %s,  %s" % (order_rmk, ds_bill["can_open_time"], can_open_time_info) if (ds_bill["can_open_time"] or can_open_time_info) else "%s" % (order_rmk),
         )
         self.log_info(
             "current price: %g;  rate: %g;  order_id: %s" % (cur_price, rate, order_id)
         )
 
     def check_order(symbol, order):
-        if order["direction"] != xq.DIRECTION_LONG and order["direction"] != xq.DIRECTION_SHORT:
+        if order["direction"] != bl.DIRECTION_LONG and order["direction"] != bl.DIRECTION_SHORT:
             self.log_error("错误的委托方向")
             return False
-        if order["action"] != xq.OPEN_POSITION and order["action"] != xq.CLOSE_POSITION:
+        if order["action"] != bl.OPEN_POSITION and order["action"] != bl.CLOSE_POSITION:
             self.log_error("错误的委托动作")
             return False
         return True
 
     def get_order_value(self, order):
-        if (order["action"] == xq.OPEN_POSITION and order["direction"] == xq.DIRECTION_LONG) or (order["action"] == xq.CLOSE_POSITION and order["direction"] == xq.DIRECTION_SHORT):
+        if (order["action"] == bl.OPEN_POSITION and order["direction"] == bl.DIRECTION_LONG) or (order["action"] == bl.CLOSE_POSITION and order["direction"] == bl.DIRECTION_SHORT):
             return - order["deal_value"]
         else:
             return order["deal_value"]
@@ -431,7 +432,7 @@ class Engine:
             if not self.check_order(order):
                 return None
 
-            if order["action"] == xq.OPEN_POSITION:
+            if order["action"] == bl.OPEN_POSITION:
                 if cycle_amount == 0:
                     cycle_first_order = order
                 cycle_amount += order["deal_amount"]
@@ -459,7 +460,7 @@ class Engine:
         if cycle_amount > 0:
             pst_info["price"] = abs(cycle_value) / cycle_amount
 
-            if cycle_first_order["direction"] == xq.DIRECTION_LONG:
+            if cycle_first_order["direction"] == bl.DIRECTION_LONG:
                 pst_info["cost_price"] = (abs(cycle_value) + cycle_commission) / cycle_amount
             else:
                 pst_info["cost_price"] = (abs(cycle_value) - cycle_commission) / cycle_amount
@@ -492,7 +493,7 @@ class Engine:
 
             order["cycle_id"] = cycle_id
 
-            if order["action"] == xq.OPEN_POSITION:
+            if order["action"] == bl.OPEN_POSITION:
                 cycle_amount += order["deal_amount"]
             else:
                 cycle_amount -= order["deal_amount"]
@@ -571,7 +572,7 @@ class Engine:
                 total_commission_rate = 0 # 2 * self.config["commission_rate"]
                 if "high" in order:
                     deal_price = order["deal_value"]/order["deal_amount"]
-                    if order["direction"] == xq.DIRECTION_LONG:
+                    if order["direction"] == bl.DIRECTION_LONG:
                         tmp_profit_rate = order["high"] / deal_price - 1 - total_commission_rate
                     else:
                         tmp_profit_rate = 1 - order["high"] / deal_price - total_commission_rate
@@ -580,7 +581,7 @@ class Engine:
                     info += "  %10g, %s)" % (order["high"], datetime.fromtimestamp(order["high_time"]))
                 else:
                     pre_deal_price = pre_order["deal_value"]/pre_order["deal_amount"]
-                    if order["direction"] == xq.DIRECTION_LONG:
+                    if order["direction"] == bl.DIRECTION_LONG:
                         tmp_profit_rate = pre_order["low"] / pre_deal_price - 1 - total_commission_rate
                     else:
                         tmp_profit_rate = 1 - pre_order["low"] / pre_deal_price - total_commission_rate
@@ -641,7 +642,7 @@ class Engine:
         if len(orders) <= 0:
             return 0, 0, 0, 0
         orders_df = pd.DataFrame(self.calc_order(symbol, orders))
-        close_df = orders_df[(orders_df["action"]==xq.CLOSE_POSITION)]
+        close_df = orders_df[(orders_df["action"]==bl.CLOSE_POSITION)]
 
         win_df = close_df[(close_df["floating_profit_rate"] > 0)]
         loss_df =close_df[(close_df["floating_profit_rate"] < 0)]
@@ -655,8 +656,8 @@ class Engine:
 
     def stat(self, signal_id, orders_df):
         print("\n signal: " + signal_id)
-        win_df = orders_df[(orders_df["action"]==xq.CLOSE_POSITION) & (orders_df["floating_profit_rate"] > 0)]
-        loss_df =orders_df[(orders_df["action"]==xq.CLOSE_POSITION) & (orders_df["floating_profit_rate"] < 0)]
+        win_df = orders_df[(orders_df["action"]==bl.CLOSE_POSITION) & (orders_df["floating_profit_rate"] > 0)]
+        loss_df =orders_df[(orders_df["action"]==bl.CLOSE_POSITION) & (orders_df["floating_profit_rate"] < 0)]
 
         win_count = len(win_df)
         fail_count = len(loss_df)
@@ -679,7 +680,7 @@ class Engine:
 
 
     def display(self, symbol, orders, klines, display_count):
-        os_keys = ts.parse_ic_keys("EMA")
+        os_keys = ts.parse_ic_keys("EMA,ATR")
         disp_ic_keys = ts.parse_ic_keys("macd,rsi")
 
         for index, value in enumerate(self.md.kline_column_names):
@@ -787,8 +788,8 @@ class Engine:
             axes[i].plot(close_times, emas + atrs, "y--", label="1ATR")
             axes[i].plot(close_times, emas - atrs, "y--", label="1ATR")
 
-            axes[i].plot(close_times, s_emas + atrs, "m--", label="1ATR")
-            axes[i].plot(close_times, demas + atrs, "b--", label="1ATR")
+            #axes[i].plot(close_times, s_emas + atrs, "m--", label="1ATR")
+            #axes[i].plot(close_times, demas + atrs, "b--", label="1ATR")
 
 
 

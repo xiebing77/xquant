@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, time
 import uuid
 import utils.tools as ts
 import common.xquant as xq
+import common.bill as bl
 import db.mongodb as md
 from .engine import Engine
 from md.dbmd import DBMD
@@ -41,7 +42,7 @@ class BackTest(Engine):
     def get_position(self, symbol, cur_price):
         """ 获取持仓信息 """
         if len(self.orders) > 0:
-            if self.orders[-1]["action"] == xq.OPEN_POSITION:
+            if self.orders[-1]["action"] == bl.OPEN_POSITION:
                 if "high" not in self.orders[-1] or self.orders[-1]["high"] < cur_price:
                     self.orders[-1]["high"] = cur_price
                     self.orders[-1]["high_time"] = self.now().timestamp()

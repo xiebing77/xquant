@@ -5,6 +5,7 @@ import argparse
 from exchange.binanceExchange import BinanceExchange
 from exchange.binanceMargin import BinanceMargin
 import common.xquant as xq
+import common.bill as bl
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='account')
@@ -26,4 +27,4 @@ if __name__ == "__main__":
         print("exchange error!")
         exit(1)
 
-    exchange.send_order(xq.DIRECTION_LONG, xq.OPEN_POSITION, xq.ORDER_TYPE_LIMIT, args.s, float(args.p), float(args.a))
+    exchange.send_order(bl.DIRECTION_LONG, bl.OPEN_POSITION, xq.ORDER_TYPE_LIMIT, args.s, float(args.p), float(args.a))

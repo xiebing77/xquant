@@ -4,6 +4,7 @@ import time
 import datetime
 import utils.tools as ts
 import common.xquant as xq
+import common.bill as bl
 from .engine import Engine
 from exchange.binanceExchange import BinanceExchange
 from exchange.binanceMargin import BinanceMargin
@@ -57,7 +58,7 @@ class RealEngine(Engine):
         if len(orders) > 0:
             now_ts = self.now().timestamp()
 
-            if orders[-1]["action"] == xq.OPEN_POSITION:
+            if orders[-1]["action"] == bl.OPEN_POSITION:
                 if "high" not in orders[-1] or orders[-1]["high"] < cur_price:
                     orders[-1]["high"] = cur_price
                     orders[-1]["high_time"] = now_ts
