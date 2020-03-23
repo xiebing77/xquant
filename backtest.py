@@ -38,6 +38,7 @@ if __name__ == "__main__":
 
     if args.log:
         logfilename = class_name + "_"+ config["symbol"] + "_" + time_range + "_" + instance_id + ".log"
+        print(logfilename)
         log.init("backtest", logfilename)
         log.info("strategy name: %s;  config: %s" % (class_name, config))
 
