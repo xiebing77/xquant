@@ -9,7 +9,7 @@ CLOSE_POSITION = "CLOSE"   # 平仓
 
 
 def create_bill(direction, action, pst_rate, describe, rmk, can_open_time=None, stop_loss_price=None):
-    """创建交易信号"""
+    """创建单据"""
     return {"direction": direction, "action": action, "pst_rate": pst_rate, "describe": describe, "rmk": rmk, "can_open_time": can_open_time,
         "stop_loss_price": stop_loss_price
     }

@@ -141,7 +141,7 @@ if __name__ == "__main__":
         else:
             display_switch = False
 
-        engine = BackTest(instance_id, config)
+        engine = BackTest(instance_id, config["exchange"], config)
         strategy = ts.createInstance(module_name, class_name, config, engine)
 
         engine.run(strategy, start_time, end_time, display_switch)

@@ -4,6 +4,8 @@
 import utils.tools as ts
 from datetime import datetime, timedelta, time
 
+time_range_split = "~"
+
 
 KLINE_INTERVAL_1MINUTE = '1m'
 KLINE_INTERVAL_3MINUTE = '3m'
