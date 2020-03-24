@@ -139,22 +139,22 @@ class BinanceMargin(Exchange):
         return books
 
     def transfer_to_margin(self, asset, amount):
-        return self.__client.transfer(asset=asset, amount=amount, type=1)
+        return self.__client.transfer(asset=asset.upper(), amount=amount, type=1)
 
     def transfer_from_margin(self, asset, amount):
-        return self.__client.transfer(asset=asset, amount=amount, type=2)
+        return self.__client.transfer(asset=asset.upper(), amount=amount, type=2)
 
     def loan(self, asset, amount):
-        return self.__client.loan(asset=asset, amount=amount)
+        return self.__client.loan(asset=asset.upper(), amount=amount)
 
     def repay(self, asset, amount):
-        return self.__client.repay(asset=asset, amount=amount)
+        return self.__client.repay(asset=asset.upper(), amount=amount)
 
     def get_loan(self, asset, startTime):
-        return self.__client.get_loan(asset=asset, startTime=startTime)
+        return self.__client.get_loan(asset=asset.upper(), startTime=startTime)
 
     def get_repay(self, asset, startTime):
-        return self.__client.get_repay(asset=asset, startTime=startTime)
+        return self.__client.get_repay(asset=asset.upper(), startTime=startTime)
 
     def get_account(self):
         """获取账户信息"""
