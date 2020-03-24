@@ -223,8 +223,8 @@ class BinanceMargin(Exchange):
             balance = Decimal(self.get_balances(target_coin)['free'])
             if balance < Decimal(amount):
                 loan_amount = ts.reserve_float_ceil(float(Decimal(amount) - balance), decimal)
-                log.info('loan: coin(%s), amount(%f)' % (target_coin, loan_amount))
-                self.loan(target_coin, loan_amount)
+                log.info('loan: coin(%s), amount(%f)' % (target_coin.upper(), loan_amount))
+                self.loan(target_coin.upper(), loan_amount)
         else:
             return
 
