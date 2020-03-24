@@ -228,7 +228,7 @@ class BinanceMargin(Exchange):
         else:
             return
 
-        self.create_order(direction, action, type, symbol,
+        return self.create_order(direction, action, type, symbol,
                           price, amount, client_order_id)
 
     def create_order(self, direction, action, type, symbol, price, amount, client_order_id=None):
