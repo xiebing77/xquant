@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, time
 import logging
 import pandas as pd
 from decimal import Decimal
+import numpy as np
 
 MATH_FLOOR = 0  # 向下，舍去多余
 MATH_CEIL = 1  # 向上，
@@ -256,3 +257,17 @@ def get_macd_bottoms(arr):
         bottoms.append(bi)
 
     return bottoms
+
+def get_trend(ema1, ema2, std_diff_std=0.01, ema_diff_std=1.02, period=-5):
+    # diff_data = ema1[period:] + ema2[period:] + price[period:]
+    diff_data = ema1[period:] + ema2[period:]
+    std_diff = np.std(diff_data)/sum(diff_data) * len(diff_data)
+    # print(round(std_diff,5), round(abs(ema1[-1]/ema2[-1]), 3))
+    if std_diff < std_diff_std or abs(ema1[-1]/ema2[-1]) < ema_diff_std:
+        ret = 0
+    elif ema1[-1] < ema2[-1]:
+        ret = -1
+    else:
+        ret = 1
+
+    return ret, std_diff

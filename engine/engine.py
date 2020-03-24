@@ -361,7 +361,8 @@ class Engine:
                 # 做空开仓
                 target_balance = self.get_balances(target_coin)
                 self.log_info("target balance:  %s" % target_balance)
-                target_amount = min(xq.get_balance_free(target_balance), base_amount / cur_price)
+                # target_amount = min(xq.get_balance_free(target_balance), base_amount / cur_price)
+                target_amount = base_amount / cur_price
                 self.log_info("target_amount: %g" % target_amount)
                 if target_amount <= 0:  #
                     return
