@@ -46,7 +46,7 @@ if __name__ == "__main__":
         log.info("args: %s" % (args))
         log.info("strategy name: %s;  config: %s" % (class_name, config))
 
-    engine = RealEngine(instance_id, config)
+    engine = RealEngine(instance_id, args.e, config)
     strategy = ts.createInstance(module_name, class_name, config, engine)
 
     engine.value = args.v
