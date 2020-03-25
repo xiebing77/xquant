@@ -26,8 +26,6 @@ if __name__ == "__main__":
     config = json.loads(fo.read())
     fo.close()
     print("config: ", config)
-    print("config[kline]: ", config['kline'])
-    print("config[kline][interval]: ", config['kline']['interval'])
 
     module_name = config["module_name"].replace("/", ".")
     class_name = config["class_name"]
