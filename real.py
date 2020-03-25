@@ -15,7 +15,7 @@ if __name__ == "__main__":
     parser.add_argument('-e', help='exchange')
     parser.add_argument('-sc', help='strategy config')
     parser.add_argument('-sii', help='strategy instance id')
-    parser.add_argument('-v', help='value')
+    parser.add_argument('-v', type=int, help='value')
     parser.add_argument('--debug', help='debug', action="store_true")
     parser.add_argument('--log', help='log', action="store_true")
     args = parser.parse_args()
