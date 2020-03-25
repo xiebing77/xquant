@@ -18,21 +18,20 @@ DB_ORDERS_NAME = "orders"
 class RealEngine(Engine):
     """实盘引擎"""
 
-    def __init__(self, instance_id, config):
+    def __init__(self, instance_id, exchange_name, config):
         super().__init__(instance_id, config, DB_ORDERS_NAME)
 
-        exchange = config["exchange"]
-        if exchange == "binance":
+        if exchange_name == "binance":
             self.__exchange = BinanceExchange(debug=True)
 
-        elif exchange == "binance_margin":
+        elif exchange_name == "binance_margin":
             self.__exchange = BinanceMargin(debug=True)
 
-        elif exchange == "okex":
+        elif exchange_name == "okex":
             self.__exchange = OkexExchange(debug=True)
 
         else:
-            print("Wrong exchange name: %s" % exchange)
+            print("Wrong exchange name: %s" % exchange_name)
             exit(1)
 
         self.md = ExchangeMD(self.__exchange)
