@@ -13,7 +13,7 @@ from importer import add_common_arguments, split_time_range
 
 
 def download_from_exchange(exchange, db, symbol, kline_type, time_range):
-    print('%10s %4s      ' % (symbol, kline_type), end = '' )
+    print('%12s %6s   ' % (symbol, kline_type), end = '' )
     collection = xq.get_kline_collection(symbol, kline_type)
     db.ensure_index(collection, [("open_time",1)], unique=True)
 
@@ -29,7 +29,7 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
             start_time = exchange.start_time
         end_time = datetime.now()
 
-
+    #print(xq.get_open_time(kline_type, end_time))
     if start_time.hour != exchange.start_time.hour:
         print("open time(%s) hour error! %s open time hour: %s" % (start_time, exchange.name, exchange.start_time.hour))
         exit(1)
@@ -42,8 +42,6 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
     size = 1000
     tmp_time = start_time
     while tmp_time < end_time:
-        print(tmp_time, end="    ")
-
         size_interval = size * interval
         if (tmp_time + size_interval) > end_time:
             batch = int((end_time - tmp_time)/interval)
@@ -54,7 +52,7 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
         klines = exchange.get_klines(symbol, kline_type, size=batch, since=1000*int(tmp_time.timestamp()))
         klines_df = pd.DataFrame(klines, columns=exchange.get_kline_column_names())
         klen = len(klines)
-        print("klines len: ", klen)
+        print(" %20s start time:  %s;  klines len: %s" % (' ', tmp_time, klen))
         for i in range(klen-1, -1, -1):
             last_open_time = datetime.fromtimestamp(klines_df["open_time"].values[i]/1000)
             if last_open_time + interval <= end_time:

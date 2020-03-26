@@ -61,18 +61,15 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
         e_p  = 26
         emas = talib.EMA(klines_df["close"], timeperiod=e_p)
         s_emas = talib.EMA(klines_df["close"], timeperiod=e_p/2)
-        emas = emas[-display_count:]
-        s_emas = s_emas[-display_count:]
-        axes[i].plot(close_times, emas, "b--", label="%sEMA" % (e_p))
-        axes[i].plot(close_times, s_emas, "c--", label="%sEMA" % (e_p/2))
+        axes[i].plot(close_times, emas[-display_count:], "b--", label="%sEMA" % (e_p))
+        axes[i].plot(close_times, s_emas[-display_count:], "c--", label="%sEMA" % (e_p/2))
 
         if not args.tp:
             tp = 40
         else:
             tp = int(args.tp)
         t_emas = talib.EMA(klines_df["close"], timeperiod=tp)
-        t_emas = t_emas[-display_count:]
-        axes[i].plot(close_times, t_emas, "m--", label="%sEMA" % (tp))
+        axes[i].plot(close_times, t_emas[-display_count:], "m--", label="%sEMA" % (tp))
 
     # Overlap Studies
     os_key = 'BBANDS'
@@ -156,12 +153,9 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
         difs = [round(a, 2) for a in klines_df["dif"]]
         deas = [round(a, 2) for a in klines_df["dea"]]
         macds = [round(a, 2) for a in klines_df["macd"]]
-        difs = difs[-display_count:]
-        deas = deas[-display_count:]
-        macds = macds[-display_count:]
-        axes[i].plot(close_times, difs, "y", label="dif")
-        axes[i].plot(close_times, deas, "b", label="dea")
-        axes[i].plot(close_times, macds, "r", drawstyle="steps", label="macd")
+        axes[i].plot(close_times, difs[-display_count:], "y", label="dif")
+        axes[i].plot(close_times, deas[-display_count:], "b", label="dea")
+        axes[i].plot(close_times, macds[-display_count:], "r", drawstyle="steps", label="macd")
 
     ic_key = 'RSI'
     if ic_key in disp_ic_keys:
