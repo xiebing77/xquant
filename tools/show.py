@@ -168,9 +168,11 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
         axes[i].plot(close_times, [70]*len(rsis), '-', color='r')
         axes[i].plot(close_times, [30]*len(rsis), '-', color='r')
 
+        """
         rs2 = ic.py_rsis(klines, closeindex, period=14)
         rs2 = [round(a, 2) for a in rs2][-display_count:]
         axes[i].plot(close_times, rs2, "y", label="rsi2")
+        """
 
 
     """

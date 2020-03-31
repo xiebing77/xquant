@@ -16,6 +16,7 @@ import common.bill as bl
 import db.mongodb as md
 from exchange.binanceExchange import BinanceExchange
 from exchange.okexExchange import OkexExchange
+from setup import *
 
 
 class Engine:
@@ -25,7 +26,7 @@ class Engine:
         self.instance_id = instance_id
         self.config = config
 
-        self.td_db = md.MongoDB(mongo_user, mongo_pwd, "xquant", db_url)
+        self.td_db = md.MongoDB(mongo_user, mongo_pwd, db_order_name, db_url)
 
         if db_orders_name:
             self.db_orders_name = db_orders_name
@@ -861,7 +862,7 @@ class Engine:
             axes[i].plot(close_times, [70]*len(rsis), '-', color='r')
             axes[i].plot(close_times, [30]*len(rsis), '-', color='r')
 
-
+            """
             rs2 = ic.py_rsis(klines, closeindex, period=14)
             rs2 = [round(a, 3) for a in rs2][-display_count:]
             axes[i].plot(close_times, rs2, "y", label="rsi2")
@@ -869,6 +870,7 @@ class Engine:
             rs3 = ic.py_rsis2(klines, closeindex, period=14)
             rs3 = [round(a, 3) for a in rs3][-display_count:]
             axes[i].plot(close_times, rs3, "m", label="rsi3")
+            """
 
         ic_key = 'AD'
         if ic_key in disp_ic_keys:
