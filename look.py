@@ -32,6 +32,7 @@ if __name__ == "__main__":
     instance_id = args.sii
 
     engine = Engine(instance_id, config, db_order_name)
+    engine.value = args.v
     orders = engine.td_db.find("orders", {"instance_id": instance_id})
     engine.analyze(symbol, orders)
 
