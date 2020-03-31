@@ -7,7 +7,7 @@ import uuid
 import utils.tools as ts
 import common.xquant as xq
 import common.log as log
-from engine.backtest import BackTest
+from engine.display import Display
 from setup import *
 
 if __name__ == "__main__":
