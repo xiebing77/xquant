@@ -7,7 +7,7 @@ import uuid
 import utils.tools as ts
 import common.xquant as xq
 import common.log as log
-from engine.display import Display
+from engine.engine import Engine
 from setup import *
 
 if __name__ == "__main__":
@@ -27,11 +27,16 @@ if __name__ == "__main__":
     fo.close()
     print("config: ", config)
 
-    module_name = config["module_name"].replace("/", ".")
-    class_name = config["class_name"]
 
-    engine = Display(args.sii, config)
-    strategy = ts.createInstance(module_name, class_name, config, engine)
+    symbol = config["symbol"]
+    instance_id = args.sii
 
-    engine.value = args.v
-    engine.run(strategy, db_order_name)
+    engine = Engine(instance_id, config, db_order_name)
+    orders = engine.td_db.find("orders", {"instance_id": instance_id})
+    engine.analyze(symbol, orders)
+
+   # if display_switch:
+    #interval = strategy.config["kline"]["interval"]
+    #klines = self.get_klines(symbol, interval, (end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
+    #self.display(symbol, orders, klines)
+
