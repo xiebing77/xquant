@@ -258,7 +258,7 @@ def get_macd_bottoms(arr):
 
     return bottoms
 
-def get_trend(ema1, ema2, std_diff_std=0.01, ema_diff_std=0.02, period=-5):
+def get_trend(ema1, ema2, std_diff_std=0.01, ema_diff_std=0.01, period=-5):
     # diff_data = ema1[period:] + ema2[period:] + price[period:]
     diff_data = ema1[period:] + ema2[period:]
     std_diff = np.std(diff_data)/sum(diff_data) * len(diff_data)
