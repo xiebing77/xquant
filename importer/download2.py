@@ -52,7 +52,7 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
         klines = exchange.get_klines(symbol, kline_type, size=batch, since=1000*int(tmp_time.timestamp()))
         klines_df = pd.DataFrame(klines, columns=exchange.get_kline_column_names())
         klen = len(klines)
-        print(" %20s start time:  %s;  count: %s" % (' ', tmp_time, klen))
+        print(" %20s start time:  %s   %s" % (' ', tmp_time, klen))
         for i in range(klen-1, -1, -1):
             last_open_time = datetime.fromtimestamp(klines_df["open_time"].values[i]/1000)
             if last_open_time + interval <= end_time:

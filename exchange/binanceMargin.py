@@ -6,7 +6,6 @@ import common.log as log
 import pandas as pd
 import common.xquant as xq
 import common.bill as bl
-from .exchange import Exchange
 from .binance.margin import Client
 from .binance.client import Client as spotClient
 from .binance.enums import *
@@ -17,7 +16,7 @@ api_key = os.environ.get('BINANCE_API_KEY')
 secret_key = os.environ.get('BINANCE_SECRET_KEY')
 
 
-class BinanceMargin(Exchange):
+class BinanceMargin:
     """binanceMargin"""
     name = 'binance_margin'
     start_time = datetime(2017, 8, 17, 8)

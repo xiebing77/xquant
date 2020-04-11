@@ -6,9 +6,7 @@ import utils.tools as ts
 import common.xquant as xq
 import common.bill as bl
 from .engine import Engine
-from exchange.binanceExchange import BinanceExchange
-from exchange.binanceMargin import BinanceMargin
-from exchange.okexExchange import OkexExchange
+from exchange.exchange import create_exchange
 from md.exmd import ExchangeMD
 
 
@@ -21,16 +19,8 @@ class RealEngine(Engine):
     def __init__(self, instance_id, exchange_name, config):
         super().__init__(instance_id, config, DB_ORDERS_NAME)
 
-        if exchange_name == "binance":
-            self.__exchange = BinanceExchange(debug=True)
-
-        elif exchange_name == "binance_margin":
-            self.__exchange = BinanceMargin(debug=True)
-
-        elif exchange_name == "okex":
-            self.__exchange = OkexExchange(debug=True)
-
-        else:
+        self.__exchange = create_exchange(exchange_name)
+        if not self.__exchange:
             print("Wrong exchange name: %s" % exchange_name)
             exit(1)
 

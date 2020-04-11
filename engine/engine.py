@@ -37,7 +37,7 @@ class Engine:
 
         self.tp_cc = {"base_open": 0}
 
-        self.kline_interval = config["kline"]["interval"]
+        #self.kline_interval = config["kline"]["interval"]
 
 
     def log_info(self, info):
