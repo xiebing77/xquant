@@ -4,7 +4,11 @@ import common.log as log
 from pymongo import MongoClient
 from pymongo.errors import BulkWriteError
 from bson import ObjectId
+from setup import mongo_user, mongo_pwd, db_url
 
+
+def get_mongodb(db_name):
+    return MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
 def get_datetime_by_id(_id):
     """get datetime from _id"""

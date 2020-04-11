@@ -8,7 +8,7 @@ location = lambda x: os.path.join(
 db_order_name = "xquant"
 mongo_user = os.environ.get('MONGO_USER')
 mongo_pwd = os.environ.get('MONGO_PWD')
-db_url = "mongodb://localhost:27017/"
+db_url = "mongodb://localhost:32768/"
 
 email_srv = os.environ.get('EMAIL_SMTP')
 email_user = os.environ.get('EMAIL_FROM')

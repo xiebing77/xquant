@@ -5,9 +5,8 @@ from datetime import datetime, timedelta, time
 import uuid
 import utils.tools as ts
 import common.xquant as xq
-import db.mongodb as md
+from db.mongodb import get_mongodb
 from .md import MarketingData
-from setup import mongo_user, mongo_pwd, db_url
 
 
 class DBMD(MarketingData):
@@ -16,7 +15,7 @@ class DBMD(MarketingData):
     def __init__(self, exchange):
         super().__init__(exchange)
 
-        self.md_db = md.MongoDB(mongo_user, mongo_pwd, exchange, db_url)
+        self.md_db = get_mongodb(exchange)
 
         self.tick_time = None
 

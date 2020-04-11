@@ -10,12 +10,9 @@ from datetime import datetime,timedelta
 import common.log as log
 import utils.tools as ts
 import utils.indicator as ic
-from setup import mongo_user, mongo_pwd, db_url
 import common.xquant as xq
 import common.bill as bl
-import db.mongodb as md
-from exchange.binanceExchange import BinanceExchange
-from exchange.okexExchange import OkexExchange
+from db.mongodb import get_mongodb
 from setup import *
 
 
@@ -26,7 +23,7 @@ class Engine:
         self.instance_id = instance_id
         self.config = config
 
-        self.td_db = md.MongoDB(mongo_user, mongo_pwd, db_order_name, db_url)
+        self.td_db = get_mongodb(db_order_name)
 
         if db_orders_name:
             self.db_orders_name = db_orders_name

@@ -6,7 +6,8 @@ import time
 from datetime import datetime, timedelta
 import db.mongodb as md
 import common.xquant as xq
-from exchange.binanceExchange import BinanceExchange
+from exchange.exchange import create_exchange
+from db.mongodb import get_mongodb
 from setup import *
 import pandas as pd
 from importer import add_common_arguments, split_time_range
@@ -83,15 +84,14 @@ if __name__ == "__main__":
         parser.print_help()
         exit(1)
 
-    if args.m == "binance":
-        print("%s connecting......" % args.m)
-        exchange = BinanceExchange(debug=True)
-        print("%s connect ok" % args.m)
-    else:
+    print("%s connecting..." % (args.m), end='')
+    exchange = create_exchange(args.m)
+    if not exchange:
         print("market data source error!")
         exit(1)
+    print('ok!')
 
-    db = md.MongoDB(mongo_user, mongo_pwd, args.m, db_url)
+    db = get_mongodb(args.m)
 
     symbols = args.ss.split(',')
     kline_types = args.kts.split(',')
