@@ -4,12 +4,9 @@
 ## 运行环境
 python3.6
 mongodb3.6
-## 程序入口
-main.py
-### 使用方式
-#### 实盘
+## 实盘
 python3 real.py -e binance -sc kdj_btc_usdt.jsn -sii testkdj -v 500 --log
-#### 回测
+## 回测
 python3 backtest.py -m binance -sc kdj_btc_usdt.jsn -r 2020-4-1~2020-4-12
 ## 目录说明
 ### utils
