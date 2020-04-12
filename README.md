@@ -8,9 +8,9 @@ mongodb3.6
 main.py
 ### 使用方式
 #### 实盘
-python3.6 main.py  kdj_btc_usdt.jsn real testbtc1 100 
+python3 real.py -e binance -sc kdj_btc_usdt.jsn -sii testkdj -v 500 --log
 #### 回测
-python3.6 main.py  kdj_btc_usdt.jsn backtest 2018-1-1~2019-1-1
+python3 backtest.py -m binance -sc kdj_btc_usdt.jsn -r 2020-4-1~2020-4-12
 ## 目录说明
 ### utils
 工具，不仅限于本项目
