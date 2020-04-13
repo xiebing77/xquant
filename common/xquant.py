@@ -3,6 +3,7 @@
 
 import utils.tools as ts
 from datetime import datetime, timedelta, time
+import json
 
 time_range_split = "~"
 
@@ -255,3 +256,10 @@ def down_area(ss, ls):
         i -= 1
 
     return bi, mi, ei
+
+def get_strategy_config(config_path):
+    fo = open(config_path, "r")
+    config = json.loads(fo.read())
+    fo.close()
+    print("config: ", config)
+    return config
