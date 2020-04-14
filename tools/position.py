@@ -29,7 +29,7 @@ if __name__ == "__main__":
     if len(klines) <= 0:
         exit(1)
 
-    cur_price = klines[-1][re.md.closeindex]
+    cur_price = float(klines[-1][re.md.closeindex])
     pst_info = re.get_position(symbol, cur_price)
     direction = pst_info["direction"]
     if args.action is bl.OPEN_POSITION:
