@@ -24,6 +24,7 @@ if __name__ == "__main__":
     re = RealEngine(args.sii, instance['exchange'], config)
     re.value = instance['value']
 
+    direction = config["direction"]
     symbol = config['symbol']
     klines = re.md.get_klines(symbol, config["kline"]["interval"], 1)
     if len(klines) <= 0:
@@ -31,7 +32,6 @@ if __name__ == "__main__":
 
     cur_price = float(klines[-1][re.md.closeindex])
     pst_info = re.get_position(symbol, cur_price)
-    direction = pst_info["direction"]
     if args.action is bl.OPEN_POSITION:
         pst_rate = 1
     else:
