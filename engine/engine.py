@@ -87,11 +87,12 @@ class Engine:
             info["amount"], info["price"], info["cost_price"], info["value"], info["commission"], self.value, info["floating_profit"]) if info["amount"] else ""
         sub_info2 = "  profit rate: %g," % (info["floating_profit_rate"]) if info["value"] else ""
         sub_info3 = "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S") if "start_time" in info and info["start_time"] else ""
+        sub_info4 = "  history_profit: %g,  history_commission: %g,  history_profit_rate: %g," % (
+            info["history_profit"], info["history_commission"], (info["history_profit"] / self.value))
 
         self.log_info(
-            "symbol( %s ); current price( %g ); position(%s%s%s  history_profit: %g,  history_commission: %g,  history_profit_rate: %g,  total_profit_rate: %g)" % (
-            symbol, cur_price, sub_info1, sub_info2, sub_info3, info["history_profit"], info["history_commission"],
-            (info["history_profit"] / self.value), (total_profit / self.value))
+            "symbol( %s ); current price( %g ); position(%s%s%s%s  total_profit_rate: %g)" % (
+            symbol, cur_price, sub_info1, sub_info2, sub_info3, sub_info4, (total_profit / self.value))
         )
         # print(info)
         return info
