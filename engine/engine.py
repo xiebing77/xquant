@@ -323,6 +323,11 @@ class Engine:
             self.log_warning("仓位率（%g）超出范围（0 ~ 1）" % ds_bill["pst_rate"])
             return
 
+        order_rmk = ds_bill["describe"] + ":  " + ds_bill["rmk"]
+        rmk = "%s, time: %s,  %s" % (order_rmk, ds_bill["can_open_time"], can_open_time_info) if (ds_bill["can_open_time"] or can_open_time_info) else "%s" % (order_rmk)
+        self.send_order(symbol, position_info, cur_price, ds_bill["direction"], ds_bill["action"], ds_bill["pst_rate"], ds_bill["stop_loss_price"], rmk)
+
+    def send_order(self, symbol, position_info, cur_price, direction, action, pst_rate, stop_loss_price, rmk):
         limit_price_rate = self.config["limit_price_rate"]
         limit_mode = self.config["mode"]
         limit_value = self.value
@@ -335,17 +340,17 @@ class Engine:
 
         target_coin, base_coin = xq.get_symbol_coins(symbol)
 
-        if ds_bill["action"] == bl.OPEN_POSITION:
+        if action == bl.OPEN_POSITION:
             # 开仓
-            if "pst_rate" in position_info and position_info["pst_rate"] >= ds_bill["pst_rate"]:
+            if "pst_rate" in position_info and position_info["pst_rate"] >= pst_rate:
                 return
 
             pst_cost = abs(position_info["value"]) + position_info["commission"]
-            base_amount = limit_value * ds_bill["pst_rate"] - pst_cost
+            base_amount = limit_value * pst_rate - pst_cost
             if base_amount <= 0:
                 return
 
-            if ds_bill["direction"] == bl.DIRECTION_LONG:
+            if direction == bl.DIRECTION_LONG:
                 # 做多开仓
                 base_balance = self.get_balances(base_coin)
                 self.log_info("base   balance:  %s" % base_balance)
@@ -367,12 +372,12 @@ class Engine:
                 rate = 1 - limit_price_rate["open"]
         else:
             # 平仓
-            if (not "pst_rate" in position_info) or position_info["pst_rate"] <= ds_bill["pst_rate"]:
+            if (not "pst_rate" in position_info) or position_info["pst_rate"] <= pst_rate:
                 return
 
-            target_amount = abs(position_info["amount"]) * (position_info["pst_rate"] - ds_bill["pst_rate"]) / position_info["pst_rate"]
+            target_amount = abs(position_info["amount"]) * (position_info["pst_rate"] - pst_rate) / position_info["pst_rate"]
 
-            if ds_bill["direction"] == bl.DIRECTION_LONG:
+            if direction == bl.DIRECTION_LONG:
                 # 做多平仓
                 rate = 1 - limit_price_rate["close"]
             else:
@@ -380,21 +385,20 @@ class Engine:
                 rate = 1 + limit_price_rate["close"]
 
         target_amount = ts.reserve_float(target_amount, self.config["digits"][target_coin])
-        self.log_info("%s %s target amount: %g" % (ds_bill["direction"], ds_bill["action"], target_amount))
+        self.log_info("%s %s target amount: %g" % (direction, action, target_amount))
         if target_amount <= 0:
             return
         limit_price = ts.reserve_float(cur_price * rate, self.config["digits"][base_coin])
-        order_rmk = ds_bill["describe"] + ":  " + ds_bill["rmk"]
         order_id = self.send_order_limit(
-            ds_bill["direction"],
-            ds_bill["action"],
+            direction,
+            action,
             symbol,
-            ds_bill["pst_rate"],
+            pst_rate,
             cur_price,
             limit_price,
             target_amount,
-            ds_bill["stop_loss_price"],
-            "%s, time: %s,  %s" % (order_rmk, ds_bill["can_open_time"], can_open_time_info) if (ds_bill["can_open_time"] or can_open_time_info) else "%s" % (order_rmk),
+            stop_loss_price,
+            rmk,
         )
         self.log_info(
             "current price: %g;  rate: %g;  order_id: %s" % (cur_price, rate, order_id)
