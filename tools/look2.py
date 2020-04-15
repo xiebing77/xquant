@@ -2,12 +2,8 @@
 import sys
 sys.path.append('../')
 import argparse
-import json
-import uuid
-import utils.tools as ts
 import common.xquant as xq
-import common.log as log
-from engine.engine import Engine
+from common.instance import get_strategy_instance
 from look import look
 
 
