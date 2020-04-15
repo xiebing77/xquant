@@ -32,10 +32,12 @@ if __name__ == "__main__":
 
     cur_price = float(klines[-1][re.md.closeindex])
     pst_info = re.get_position(symbol, cur_price)
-    if args.action is bl.OPEN_POSITION:
+    if args.action == bl.OPEN_POSITION:
         pst_rate = 1
     else:
         pst_rate = 0
 
+    print(pst_info)
+    print('args.action: %s, pst_rate: %g' % (args.action, pst_rate))
     re.send_order(symbol, pst_info, cur_price, direction, args.action, pst_rate, None, args.rmk)
 
