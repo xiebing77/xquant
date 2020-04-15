@@ -14,12 +14,10 @@ from md.dbmd import DBMD
 class BackTest(Engine):
     """回测引擎"""
 
-    def __init__(self, instance_id, exchange_name, config, *symbols):
-        super().__init__(instance_id, config)
+    def __init__(self, instance_id, exchange_name, config, value=10000, *symbols):
+        super().__init__(instance_id, config, value)
 
         self.md = DBMD(exchange_name)
-
-        self.value = 10000
         self.orders = []
 
     def now(self):

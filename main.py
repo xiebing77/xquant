@@ -128,10 +128,9 @@ if __name__ == "__main__":
         engine.run(strategy, db_name)
 
     elif select == "real":
-        engine = RealEngine(instance_id, config["exchange"], config)
+        engine = RealEngine(instance_id, config["exchange"], config, value)
         strategy = ts.createInstance(module_name, class_name, config, engine)
 
-        engine.value = value
         engine.run(strategy, debug)
 
     elif select == "backtest":

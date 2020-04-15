@@ -27,10 +27,9 @@ def real_run(config, instance_id, exchange_name, value, args):
         log.info("%s" % (info))
         log.info("strategy name: %s;  config: %s" % (class_name, config))
 
-    engine = RealEngine(instance_id, exchange_name, config)
+    engine = RealEngine(instance_id, exchange_name, config, value)
     strategy = ts.createInstance(module_name, class_name, config, engine)
 
-    engine.value = value
     engine.run(strategy, args.debug)
 
 

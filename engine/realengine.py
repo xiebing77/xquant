@@ -16,8 +16,8 @@ DB_ORDERS_NAME = "orders"
 class RealEngine(Engine):
     """实盘引擎"""
 
-    def __init__(self, instance_id, exchange_name, config):
-        super().__init__(instance_id, config, DB_ORDERS_NAME)
+    def __init__(self, instance_id, exchange_name, config, value):
+        super().__init__(instance_id, config, value, DB_ORDERS_NAME)
 
         self.__exchange = create_exchange(exchange_name)
         if not self.__exchange:
@@ -25,7 +25,6 @@ class RealEngine(Engine):
             exit(1)
 
         self.md = ExchangeMD(self.__exchange)
-        self.value = 0
 
     def now(self):
         return datetime.datetime.now()

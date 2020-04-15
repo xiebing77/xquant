@@ -21,8 +21,7 @@ if __name__ == "__main__":
 
     instance = get_strategy_instance(args.sii)
     config = xq.get_strategy_config(instance['config_path'])
-    re = RealEngine(args.sii, instance['exchange'], config)
-    re.value = instance['value']
+    re = RealEngine(args.sii, instance['exchange'], config, instance['value'])
 
     direction = config["direction"]
     symbol = config['symbol']

@@ -19,9 +19,10 @@ from setup import *
 class Engine:
     """引擎"""
 
-    def __init__(self, instance_id, config, db_orders_name=None):
+    def __init__(self, instance_id, config, value, db_orders_name=None):
         self.instance_id = instance_id
         self.config = config
+        self.value = value
 
         self.td_db = get_mongodb(db_order_name)
 

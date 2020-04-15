@@ -31,8 +31,7 @@ if __name__ == "__main__":
     symbol = config["symbol"]
     instance_id = args.sii
 
-    engine = Engine(instance_id, config, db_order_name)
-    engine.value = args.v
+    engine = Engine(instance_id, config, args.v, db_order_name)
     orders = engine.td_db.find("orders", {"instance_id": instance_id})
     engine.analyze(symbol, orders)
 
