@@ -10,6 +10,13 @@ import common.log as log
 from engine.engine import Engine
 from setup import *
 
+
+def look(instance_id, config, value):
+    engine = Engine(instance_id, config, value, db_order_name)
+    orders = engine.td_db.find("orders", {"instance_id": instance_id})
+    engine.analyze(config["symbol"], orders)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='backtest')
     parser.add_argument('-sc', help='strategy config')
@@ -22,21 +29,7 @@ if __name__ == "__main__":
         parser.print_help()
         exit(1)
 
-    fo = open(args.sc, "r")
-    config = json.loads(fo.read())
-    fo.close()
-    print("config: ", config)
+    config = xq.get_strategy_config(args.sc)
 
-
-    symbol = config["symbol"]
-    instance_id = args.sii
-
-    engine = Engine(instance_id, config, args.v, db_order_name)
-    orders = engine.td_db.find("orders", {"instance_id": instance_id})
-    engine.analyze(symbol, orders)
-
-   # if display_switch:
-    #interval = strategy.config["kline"]["interval"]
-    #klines = self.get_klines(symbol, interval, (end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
-    #self.display(symbol, orders, klines)
+    look(args.sii, config, args.v)
 
