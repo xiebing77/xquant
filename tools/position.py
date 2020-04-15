@@ -38,7 +38,12 @@ if __name__ == "__main__":
 
     print('before position info: %s' % (pst_info))
     print('args.action: %s, pst_rate: %g' % (args.action, pst_rate))
-    re.send_order(symbol, pst_info, cur_price, direction, args.action, pst_rate, None, args.rmk)
+    if args.rmk:
+        rmk = args.rmk
+    else:
+        rmk = args.action
+    rmk += ":  "
+    re.send_order(symbol, pst_info, cur_price, direction, args.action, pst_rate, None, rmk)
 
     after_pst_info = re.get_position(symbol, cur_price)
     print('after  position info: %s' % (after_pst_info))
