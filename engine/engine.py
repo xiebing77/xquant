@@ -752,7 +752,7 @@ class Engine:
         i = -1
         i += 1
         mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
-        axes[i].set_ylabel('price')
+        axes[i].set_ylabel(symbol + '  ' + self.config['kline']['interval'])
         axes[i].grid(True)
         axes[i].autoscale_view()
         axes[i].xaxis_date()

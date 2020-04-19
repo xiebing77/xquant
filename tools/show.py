@@ -6,6 +6,7 @@ import utils.tools as ts
 import utils.indicator as ic
 import common.xquant as xq
 from md.dbmd import DBMD
+from exchange.exchange import exchange_names, BINANCE_SPOT_EXCHANGE_NAME
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as dts
@@ -51,7 +52,7 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
     # kine
     i += 1
     mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
-    axes[i].set_ylabel('price')
+    axes[i].set_ylabel(args.s + '    ' + args.i)
     axes[i].grid(True)
     axes[i].autoscale_view()
     axes[i].xaxis_date()
@@ -469,16 +470,20 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
         slowk, slowd = talib.STOCH(klines_df["high"], klines_df["low"], klines_df["close"],
             fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
         i += 1
+        slowj = 3*slowk - 2*slowd
         ts.ax(axes[i], ic_key, close_times, slowk[-display_count:], "b")
         ts.ax(axes[i], ic_key, close_times, slowd[-display_count:], "y")
+        ts.ax(axes[i], ic_key, close_times, slowj[-display_count:], "m")
 
     ic_key = 'STOCHF'
     if ic_key in disp_ic_keys:
         fastk, fastd = talib.STOCHF(klines_df["high"], klines_df["low"], klines_df["close"],
             fastk_period=5, fastd_period=3, fastd_matype=0)
         i += 1
+        fastj = 3*fastk - 2*fastd
         ts.ax(axes[i], ic_key, close_times, fastk[-display_count:], "y:")
         ts.ax(axes[i], ic_key, close_times, fastd[-display_count:], "b:")
+        ts.ax(axes[i], ic_key, close_times, fastj[-display_count:], "m")
 
     ic_key = 'STOCHRSI'
     if ic_key in disp_ic_keys:
@@ -511,26 +516,20 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='show')
-    parser.add_argument('-e', help='exchange')
+    parser.add_argument('-e', choices=exchange_names, default=BINANCE_SPOT_EXCHANGE_NAME, help='exchange')
     parser.add_argument('-s', help='symbol (btc_usdt)')
     parser.add_argument('-i', help='interval')
     parser.add_argument('-r', help='time range')
     parser.add_argument('-tp', help='trend period')
     parser.add_argument('-os', help='Overlap Studies,egg: EMA,BBANDS')
     parser.add_argument('-di', help='display indicators,egg: macd,kdj,MACD,KDJ,RSI')
+
     args = parser.parse_args()
     # print(args)
 
-    if not (args.r and args.i and args.s and args.di):
+    if not (args.r and args.i and args.s and args.di and args.e):
         parser.print_help()
         exit(1)
-
-    if not args.e:
-        exchange = "binance"
-        open_hour = 8
-    else:
-        exchange = args.e
-        open_hour = 8
 
     interval = args.i
     start_time, end_time = ts.parse_date_range(args.r)
@@ -538,7 +537,7 @@ if __name__ == "__main__":
     print("display_count: %s" % display_count)
 
 
-    md = DBMD(exchange)
+    md = DBMD(args.e)
     md.tick_time = datetime.now()
     pre_count = 150
     klines = md.get_klines(args.s, interval, pre_count+display_count, start_time-xq.get_timedelta(interval, pre_count))
