@@ -84,7 +84,7 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
 
     # Overlap Studies
     os_key = 'BBANDS'
-    if os_key in os_keys:
+    if args.BBANDS:
         upperband, middleband, lowerband = talib.BBANDS(klines_df["close"], timeperiod=5, nbdevup=2, nbdevdn=2, matype=0)
         ts.ax(axes[i], os_key+' upperband', close_times, upperband[-display_count:], "y")
         ts.ax(axes[i], os_key+' middleband', close_times, middleband[-display_count:], "b")
@@ -531,10 +531,11 @@ if __name__ == "__main__":
     parser.add_argument('-i', help='interval')
     parser.add_argument('-r', help='time range')
     parser.add_argument('-tp', help='trend period')
-    parser.add_argument('-os', help='Overlap Studies,egg: EMA,BBANDS')
+    parser.add_argument('-os', help='Overlap Studies,egg: EMA')
     parser.add_argument('-di', help='display indicators,egg: macd,kdj,MACD,KDJ,RSI')
 
-    parser.add_argument('--ABANDS', default=0, type=float, help='atr bands')
+    parser.add_argument('--ABANDS', default=0, type=float, help='ATR Bands')
+    parser.add_argument('--BBANDS', action="store_true", help='Bollinger Bands')
 
     args = parser.parse_args()
     # print(args)
