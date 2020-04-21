@@ -39,7 +39,7 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
     close_times = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_df["close_time"][-display_count:]]
 
     fig, axes = plt.subplots(len(disp_ic_keys)+1, 1, sharex=True)
-    fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
+    fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
 
     quotes = []
     for k in klines[-display_count:]:
@@ -57,6 +57,15 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
     axes[i].autoscale_view()
     axes[i].xaxis_date()
 
+
+    os_key = 'ABANDS'
+    if args.ABANDS: # ATR BANDS
+        real = talib.ATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+        emas = talib.EMA(klines_df["close"], timeperiod=26)
+        ts.ax(axes[i], os_key+' upperband', close_times, (emas+args.ABANDS*real)[-display_count:], "y")
+        ts.ax(axes[i], os_key+' lowerband', close_times, (emas-args.ABANDS*real)[-display_count:], "y")
+
+
     os_key = 'EMA'
     if os_key in os_keys:
         e_p  = 26
@@ -71,6 +80,7 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
             tp = int(args.tp)
         t_emas = talib.EMA(klines_df["close"], timeperiod=tp)
         axes[i].plot(close_times, t_emas[-display_count:], "m--", label="%sEMA" % (tp))
+
 
     # Overlap Studies
     os_key = 'BBANDS'
@@ -523,6 +533,8 @@ if __name__ == "__main__":
     parser.add_argument('-tp', help='trend period')
     parser.add_argument('-os', help='Overlap Studies,egg: EMA,BBANDS')
     parser.add_argument('-di', help='display indicators,egg: macd,kdj,MACD,KDJ,RSI')
+
+    parser.add_argument('--ABANDS', default=0, type=float, help='atr bands')
 
     args = parser.parse_args()
     # print(args)
