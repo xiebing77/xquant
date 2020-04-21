@@ -70,9 +70,9 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
     if args.EMA:
         cs = ['c', 'b', 'm', 'k']
         for idx, e_p in enumerate(args.EMA):
-            e_p = int(e_p)
             if idx >= len(cs):
                 break
+            e_p = int(e_p)
             emas = talib.EMA(klines_df["close"], timeperiod=e_p)
             axes[i].plot(close_times, emas[-display_count:], cs[idx]+'--', label="%sEMA" % (e_p))
 
@@ -96,27 +96,43 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
     os_key = 'KAMA'
-    if os_key in os_keys:
-        real = talib.KAMA(klines_df["close"], timeperiod=30)
+    if args.KAMA:
+        real = talib.KAMA(klines_df["close"], timeperiod=args.KAMA)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
+    os_key = 'MA'
+    if args.MA:
+        cs = ['c', 'b', 'm', 'k']
+        for idx, e_p in enumerate(args.MA):
+            if idx >= len(cs):
+                break
+            e_p = int(e_p)
+            emas = talib.MA(klines_df["close"], timeperiod=e_p)
+            axes[i].plot(close_times, emas[-display_count:], cs[idx]+'--', label="%sMA" % (e_p))
+
+    os_key = 'MAMA'
+    if args.MAMA:
+        mama, fama = talib.MAMA(klines_df["close"], fastlimit=0, slowlimit=0)
+        ts.ax(axes[i], os_key, close_times, mama[-display_count:], "b")
+        ts.ax(axes[i], os_key, close_times, fama[-display_count:], "c")
+
     os_key = 'MIDPOINT'
-    if os_key in os_keys:
-        real = talib.MIDPOINT(klines_df["close"], timeperiod=14)
+    if args.MIDPOINT:
+        real = talib.MIDPOINT(klines_df["close"], timeperiod=args.MIDPOINT)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
     os_key = 'MIDPRICE'
-    if os_key in os_keys:
-        real = talib.MIDPRICE(klines_df["high"], klines_df["low"], timeperiod=14)
+    if args.MIDPRICE:
+        real = talib.MIDPRICE(klines_df["high"], klines_df["low"], timeperiod=args.MIDPRICE)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
     os_key = 'SAR'
-    if os_key in os_keys:
+    if args.SAR:
         real = talib.SAR(klines_df["high"], klines_df["low"], acceleration=0, maximum=0)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
     os_key = 'SAREXT'
-    if os_key in os_keys:
+    if args.SAREXT:
         real = talib.SAREXT(klines_df["high"], klines_df["low"],
             startvalue=0, offsetonreverse=0,
             accelerationinitlong=0, accelerationlong=0, accelerationmaxlong=0,
@@ -124,28 +140,28 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
     os_key = 'SMA'
-    if os_key in os_keys:
-        real = talib.SMA(klines_df["close"], timeperiod=30)
+    if args.SMA:
+        real = talib.SMA(klines_df["close"], timeperiod=args.SMA)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
     os_key = 'T3'
-    if os_key in os_keys:
-        real = talib.T3(klines_df["close"], timeperiod=5, vfactor=0)
+    if args.T3:
+        real = talib.T3(klines_df["close"], timeperiod=args.T3, vfactor=0)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
     os_key = 'TEMA'
-    if os_key in os_keys:
-        real = talib.TEMA(klines_df["close"], timeperiod=30)
+    if args.TEMA:
+        real = talib.TEMA(klines_df["close"], timeperiod=args.TEMA)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
     os_key = 'TRIMA'
-    if os_key in os_keys:
-        real = talib.TRIMA(klines_df["close"], timeperiod=30)
+    if args.TRIMA:
+        real = talib.TRIMA(klines_df["close"], timeperiod=args.TRIMA)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
     os_key = 'WMA'
-    if os_key in os_keys:
-        real = talib.WMA(klines_df["close"], timeperiod=30)
+    if args.WMA:
+        real = talib.WMA(klines_df["close"], timeperiod=args.WMA)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
 
@@ -535,6 +551,18 @@ if __name__ == "__main__":
     parser.add_argument('--DEMA', type=int, nargs='?', const=30, help='Double Exponential Moving Average')
     parser.add_argument('--EMA', nargs='*', help='Exponential Moving Average')
     parser.add_argument('--HT_TRENDLINE', action="store_true", help='Hilbert Transform - Instantaneous Trendline')
+    parser.add_argument('--KAMA', type=int, nargs='?', const=30, help='Kaufman Adaptive Moving Average')
+    parser.add_argument('--MA', nargs='*', help='Moving average')
+    parser.add_argument('--MAMA', action="store_true", help='MESA Adaptive Moving Average')
+    parser.add_argument('--MIDPOINT', type=int, nargs='?', const=14, help='MidPoint over period')
+    parser.add_argument('--MIDPRICE', type=int, nargs='?', const=14, help='Midpoint Price over period')
+    parser.add_argument('--SAR', action="store_true", help='Parabolic SAR')
+    parser.add_argument('--SAREXT', action="store_true", help='Parabolic SAR - Extended')
+    parser.add_argument('--SMA', type=int, nargs='?', const=30, help='Simple Moving Average')
+    parser.add_argument('--T3', type=int, nargs='?', const=5, help='Triple Exponential Moving Average')
+    parser.add_argument('--TEMA', type=int, nargs='?', const=30, help='Triple Exponential Moving Average')
+    parser.add_argument('--TRIMA', type=int, nargs='?', const=30, help='Triangular Moving Average')
+    parser.add_argument('--WMA', type=int, nargs='?', const=30, help='Weighted Moving Average')
     args = parser.parse_args()
     # print(args)
 
