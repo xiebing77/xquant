@@ -91,7 +91,7 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
     os_key = 'HT_TRENDLINE'
-    if os_key in os_keys:
+    if args.HT_TRENDLINE:
         real = talib.HT_TRENDLINE(klines_df["close"])
         ts.ax(axes[i], os_key, close_times, real[-display_count:], "y")
 
@@ -532,9 +532,9 @@ if __name__ == "__main__":
 
     # Overlap Studies
     parser.add_argument('--BBANDS', action="store_true", help='Bollinger Bands')
-    parser.add_argument('--EMA', nargs='*', help='Exponential Moving Average')
     parser.add_argument('--DEMA', type=int, nargs='?', const=30, help='Double Exponential Moving Average')
-
+    parser.add_argument('--EMA', nargs='*', help='Exponential Moving Average')
+    parser.add_argument('--HT_TRENDLINE', action="store_true", help='Hilbert Transform - Instantaneous Trendline')
     args = parser.parse_args()
     # print(args)
 
