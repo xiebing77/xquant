@@ -67,19 +67,14 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
 
 
     os_key = 'EMA'
-    if os_key in os_keys:
-        e_p  = 26
-        emas = talib.EMA(klines_df["close"], timeperiod=e_p)
-        s_emas = talib.EMA(klines_df["close"], timeperiod=e_p/2)
-        axes[i].plot(close_times, emas[-display_count:], "b--", label="%sEMA" % (e_p))
-        axes[i].plot(close_times, s_emas[-display_count:], "c--", label="%sEMA" % (e_p/2))
-
-        if not args.tp:
-            tp = 40
-        else:
-            tp = int(args.tp)
-        t_emas = talib.EMA(klines_df["close"], timeperiod=tp)
-        axes[i].plot(close_times, t_emas[-display_count:], "m--", label="%sEMA" % (tp))
+    if args.EMA:
+        cs = ['b', 'c', 'm', 'k']
+        for idx, e_p in enumerate(args.EMA):
+            e_p = int(e_p)
+            if idx >= len(cs):
+                break
+            emas = talib.EMA(klines_df["close"], timeperiod=e_p)
+            axes[i].plot(close_times, emas[-display_count:], cs[idx]+'--', label="%sEMA" % (e_p))
 
 
     # Overlap Studies
@@ -530,12 +525,14 @@ if __name__ == "__main__":
     parser.add_argument('-s', help='symbol (btc_usdt)')
     parser.add_argument('-i', help='interval')
     parser.add_argument('-r', help='time range')
-    parser.add_argument('-tp', help='trend period')
     parser.add_argument('-os', help='Overlap Studies,egg: EMA')
     parser.add_argument('-di', help='display indicators,egg: macd,kdj,MACD,KDJ,RSI')
 
     parser.add_argument('--ABANDS', default=0, type=float, help='ATR Bands')
+
+    # Overlap Studies
     parser.add_argument('--BBANDS', action="store_true", help='Bollinger Bands')
+    parser.add_argument('--EMA', nargs='*', help='Exponential Moving Average')
 
     args = parser.parse_args()
     # print(args)
