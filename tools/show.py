@@ -68,7 +68,7 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
 
     os_key = 'EMA'
     if args.EMA:
-        cs = ['b', 'c', 'm', 'k']
+        cs = ['c', 'b', 'm', 'k']
         for idx, e_p in enumerate(args.EMA):
             e_p = int(e_p)
             if idx >= len(cs):

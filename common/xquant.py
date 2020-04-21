@@ -4,6 +4,8 @@
 import utils.tools as ts
 from datetime import datetime, timedelta, time
 import json
+import pprint
+
 
 time_range_split = "~"
 
@@ -261,5 +263,5 @@ def get_strategy_config(config_path):
     fo = open(config_path, "r")
     config = json.loads(fo.read())
     fo.close()
-    print("config: ", config)
+    pprint.pprint(config)
     return config

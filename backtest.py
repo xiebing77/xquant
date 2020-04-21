@@ -2,12 +2,12 @@
 import sys
 sys.path.append('../')
 import argparse
-import json
 import uuid
 import utils.tools as ts
 import common.xquant as xq
 import common.log as log
 from engine.backtest import BackTest
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='backtest')
@@ -22,10 +22,7 @@ if __name__ == "__main__":
         parser.print_help()
         exit(1)
 
-    fo = open(args.sc, "r")
-    config = json.loads(fo.read())
-    fo.close()
-    print("config: ", config)
+    config = xq.get_strategy_config(args.sc)
 
     module_name = config["module_name"].replace("/", ".")
     class_name = config["class_name"]
