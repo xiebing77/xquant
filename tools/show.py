@@ -14,6 +14,7 @@ from matplotlib import gridspec
 import mpl_finance as mpf
 import pandas as pd
 import talib
+import utils.tal as tal
 
 from datetime import datetime,timedelta
 
@@ -41,14 +42,14 @@ def handle_overlap_studies(args, kax, klines_df, close_times):
     os_key = 'BBANDS'
     if args.BBANDS:
         upperband, middleband, lowerband = talib.BBANDS(klines_df["close"], timeperiod=5, nbdevup=2, nbdevdn=2, matype=0)
-        ts.ax(kax, os_key+' upperband', close_times, upperband[-display_count:], "y")
-        ts.ax(kax, os_key+' middleband', close_times, middleband[-display_count:], "b")
-        ts.ax(kax, os_key+' lowerband', close_times, lowerband[-display_count:], "y")
+        kax.plot(close_times, upperband[-display_count:], "y", label=os_key+' upperband')
+        kax.plot(close_times, middleband[-display_count:], "b", label=os_key+' middleband')
+        kax.plot(close_times, lowerband[-display_count:], "y", label=os_key+' lowerband')
 
     os_key = 'DEMA'
     if args.DEMA:
         real = talib.DEMA(klines_df["close"], timeperiod=args.DEMA)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'EMA'
     if args.EMA:
@@ -63,12 +64,12 @@ def handle_overlap_studies(args, kax, klines_df, close_times):
     os_key = 'HT_TRENDLINE'
     if args.HT_TRENDLINE:
         real = talib.HT_TRENDLINE(klines_df["close"])
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'KAMA'
     if args.KAMA:
         real = talib.KAMA(klines_df["close"], timeperiod=args.KAMA)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'MA'
     if args.MA:
@@ -83,23 +84,23 @@ def handle_overlap_studies(args, kax, klines_df, close_times):
     os_key = 'MAMA'
     if args.MAMA:
         mama, fama = talib.MAMA(klines_df["close"], fastlimit=0, slowlimit=0)
-        ts.ax(kax, os_key, close_times, mama[-display_count:], "b")
-        ts.ax(kax, os_key, close_times, fama[-display_count:], "c")
+        kax.plot(close_times, mama[-display_count:], "b", label=os_key)
+        kax.plot(close_times, fama[-display_count:], "c", label=os_key)
 
     os_key = 'MIDPOINT'
     if args.MIDPOINT:
         real = talib.MIDPOINT(klines_df["close"], timeperiod=args.MIDPOINT)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'MIDPRICE'
     if args.MIDPRICE:
         real = talib.MIDPRICE(klines_df["high"], klines_df["low"], timeperiod=args.MIDPRICE)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'SAR'
     if args.SAR:
         real = talib.SAR(klines_df["high"], klines_df["low"], acceleration=0, maximum=0)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'SAREXT'
     if args.SAREXT:
@@ -107,35 +108,35 @@ def handle_overlap_studies(args, kax, klines_df, close_times):
             startvalue=0, offsetonreverse=0,
             accelerationinitlong=0, accelerationlong=0, accelerationmaxlong=0,
             accelerationinitshort=0, accelerationshort=0, accelerationmaxshort=0)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'SMA'
     if args.SMA:
         real = talib.SMA(klines_df["close"], timeperiod=args.SMA)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'T3'
     if args.T3:
         real = talib.T3(klines_df["close"], timeperiod=args.T3, vfactor=0)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'TEMA'
     if args.TEMA:
         real = talib.TEMA(klines_df["close"], timeperiod=args.TEMA)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'TRIMA'
     if args.TRIMA:
         real = talib.TRIMA(klines_df["close"], timeperiod=args.TRIMA)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'WMA'
     if args.WMA:
         real = talib.WMA(klines_df["close"], timeperiod=args.WMA)
-        ts.ax(kax, os_key, close_times, real[-display_count:], "y")
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
 
-def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys):
+def show(args, klines, kline_column_names, display_count, disp_ic_keys):
     for index, value in enumerate(kline_column_names):
         if value == "high":
             highindex = index
@@ -168,46 +169,77 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
 
     # kine
     i += 1
+    ax = axes[i]
     mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
-    axes[i].set_ylabel(args.s + '    ' + args.i)
-    axes[i].grid(True)
-    axes[i].autoscale_view()
-    axes[i].xaxis_date()
+    ax.set_ylabel(args.s + '    ' + args.i)
+    ax.grid(True)
+    ax.autoscale_view()
+    ax.xaxis_date()
 
-    handle_overlap_studies(args, axes[i], klines_df, close_times)
+    handle_overlap_studies(args, ax, klines_df, close_times)
 
-    os_key = 'ABANDS'
     if args.ABANDS: # ATR BANDS
+        name = 'ABANDS'
         real = talib.ATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
         emas = talib.EMA(klines_df["close"], timeperiod=26)
-        ts.ax(axes[i], os_key+' upperband', close_times, (emas+args.ABANDS*real)[-display_count:], "y")
-        ts.ax(axes[i], os_key+' lowerband', close_times, (emas-args.ABANDS*real)[-display_count:], "y")
+        ax.plot(close_times, emas[-display_count:], "b--", label=name)
 
+        #cs = ['y', 'c', 'm', 'k']
+        for idx, n in enumerate(args.ABANDS):
+            """
+            if idx >= len(cs):
+                break
+            c = cs[idx]
+            """
+            c = 'y'
+            cl = c + '--'
+            n = int(n)
+            ax.plot(close_times, (emas+n*real)[-display_count:], cl, label=name+' upperband')
+            ax.plot(close_times, (emas-n*real)[-display_count:], cl, label=name+' lowerband')
+
+    if args.BANDS: # BANDS
+        name = 'BANDS'
+        emas = talib.EMA(klines_df["close"], timeperiod=26)
+        ax.plot(close_times, emas[-display_count:], "b--", label=name)
+        r= args.BANDS
+        ax.plot(close_times, (1+r)*emas[-display_count:], 'y--', label=name+' upperband')
+        ax.plot(close_times, (1-r)*emas[-display_count:], 'y--', label=name+' lowerband')
+
+    """
+    if args.EBANDS: # BANDS
+        name = 'EBANDS'
+        upperband, middleband, lowerband = tal.EBANDS(klines_df, timeperiod=26)
+        ax.plot(close_times, middleband[-display_count:], "b--", label=name)
+        ax.plot(close_times, upperband[-display_count:], 'y--', label=name+' upperband')
+        ax.plot(close_times, lowerband[-display_count:], 'y--', label=name+' lowerband')
+    """
 
     ic_key = 'macd'
     if ic_key in disp_ic_keys:
         i += 1
-        axes[i].set_ylabel('macd')
-        axes[i].grid(True)
+        ax = axes[i]
+        ax.set_ylabel('macd')
+        ax.grid(True)
 
         klines_df = ic.pd_macd(klines_df)
         difs = [round(a, 2) for a in klines_df["dif"]]
         deas = [round(a, 2) for a in klines_df["dea"]]
         macds = [round(a, 2) for a in klines_df["macd"]]
-        axes[i].plot(close_times, difs[-display_count:], "y", label="dif")
-        axes[i].plot(close_times, deas[-display_count:], "b", label="dea")
-        axes[i].plot(close_times, macds[-display_count:], "r", drawstyle="steps", label="macd")
+        ax.plot(close_times, difs[-display_count:], "y", label="dif")
+        ax.plot(close_times, deas[-display_count:], "b", label="dea")
+        ax.plot(close_times, macds[-display_count:], "r", drawstyle="steps", label="macd")
 
     ic_key = 'RSI'
     if ic_key in disp_ic_keys:
         i += 1
-        axes[i].set_ylabel(ic_key)
-        axes[i].grid(True)
+        ax = axes[i]
+        ax.set_ylabel(ic_key)
+        ax.grid(True)
         rsis = talib.RSI(klines_df["close"], timeperiod=14)
         rsis = [round(a, 2) for a in rsis][-display_count:]
-        axes[i].plot(close_times, rsis, "r", label=ic_key)
-        axes[i].plot(close_times, [70]*len(rsis), '-', color='r')
-        axes[i].plot(close_times, [30]*len(rsis), '-', color='r')
+        ax.plot(close_times, rsis, "r", label=ic_key)
+        ax.plot(close_times, [70]*len(rsis), '-', color='r')
+        ax.plot(close_times, [30]*len(rsis), '-', color='r')
 
         """
         rs2 = ic.py_rsis(klines, closeindex, period=14)
@@ -227,8 +259,9 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
     ic_key = 'KDJ'
     if ic_key in disp_ic_keys:
         i += 1
-        axes[i].set_ylabel(ic_key)
-        axes[i].grid(True)
+        ax = axes[i]
+        ax.set_ylabel(ic_key)
+        ax.grid(True)
         """
         ks, ds = talib.STOCH(klines_df["high"], klines_df["low"], klines_df["close"],
             fastk_period=9, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
@@ -238,9 +271,9 @@ def show(args, klines, kline_column_names, display_count, os_keys, disp_ic_keys)
         ks = [round(a, 2) for a in ks][-display_count:]
         ds = [round(a, 2) for a in ds][-display_count:]
         js = [round(a, 2) for a in js][-display_count:]
-        axes[i].plot(close_times, ks, "b", label="K")
-        axes[i].plot(close_times, ds, "y", label="D")
-        axes[i].plot(close_times, js, "m", label="J")
+        ax.plot(close_times, ks, "b", label="K")
+        ax.plot(close_times, ds, "y", label="D")
+        ax.plot(close_times, js, "m", label="J")
 
     # Volume Indicator
     ic_key = 'AD'
@@ -560,10 +593,10 @@ if __name__ == "__main__":
     parser.add_argument('-s', help='symbol (btc_usdt)')
     parser.add_argument('-i', help='interval')
     parser.add_argument('-r', help='time range')
-    parser.add_argument('-os', help='Overlap Studies,egg: EMA')
     parser.add_argument('-di', help='display indicators,egg: macd,kdj,MACD,KDJ,RSI')
 
-    parser.add_argument('--ABANDS', default=0, type=float, help='ATR Bands')
+    parser.add_argument('--ABANDS', nargs='*', help='ATR Bands')
+    parser.add_argument('--BANDS', type=float, nargs='?', const=0.1, help=' Bands')
 
     add_argument_overlap_studies(parser)
 
@@ -585,5 +618,5 @@ if __name__ == "__main__":
     pre_count = 150
     klines = md.get_klines(args.s, interval, pre_count+display_count, start_time-xq.get_timedelta(interval, pre_count))
 
-    show(args, klines, md.kline_column_names, display_count, ts.parse_ic_keys(args.os), ts.parse_ic_keys(args.di))
+    show(args, klines, md.kline_column_names, display_count, ts.parse_ic_keys(args.di))
 

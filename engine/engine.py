@@ -779,8 +779,8 @@ class Engine:
 
 
 
-            #axes[i].plot(close_times, emas + 2*atrs, "y--", label="2ATR")
-            #axes[i].plot(close_times, emas - 2*atrs, "y--", label="2ATR")
+            axes[i].plot(close_times, emas + 2*atrs, "y--", label="2ATR")
+            axes[i].plot(close_times, emas - 2*atrs, "y--", label="2ATR")
             #axes[i].plot(close_times, emas + 3*atrs, "y--", label="3ATR")
             #axes[i].plot(close_times, emas - 3*atrs, "y--", label="3ATR")
 

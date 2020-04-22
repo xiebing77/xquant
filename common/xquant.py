@@ -263,5 +263,5 @@ def get_strategy_config(config_path):
     fo = open(config_path, "r")
     config = json.loads(fo.read())
     fo.close()
-    pprint.pprint(config)
+    pprint.pprint(config, indent=4)
     return config
