@@ -7,6 +7,7 @@ import utils.tools as ts
 import common.xquant as xq
 import common.log as log
 from engine.backtest import BackTest
+from common.overlap_studies import *
 
 
 if __name__ == "__main__":
@@ -16,6 +17,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
     parser.add_argument('--cs', help='chart show', action="store_true")
     parser.add_argument('--log', help='log', action="store_true")
+    add_argument_overlap_studies(parser)
     args = parser.parse_args()
     # print(args)
     if not (args.m and args.sc and args.r):
@@ -40,4 +42,4 @@ if __name__ == "__main__":
 
     engine = BackTest(instance_id, args.m, config)
     strategy = ts.createInstance(module_name, class_name, config, engine)
-    engine.run(strategy, start_time, end_time, args.cs)
+    engine.run(strategy, start_time, end_time, args)

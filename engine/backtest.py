@@ -81,7 +81,7 @@ class BackTest(Engine):
         """ 撤掉本策略的所有挂单委托 """
         pass
 
-    def run(self, strategy, start_time, end_time, display_switch):
+    def run(self, strategy, start_time, end_time, args):
         """ run """
         total_tick_start = datetime.now()
         self.md.tick_time = start_time
@@ -119,9 +119,9 @@ class BackTest(Engine):
         symbol = strategy.config["symbol"]
         self.analyze(symbol, self.orders)
 
-        if display_switch:
+        if args.cs:
             interval = strategy.config["kline"]["interval"]
             display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
             print("display_count: %s" % display_count)
             klines = self.md.get_klines(symbol, interval, 150+display_count)
-            self.display(symbol, self.orders, klines, display_count)
+            self.display(args, symbol, self.orders, klines, display_count)
