@@ -41,6 +41,7 @@ def show(args, klines, kline_column_names, display_count, disp_ic_keys):
 
     fig, axes = plt.subplots(len(disp_ic_keys)+1, 1, sharex=True)
     fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
+    fig.suptitle(args.s + '    ' + args.i)
 
     quotes = []
     for k in klines[-display_count:]:
@@ -54,10 +55,11 @@ def show(args, klines, kline_column_names, display_count, disp_ic_keys):
     i += 1
     ax = axes[i]
     mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
-    ax.set_ylabel(args.s + '    ' + args.i)
+    ax.set_ylabel('price')
     ax.grid(True)
     ax.autoscale_view()
     ax.xaxis_date()
+
 
     handle_overlap_studies(args, ax, klines_df, close_times, display_count)
 

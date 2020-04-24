@@ -6,7 +6,6 @@ import uuid
 import utils.tools as ts
 import common.xquant as xq
 import common.bill as bl
-import db.mongodb as md
 from .engine import Engine
 from md.dbmd import DBMD
 
@@ -81,7 +80,7 @@ class BackTest(Engine):
         """ 撤掉本策略的所有挂单委托 """
         pass
 
-    def run(self, strategy, start_time, end_time, args):
+    def run(self, strategy, start_time, end_time):
         """ run """
         total_tick_start = datetime.now()
         self.md.tick_time = start_time
@@ -116,12 +115,11 @@ class BackTest(Engine):
             % (tick_count, total_tick_end - total_tick_start)
         )
 
-        symbol = strategy.config["symbol"]
-        self.analyze(symbol, self.orders)
 
-        if args.cs:
-            interval = strategy.config["kline"]["interval"]
-            display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
-            print("display_count: %s" % display_count)
-            klines = self.md.get_klines(symbol, interval, 150+display_count)
-            self.display(args, symbol, self.orders, klines, display_count)
+    def show(self, symbol, start_time, end_time, args):
+        interval = self.config["kline"]["interval"]
+        display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
+        print("display_count: %s" % display_count)
+
+        klines = self.md.get_klines(symbol, interval, 150+display_count)
+        self.display(args, symbol, self.orders, klines, display_count)
