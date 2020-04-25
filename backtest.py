@@ -116,7 +116,7 @@ if __name__ == "__main__":
     parser_show.set_defaults(func=show)
 
     args = parser.parse_args()
-    print(args)
+    # print(args)
     if hasattr(args, 'func'):
         args.func(args)
     else:

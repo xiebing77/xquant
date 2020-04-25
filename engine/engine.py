@@ -257,7 +257,7 @@ class Engine:
             )
         """
 
-    def handle_order(self, symbol, position_info, cur_price, check_bills):
+    def handle_order(self, symbol, position_info, cur_price, check_bills, extra_info=''):
         """ 处理委托 """
         rc_bills = self.risk_control(position_info, cur_price)
         bills = rc_bills + check_bills
@@ -309,7 +309,7 @@ class Engine:
 
         order_rmk = ds_bill["describe"] + ":  " + ds_bill["rmk"]
         rmk = "%s, time: %s,  %s" % (order_rmk, ds_bill["can_open_time"], can_open_time_info) if (ds_bill["can_open_time"] or can_open_time_info) else "%s" % (order_rmk)
-        self.send_order(symbol, position_info, cur_price, ds_bill["direction"], ds_bill["action"], ds_bill["pst_rate"], ds_bill["stop_loss_price"], rmk)
+        self.send_order(symbol, position_info, cur_price, ds_bill["direction"], ds_bill["action"], ds_bill["pst_rate"], ds_bill["stop_loss_price"], rmk + extra_info)
 
     def send_order(self, symbol, position_info, cur_price, direction, action, pst_rate, stop_loss_price, rmk):
         limit_price_rate = self.config["limit_price_rate"]
@@ -720,7 +720,8 @@ class Engine:
         ]
         """
         fig, axes = plt.subplots(len(disp_ic_keys)+2, 1, sharex=True)
-        fig.subplots_adjust(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
+        fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
+        fig.suptitle(symbol + '  ' + self.config['kline']['interval'])
 
         trade_times = [order["trade_time"] for order in orders]
 
@@ -733,7 +734,7 @@ class Engine:
         i = -1
         i += 1
         mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
-        axes[i].set_ylabel(symbol + '  ' + self.config['kline']['interval'])
+        axes[i].set_ylabel('price')
         axes[i].grid(True)
         axes[i].autoscale_view()
         axes[i].xaxis_date()

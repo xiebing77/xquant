@@ -456,7 +456,7 @@ if __name__ == "__main__":
     add_argument_overlap_studies(parser)
 
     args = parser.parse_args()
-    print(args)
+    # print(args)
 
     if not (args.r and args.i and args.s and args.di and args.e):
         parser.print_help()
