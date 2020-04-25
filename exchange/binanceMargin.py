@@ -212,14 +212,22 @@ class BinanceMargin:
         decimal = ts.get_decimal(amount)
 
         if binance_side is SIDE_BUY:
-            balance = Decimal(self.get_balances(base_coin)['free'])
+            balance = self.get_balances(base_coin)
+            if balance:
+                balance = Decimal(balance['free'])
+            else:
+                balance = Decimal(0)
             if balance < Decimal(amount) * Decimal(price):
                 loan_amount = ts.reserve_float_ceil(float(Decimal(amount) * Decimal(price) - balance), decimal)
                 log.info('loan: coin(%s), amount(%f)' % (base_coin, loan_amount))
                 self.loan(base_coin, loan_amount)
 
         elif binance_side is SIDE_SELL:
-            balance = Decimal(self.get_balances(target_coin)['free'])
+            balance = self.get_balances(target_coin)
+            if balance:
+                balance = Decimal(balance['free'])
+            else:
+                balance = Decimal(0)
             if balance < Decimal(amount):
                 loan_amount = ts.reserve_float_ceil(float(Decimal(amount) - balance), decimal)
                 log.info('loan: coin(%s), amount(%f)' % (target_coin.upper(), loan_amount))
