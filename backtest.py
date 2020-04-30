@@ -2,6 +2,7 @@
 import sys
 sys.path.append('../')
 import argparse
+from datetime import datetime
 import uuid
 import utils.tools as ts
 import common.xquant as xq
@@ -18,7 +19,7 @@ def run(args):
     if not (args.m and args.sc and args.r):
         exit(1)
 
-    instance_id = str(uuid.uuid1())  # 每次回测都是一个独立的实例
+    instance_id = datetime.now().strftime("%Y%m%d-%H%M%S_") + str(uuid.uuid1())  # 每次回测都是一个独立的实例
     print('instance_id: %s' % instance_id)
 
     config = xq.get_strategy_config(args.sc)

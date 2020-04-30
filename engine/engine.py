@@ -721,7 +721,7 @@ class Engine:
         """
         fig, axes = plt.subplots(len(disp_ic_keys)+2, 1, sharex=True)
         fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
-        fig.suptitle(symbol + '  ' + self.config['kline']['interval'])
+        fig.suptitle(symbol + '  ' + self.config['kline']['interval'] + ' ' + self.config['class_name'])
 
         trade_times = [order["trade_time"] for order in orders]
 

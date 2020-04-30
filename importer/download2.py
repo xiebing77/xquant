@@ -31,6 +31,7 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
         end_time = datetime.now()
 
     #print(xq.get_open_time(kline_type, end_time))
+    """
     if start_time.hour != exchange.start_time.hour:
         print("open time(%s) hour error! %s open time hour: %s" % (start_time, exchange.name, exchange.start_time.hour))
         exit(1)
@@ -38,6 +39,10 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
     if end_time.hour < exchange.start_time.hour:
         end_time -= timedelta(days=1)
     end_time = end_time.replace(hour=exchange.start_time.hour, minute=0, second=0, microsecond=0)
+    """
+
+    end_time = end_time.replace(minute=0, second=0, microsecond=0)
+    end_time = xq.get_open_time(kline_type, end_time)
     print("time range:  %s ~ %s " % (start_time, end_time))
 
     size = 1000
