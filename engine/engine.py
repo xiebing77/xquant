@@ -93,8 +93,8 @@ class Engine:
             info["history_profit"], info["history_commission"], (info["history_profit"] / self.value))
 
         self.log_info(
-            "symbol( %s ); current price( %g ); position(%s%s%s%s  total_profit_rate: %g)" % (
-            symbol, cur_price, sub_info1, sub_info2, sub_info3, sub_info4, (total_profit / self.value))
+            "symbol( %s ); current price( %g ); position(%s%s%s%s  total_profit_rate: %g%%)" % (
+            symbol, cur_price, sub_info1, sub_info2, sub_info3, sub_info4, (total_profit / self.value) * 100)
         )
         # print(info)
         return info
