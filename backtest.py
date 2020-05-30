@@ -54,15 +54,13 @@ def run(args):
         },
     )
 
-    if args.cs:
-        engine.show(symbol, start_time, end_time, args)
+    if args.chart:
+        engine.chart(symbol, start_time, end_time, args)
 
 
-def show(args):
-    if not (args.sii):
+def get_instance(instance_id):
+    if not (instance_id):
         exit(1)
-
-    instance_id = args.sii
 
     print(instance_id)
     instances = bt_db.find(
@@ -73,20 +71,30 @@ def show(args):
     if len(instances) <= 0:
         exit(1)
     instance = instances[0]
-    mds = instance['mds']
-    sc = instance['sc']
-    print('instance_id: %s  marketing data src: %s  strategy config path: %s  ' % (instance_id, mds, sc))
+    return instance
 
-    config = xq.get_strategy_config(sc)
-    symbol = config['symbol']
-    start_time = instance['start_time']
-    end_time = instance['end_time']
-    orders = instance['orders']
 
-    engine = BackTest(instance_id, mds, config)
-    engine.md.tick_time = end_time
-    engine.orders = orders
-    engine.show(symbol, start_time, end_time, args)
+def analyze(args):
+    instance_id = args.sii
+    instance = get_instance(instance_id)
+    print('instance_id: %s  marketing data src: %s  strategy config path: %s  ' % (instance_id, instance['mds'], instance['sc']))
+
+    config = xq.get_strategy_config(instance['sc'])
+    engine = BackTest(instance_id, instance['mds'], config)
+
+    engine.analyze(config['symbol'], instance['orders'])
+
+def chart(args):
+    instance_id = args.sii
+    instance = get_instance(instance_id)
+    print('instance_id: %s  marketing data src: %s  strategy config path: %s  ' % (instance_id, instance['mds'], instance['sc']))
+
+    config = xq.get_strategy_config(instance['sc'])
+    engine = BackTest(instance_id, instance['mds'], config)
+    engine.md.tick_time = instance['end_time']
+    engine.orders = instance['orders']
+
+    engine.chart(config['symbol'], instance['start_time'], instance['end_time'], args)
 
 
 if __name__ == "__main__":
@@ -107,14 +115,18 @@ if __name__ == "__main__":
     parser.add_argument('-m', help='market data source')
     parser.add_argument('-sc', help='strategy config')
     parser.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
-    parser.add_argument('--cs', help='chart show', action="store_true")
+    parser.add_argument('--chart', help='chart', action="store_true")
     parser.add_argument('--log', help='log', action="store_true")
     add_argument_overlap_studies(parser)
 
-    parser_show = subparsers.add_parser('show', help='show help')
+    parser_show = subparsers.add_parser('analyze', help='analyze help')
+    parser_show.add_argument('-sii', help='strategy instance id')
+    parser_show.set_defaults(func=analyze)
+
+    parser_show = subparsers.add_parser('chart', help='chart help')
     parser_show.add_argument('-sii', help='strategy instance id')
     add_argument_overlap_studies(parser_show)
-    parser_show.set_defaults(func=show)
+    parser_show.set_defaults(func=chart)
 
     args = parser.parse_args()
     # print(args)
