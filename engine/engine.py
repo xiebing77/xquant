@@ -336,9 +336,11 @@ class Engine:
 
             if direction == bl.DIRECTION_LONG:
                 # 做多开仓
+                '''
                 base_balance = self.get_balances(base_coin)
                 self.log_info("base   balance:  %s" % base_balance)
                 base_amount = min(xq.get_balance_free(base_balance), base_amount)
+                '''
                 self.log_info("base_amount: %g" % base_amount)
                 if base_amount <= 0:  #
                     return
@@ -346,9 +348,11 @@ class Engine:
                 rate = 1 + limit_price_rate["open"]
             else:
                 # 做空开仓
+                '''
                 target_balance = self.get_balances(target_coin)
                 self.log_info("target balance:  %s" % target_balance)
                 # target_amount = min(xq.get_balance_free(target_balance), base_amount / cur_price)
+                '''
                 target_amount = base_amount / cur_price
                 self.log_info("target_amount: %g" % target_amount)
                 if target_amount <= 0:  #
