@@ -17,3 +17,14 @@ def get_strategy_instance(sii):
         exit(1)
     return instances[0]
 
+def add_strategy_instance(record):
+    db = get_mongodb(setup.db_order_name)
+    db.insert_one(STRATEGY_INSTANCE_COLLECTION_NAME, record)
+
+def update_strategy_instance(query, record):
+    db = get_mongodb(setup.db_order_name)
+    db.update(STRATEGY_INSTANCE_COLLECTION_NAME, query, record)
+
+def delete_strategy_instance(query):
+    db = get_mongodb(setup.db_order_name)
+    db.delete_one(STRATEGY_INSTANCE_COLLECTION_NAME, query)
