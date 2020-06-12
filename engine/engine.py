@@ -515,7 +515,7 @@ class Engine:
         return orders
 
 
-    def analyze(self, symbol, orders, display_rmk):
+    def analyze(self, symbol, orders, display_rmk=False):
         if len(orders) == 0:
             return
 
