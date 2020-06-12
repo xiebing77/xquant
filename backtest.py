@@ -4,6 +4,7 @@ sys.path.append('../')
 import argparse
 from datetime import datetime
 import uuid
+import pprint
 import utils.tools as ts
 import common.xquant as xq
 import common.log as log
@@ -62,7 +63,6 @@ def get_instance(instance_id):
     if not (instance_id):
         exit(1)
 
-    print(instance_id)
     instances = bt_db.find(
         BACKTEST_INSTANCES_COLLECTION_NAME,
         {"instance_id": instance_id}
@@ -74,26 +74,37 @@ def get_instance(instance_id):
     return instance
 
 
+def view(args):
+    instance_id = args.sii
+    instance = get_instance(instance_id)
+
+    config = xq.get_strategy_config(instance['sc'])
+
+    engine = BackTest(instance_id, instance['mds'], config)
+    engine.view(config['symbol'], instance['orders'])
+
+
 def analyze(args):
     instance_id = args.sii
     instance = get_instance(instance_id)
-    print('instance_id: %s  marketing data src: %s  strategy config path: %s  ' % (instance_id, instance['mds'], instance['sc']))
+    print('marketing data src: %s  strategy config path: %s  ' % (instance['mds'], instance['sc']))
 
     config = xq.get_strategy_config(instance['sc'])
-    engine = BackTest(instance_id, instance['mds'], config)
+    pprint.pprint(config, indent=4)
 
-    engine.analyze(config['symbol'], instance['orders'])
+    engine = BackTest(instance_id, instance['mds'], config)
+    engine.analyze(config['symbol'], instance['orders'], args.rmk)
+
 
 def chart(args):
     instance_id = args.sii
     instance = get_instance(instance_id)
-    print('instance_id: %s  marketing data src: %s  strategy config path: %s  ' % (instance_id, instance['mds'], instance['sc']))
 
     config = xq.get_strategy_config(instance['sc'])
+
     engine = BackTest(instance_id, instance['mds'], config)
     engine.md.tick_time = instance['end_time']
     engine.orders = instance['orders']
-
     engine.chart(config['symbol'], instance['start_time'], instance['end_time'], args)
 
 
@@ -119,14 +130,19 @@ if __name__ == "__main__":
     parser.add_argument('--log', help='log', action="store_true")
     add_argument_overlap_studies(parser)
 
-    parser_show = subparsers.add_parser('analyze', help='analyze help')
-    parser_show.add_argument('-sii', help='strategy instance id')
-    parser_show.set_defaults(func=analyze)
+    parser_view = subparsers.add_parser('view', help='view help')
+    parser_view.add_argument('-sii', help='strategy instance id')
+    parser_view.set_defaults(func=view)
 
-    parser_show = subparsers.add_parser('chart', help='chart help')
-    parser_show.add_argument('-sii', help='strategy instance id')
-    add_argument_overlap_studies(parser_show)
-    parser_show.set_defaults(func=chart)
+    parser_analyze = subparsers.add_parser('analyze', help='analyze help')
+    parser_analyze.add_argument('-sii', help='strategy instance id')
+    parser_analyze.add_argument('--rmk', help='remark', action="store_true")
+    parser_analyze.set_defaults(func=analyze)
+
+    parser_chart = subparsers.add_parser('chart', help='chart help')
+    parser_chart.add_argument('-sii', help='strategy instance id')
+    add_argument_overlap_studies(parser_chart)
+    parser_chart.set_defaults(func=chart)
 
     args = parser.parse_args()
     # print(args)

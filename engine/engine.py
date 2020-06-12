@@ -515,7 +515,7 @@ class Engine:
         return orders
 
 
-    def analyze(self, symbol, orders):
+    def analyze(self, symbol, orders, display_rmk):
         if len(orders) == 0:
             return
 
@@ -599,7 +599,11 @@ class Engine:
                         order["floating_profit"],
                         order["total_profit"],
                     )
-            info += "  %s" % (order["rmk"])
+            if display_rmk:
+                rmk = order["rmk"]
+            else:
+                rmk = order["rmk"].split(':')[0]
+            info += "  %s" % (rmk)
 
             pre_order = order
             print(info)
@@ -627,6 +631,25 @@ class Engine:
             #print(cycle_ids)
 
             self.stat(signal_id, orders_df[(orders_df["cycle_id"].isin(cycle_ids))] )
+
+
+    def view(self, symbol, orders):
+        if len(orders) == 0:
+            return
+
+        orders = self.stat_orders(symbol, orders)
+
+        total_profit = orders[-1]['total_profit']
+        total_profit_rate = orders[-1]['total_profit_rate']
+
+        orders_df = pd.DataFrame(orders)
+        orders_df["create_time"] = orders_df["create_time"].map(lambda x: datetime.fromtimestamp(x))
+        total_commission = orders_df["deal_value"].sum() * self.config["commission_rate"]
+
+        print("%s ~ %s    init value: %s,  total_profit: %.2f(%.2f%%), total_commission: %.2f" % (
+            datetime.fromtimestamp(orders[0]["create_time"]).strftime('%Y-%m-%d'), datetime.fromtimestamp(orders[-1]["create_time"]).strftime('%Y-%m-%d'),
+            self.value, total_profit, total_profit_rate*100, total_commission)
+        )
 
 
     def calc(self, symbol, orders):
@@ -860,18 +883,20 @@ class Engine:
             axes[i].plot(close_times, ds, "y", label="d")
             axes[i].plot(close_times, js, "m", label="j")
 
-        """
-        axes[-2].set_ylabel('rate')
-        axes[-2].grid(True)
-        #axes[-2].set_label(["position rate", "profit rate"])
-        axes[-2].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
-        axes[-2].plot(trade_times ,[round(100*order["floating_profit_rate"], 2) for order in orders], "g--", drawstyle="steps", label="profit")
-        """
 
-        axes[-1].set_ylabel('total profit rate')
-        axes[-1].grid(True)
-        axes[-1].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "go--")
-        axes[-1].plot(close_times, [round(100*((close/base_close)-1), 2) for close in closes], "r--")
+        i += 1
+        axes[i].set_ylabel('rate')
+        axes[i].grid(True)
+        #axes[i].set_label(["position rate", "profit rate"])
+        #axes[i].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
+        axes[i].plot(trade_times ,[round(100*order["floating_profit_rate"], 2) for order in orders], "g", drawstyle="steps", label="profit")
+        """
+        i += 1
+        axes[i].set_ylabel('total profit rate')
+        axes[i].grid(True)
+        axes[i].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "go--")
+        axes[i].plot(close_times, [round(100*((close/base_close)-1), 2) for close in closes], "r--")
+        """
 
         """
         trade_times = []
