@@ -40,6 +40,13 @@ def real_view(config, instance_id, exchange_name, value):
     orders = realEngine.get_orders(symbol)
     realEngine.view(symbol, orders)
 
+def real_analyze(config, instance_id, exchange_name, value, display_rmk):
+    symbol = config['symbol']
+
+    realEngine = RealEngine(instance_id, exchange_name, config, value)
+    orders = realEngine.get_orders(symbol)
+    realEngine.analyze(symbol, orders, display_rmk)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='real')
