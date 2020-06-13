@@ -41,7 +41,7 @@ class RealEngine(Engine):
         """ 获取持仓信息 """
         self.sync_orders(symbol)
 
-        orders = self.td_db.find(self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol})
+        orders = self.get_orders(symbol)
 
         if len(orders) > 0:
             now_ts = self.now().timestamp()
@@ -72,6 +72,17 @@ class RealEngine(Engine):
                     )
 
         return self._get_position(symbol, orders, cur_price)
+
+
+    def get_orders(self, symbol):
+        return self.td_db.find(
+            DB_ORDERS_NAME,
+            {
+                "instance_id": self.instance_id,
+                "symbol": symbol,
+            },
+        )
+
 
     def get_open_orders(self, symbol):
         """ 是否有open状态的委托 """

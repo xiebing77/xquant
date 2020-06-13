@@ -33,6 +33,14 @@ def real_run(config, instance_id, exchange_name, value, args):
     engine.run(strategy, args.debug)
 
 
+def real_view(config, instance_id, exchange_name, value):
+    symbol = config['symbol']
+
+    realEngine = RealEngine(instance_id, exchange_name, config, value)
+    orders = realEngine.get_orders(symbol)
+    realEngine.view(symbol, orders)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='real')
     parser.add_argument('-e', help='exchange')

@@ -9,7 +9,7 @@ def get_strategy_instance(sii):
     db.ensure_index(STRATEGY_INSTANCE_COLLECTION_NAME, [("instance_id",1)])
 
     instances = db.find(STRATEGY_INSTANCE_COLLECTION_NAME, {"instance_id": sii})
-    print(instances)
+    #print(instances)
     if len(instances) is 0:
         print("strategy instance id (%s) not exist!" % (sii))
         exit(1)
