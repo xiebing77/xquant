@@ -24,8 +24,8 @@ if __name__ == "__main__":
     # ret = client.get_open_order_ids(symbol='ETH_USDT')
     # ret = client.get_order_book(symbol='ETH_USDT', limit=20)
     # ret = client.order_status_is_close(symbol='BTC_USDT', order_id=726519783)
-    ret = client.send_order(direciton='SHORT', action='OPEN', type='LIMIT', symbol='ETH_USDT', amount=1, price=200)
-    # ret = client.send_order(direciton='LONG', action='OPEN', type='LIMIT', symbol='ETH_USDT', amount=0.1, price=160)
+    # ret = client.send_order(direction='SHORT', action='OPEN', type='LIMIT', symbol='ETH_USDT', amount=0.234123, price=200)
+    ret = client.send_order(direction='LONG', action='OPEN', type='LIMIT', symbol='ETH_USDT', amount=10000.12234, price=80.213)
     # ret = client.cancel_order(symbol='ETH_USDT', order_id='498421194')
     # ret = client.cancel_orders(symbol='ETH_USDT', order_ids=[498425779, 498425781, 498426026, 498426027, 498424836])
     

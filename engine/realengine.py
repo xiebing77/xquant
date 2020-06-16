@@ -4,9 +4,10 @@ import time
 import datetime
 import utils.tools as ts
 import common.xquant as xq
+import common.bill as bl
 from .engine import Engine
-from exchange.binanceExchange import BinanceExchange
-from exchange.okexExchange import OkexExchange
+from exchange.exchange import create_exchange
+from md.exmd import ExchangeMD
 
 
 DB_ORDERS_NAME = "orders"
@@ -15,30 +16,18 @@ DB_ORDERS_NAME = "orders"
 class RealEngine(Engine):
     """实盘引擎"""
 
-    def __init__(self, instance_id, config):
-        super().__init__(instance_id, config, DB_ORDERS_NAME)
+    def __init__(self, instance_id, exchange_name, config, value):
+        super().__init__(instance_id, config, value, DB_ORDERS_NAME)
 
-        exchange = config["exchange"]
-        if exchange == "binance":
-            self.__exchange = BinanceExchange(debug=True)
-
-        elif exchange == "okex":
-            self.__exchange = OkexExchange(debug=True)
-
-        else:
-            print("Wrong exchange name: %s" % exchange)
+        self.__exchange = create_exchange(exchange_name)
+        if not self.__exchange:
+            print("Wrong exchange name: %s" % exchange_name)
             exit(1)
+
+        self.md = ExchangeMD(self.__exchange)
 
     def now(self):
         return datetime.datetime.now()
-
-    def get_klines(self, symbol, interval, size):
-        """ 获取日k线 """
-        return self.__exchange.get_klines(symbol, interval, size)
-
-    def get_klines_1day(self, symbol, size):
-        """ 获取日k线 """
-        return self.__exchange.get_klines_1day(symbol, size)
 
     def get_account(self):
         """ 获取账户信息 """
@@ -52,12 +41,12 @@ class RealEngine(Engine):
         """ 获取持仓信息 """
         self.sync_orders(symbol)
 
-        orders = self.td_db.find(self.db_orders_name, {"instance_id": self.instance_id, "symbol": symbol})
+        orders = self.get_orders(symbol)
 
         if len(orders) > 0:
             now_ts = self.now().timestamp()
 
-            if orders[-1]["action"] == xq.OPEN_POSITION:
+            if orders[-1]["action"] == bl.OPEN_POSITION:
                 if "high" not in orders[-1] or orders[-1]["high"] < cur_price:
                     orders[-1]["high"] = cur_price
                     orders[-1]["high_time"] = now_ts
@@ -83,6 +72,17 @@ class RealEngine(Engine):
                     )
 
         return self._get_position(symbol, orders, cur_price)
+
+
+    def get_orders(self, symbol):
+        return self.td_db.find(
+            DB_ORDERS_NAME,
+            {
+                "instance_id": self.instance_id,
+                "symbol": symbol,
+            },
+        )
+
 
     def get_open_orders(self, symbol):
         """ 是否有open状态的委托 """
@@ -145,7 +145,7 @@ class RealEngine(Engine):
         return
 
     def send_order_limit(
-        self, direction, action, symbol, pst_rate, cur_price, limit_price, amount, rmk
+        self, direction, action, symbol, pst_rate, cur_price, limit_price, amount, stop_loss_price, rmk
     ):
         """ 提交委托 """
         """
@@ -194,6 +194,7 @@ class RealEngine(Engine):
                 "market_price": cur_price,
                 "price": limit_price,
                 "amount": amount,
+                "stop_loss_price": stop_loss_price,
                 "status": xq.ORDER_STATUS_OPEN,
                 "order_id": order_id,
                 "cancle_amount": 0,

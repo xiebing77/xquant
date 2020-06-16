@@ -5,18 +5,20 @@ from datetime import datetime
 import common.log as log
 import pandas as pd
 import common.xquant as xq
-from .exchange import Exchange
+import common.bill as bl
 from .binance.margin import Client
 from .binance.client import Client as spotClient
 from .binance.enums import *
 from decimal import Decimal
+import utils.tools as ts
 
 api_key = os.environ.get('BINANCE_API_KEY')
 secret_key = os.environ.get('BINANCE_SECRET_KEY')
 
 
-class BinanceMargin(Exchange):
+class BinanceMargin:
     """binanceMargin"""
+    name = 'binance_margin'
     start_time = datetime(2017, 8, 17, 8)
     min_value = 10
     kl_bt_accuracy = xq.KLINE_INTERVAL_1MINUTE
@@ -34,17 +36,17 @@ class BinanceMargin(Exchange):
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         return '%s%s' % (self.__get_coinkey(target_coin), self.__get_coinkey(base_coin))
 
-    def __trans_side(self, direciton, action):
+    def __trans_side(self, direction, action):
         """转换为binance格式的side"""
-        if direciton == xq.DIRECTION_LONG:
-            if action == xq.OPEN_POSITION:
+        if direction == bl.DIRECTION_LONG:
+            if action == bl.OPEN_POSITION:
                 return SIDE_BUY
-            elif action == xq.CLOSE_POSITION:
+            elif action == bl.CLOSE_POSITION:
                 return SIDE_SELL
-        elif direciton == xq.DIRECTION_SHORT:
-            if action == xq.OPEN_POSITION:
+        elif direction == bl.DIRECTION_SHORT:
+            if action == bl.OPEN_POSITION:
                 return SIDE_SELL
-            elif action == xq.CLOSE_POSITION:
+            elif action == bl.CLOSE_POSITION:
                 return SIDE_BUY
         return None
 
@@ -136,22 +138,22 @@ class BinanceMargin(Exchange):
         return books
 
     def transfer_to_margin(self, asset, amount):
-        return self.__client.transfer(asset=asset, amount=amount, type=1)
+        return self.__client.transfer(asset=asset.upper(), amount=amount, type=1)
 
     def transfer_from_margin(self, asset, amount):
-        return self.__client.transfer(asset=asset, amount=amount, type=2)
+        return self.__client.transfer(asset=asset.upper(), amount=amount, type=2)
 
     def loan(self, asset, amount):
-        return self.__client.loan(asset=asset, amount=amount)
+        return self.__client.loan(asset=asset.upper(), amount=amount)
 
     def repay(self, asset, amount):
-        return self.__client.repay(asset=asset, amount=amount)
+        return self.__client.repay(asset=asset.upper(), amount=amount)
 
     def get_loan(self, asset, startTime):
-        return self.__client.get_loan(asset=asset, startTime=startTime)
+        return self.__client.get_loan(asset=asset.upper(), startTime=startTime)
 
     def get_repay(self, asset, startTime):
-        return self.__client.get_repay(asset=asset, startTime=startTime)
+        return self.__client.get_repay(asset=asset.upper(), startTime=startTime)
 
     def get_account(self):
         """获取账户信息"""
@@ -204,32 +206,43 @@ class BinanceMargin(Exchange):
         df_s = df.groupby('orderId')['qty', 'value'].sum()
         return df_s['qty'], df_s['value']
 
-    def send_order(self, direciton, action, type, symbol, price, amount, client_order_id=None):
+    def send_order(self, direction, action, type, symbol, price, amount, client_order_id=None):
         target_coin, base_coin = xq.get_symbol_coins(symbol)
-        binance_side = self.__trans_side(direciton, action)
+        binance_side = self.__trans_side(direction, action)
+        decimal = ts.get_decimal(amount)
 
         if binance_side is SIDE_BUY:
-            balance = Decimal(self.get_balances(base_coin)['free'])
+            balance = self.get_balances(base_coin)
+            if balance:
+                balance = Decimal(balance['free'])
+            else:
+                balance = Decimal(0)
             if balance < Decimal(amount) * Decimal(price):
-                """TODO:需要考虑精度问题"""
-                loan_amount = float(Decimal(amount) * Decimal(price) - balance)
+                loan_amount = ts.reserve_float_ceil(float(Decimal(amount) * Decimal(price) - balance), 0)
+                log.info('loan: coin(%s), amount(%f)' % (base_coin, loan_amount))
                 self.loan(base_coin, loan_amount)
 
         elif binance_side is SIDE_SELL:
-            balance = Decimal(self.get_balances(target_coin)['free'])
+            balance = self.get_balances(target_coin)
+            if balance:
+                balance = Decimal(balance['free'])
+            else:
+                balance = Decimal(0)
             if balance < Decimal(amount):
-                self.loan(target_coin, float(Decimal(amount) - balance))
+                loan_amount = ts.reserve_float_ceil(float(Decimal(amount) - balance), decimal)
+                log.info('loan: coin(%s), amount(%f)' % (target_coin.upper(), loan_amount))
+                self.loan(target_coin.upper(), loan_amount)
         else:
             return
 
-        self.create_order(direciton, action, type, symbol,
+        return self.create_order(direction, action, type, symbol,
                           price, amount, client_order_id)
 
-    def create_order(self, direciton, action, type, symbol, price, amount, client_order_id=None):
+    def create_order(self, direction, action, type, symbol, price, amount, client_order_id=None):
         """提交委托"""
         exchange_symbol = self.__trans_symbol(symbol)
 
-        binance_side = self.__trans_side(direciton, action)
+        binance_side = self.__trans_side(direction, action)
         if binance_side is None:
             return
         binance_type = self.__trans_type(type)

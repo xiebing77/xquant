@@ -1,15 +1,27 @@
 #!/usr/bin/python
 """xquant log"""
 
+import os
 import logging
 import logging.handlers
 
 logger = logging.getLogger('QuantLogger')
 logger.setLevel(logging.DEBUG)
 
-def init(logname, server_ip=None, server_port=None):
+def init(path, logname, server_ip=None, server_port=None):
     global logger
-    logging.basicConfig(level=logging.NOTSET, filename=logname)
+    #logpath = os.path.join(os.getcwd(), "log")
+    logpath = os.path.join("log")
+    if not os.path.exists(logpath):
+        os.mkdir(logpath)
+
+    fullpath = os.path.join(logpath, path)
+    if not os.path.exists(fullpath):
+        os.mkdir(fullpath)
+
+    filename = os.path.join(fullpath, logname)
+    logging.basicConfig(level=logging.NOTSET, filename=filename)
+
     if server_ip != None:
         extra = {'tags':logname}
         handler = logging.handlers.SysLogHandler(address = (server_ip, int(server_port)))

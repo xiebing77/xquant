@@ -8,19 +8,12 @@ class Strategy:
         self.config = strategy_config
         self.engine = engine
 
-        for index, value in enumerate(self.engine.get_kline_column_names()):
-            if value == "high":
-                self.highindex = index
-            if value == "low":
-                self.lowindex = index
-            if value == "open":
-                self.openindex = index
-            if value == "close":
-                self.closeindex = index
-            if value == "volume":
-                self.volumeindex = index
-            if value == "open_time":
-                self.opentimeindex = index
+        self.highindex = self.engine.md.highindex
+        self.lowindex = self.engine.md.lowindex
+        self.openindex = self.engine.md.openindex
+        self.closeindex = self.engine.md.closeindex
+        self.volumeindex = self.engine.md.volumeindex
+        self.opentimeindex = self.engine.md.opentimeindex
 
         self.aligning_log = "\n%4s" % " "
         self.aligning_info = "\n%68s" % " "

@@ -5,7 +5,7 @@ from datetime import datetime
 import common.log as log
 import pandas as pd
 import common.xquant as xq
-from .exchange import Exchange
+import common.bill as bl
 from .binance.client import Client
 from .binance.enums import *
 
@@ -13,8 +13,9 @@ api_key = os.environ.get('BINANCE_API_KEY')
 secret_key = os.environ.get('BINANCE_SECRET_KEY')
 
 
-class BinanceExchange(Exchange):
+class BinanceExchange:
     """BinanceExchange"""
+    name = 'binance'
     start_time = datetime(2017, 8, 17, 8)
     min_value = 10
     kl_bt_accuracy = xq.KLINE_INTERVAL_1MINUTE
@@ -31,17 +32,17 @@ class BinanceExchange(Exchange):
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         return '%s%s' % (self.__get_coinkey(target_coin), self.__get_coinkey(base_coin))
 
-    def __trans_side(self, direciton, action):
+    def __trans_side(self, direction, action):
         """转换为binance格式的side"""
-        if direciton == xq.DIRECTION_LONG:
-            if action == xq.OPEN_POSITION:
+        if direction == bl.DIRECTION_LONG:
+            if action == bl.OPEN_POSITION:
                 return SIDE_BUY
-            elif action == xq.CLOSE_POSITION:
+            elif action == bl.CLOSE_POSITION:
                 return SIDE_SELL
-        elif direciton == xq.DIRECTION_SHORT:
-            if action == xq.OPEN_POSITION:
+        elif direction == bl.DIRECTION_SHORT:
+            if action == bl.OPEN_POSITION:
                 return SIDE_SELL
-            elif action == xq.CLOSE_POSITION:
+            elif action == bl.CLOSE_POSITION:
                 return SIDE_BUY
         return None
 
@@ -176,11 +177,11 @@ class BinanceExchange(Exchange):
         df_s = df.groupby('orderId')['qty', 'value'].sum()
         return df_s['qty'], df_s['value']
 
-    def send_order(self, direciton, action, type, symbol, price, amount, client_order_id=None):
+    def send_order(self, direction, action, type, symbol, price, amount, client_order_id=None):
         """提交委托"""
         exchange_symbol = self.__trans_symbol(symbol)
 
-        binance_side = self.__trans_side(direciton, action)
+        binance_side = self.__trans_side(direction, action)
         if binance_side is None:
             return
         binance_type = self.__trans_type(type)

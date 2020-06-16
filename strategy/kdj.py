@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """simple kdj strategy"""
-import common.xquant as xq
+import common.bill as bl
 import utils.indicator as ic
 from strategy.strategy import Strategy
 
@@ -10,24 +10,13 @@ class KDJStrategy(Strategy):
 
     def __init__(self, strategy_config, engine):
         super().__init__(strategy_config, engine)
-        self.strategy_config = strategy_config
         self.kline = strategy_config["kline"]
         self.offset = strategy_config["kdj_offset"]
-
-        for index, value in enumerate(self.engine.get_kline_column_names()):
-            if value == "high":
-                self.highindex = index
-            if value == "low":
-                self.lowindex = index
-            if value == "close":
-                self.closeindex = index
-            if value == "volume":
-                self.volumeindex = index
 
 
     def check(self, symbol):
         """ kdj指标，金叉全买入，下降趋势部分卖出，死叉全卖出 """
-        klines = self.engine.get_klines(
+        klines = self.engine.md.get_klines(
             symbol, self.kline["interval"], self.kline["size"]
         )
         self.cur_price = float(klines[-1][self.closeindex])
@@ -52,11 +41,11 @@ class KDJStrategy(Strategy):
         offset = self.offset[0]
         if cur_j - offset > cur_k > cur_d + offset:
             # 金叉
-            return xq.create_buy_signal(1, "买：" + signal_info)
+            return bl.open_long_bill(1, "买：", signal_info)
 
         elif cur_j + offset < cur_k < cur_d - offset:
             # 死叉
-            return xq.create_sell_signal(0, "卖：" + signal_info)
+            return bl.close_long_bill(0, "卖：", signal_info)
 
 
         return None
@@ -72,4 +61,5 @@ class KDJStrategy(Strategy):
         signal = self.check(symbol)
         if signal:
             check_signals.append(signal)
-        self.engine.handle_order(symbol, self.cur_price, check_signals)
+        position_info = self.engine.get_position(symbol, self.cur_price)
+        self.engine.handle_order(symbol, position_info, self.cur_price, check_signals)
