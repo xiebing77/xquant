@@ -6,22 +6,26 @@ import common.log as log
 import pandas as pd
 import common.xquant as xq
 import common.bill as bl
-from .binance.client import Client
+from .binance.margin import Client
+from .binance.client import Client as spotClient
 from .binance.enums import *
+from decimal import Decimal
+import utils.tools as ts
 
 api_key = os.environ.get('BINANCE_API_KEY')
 secret_key = os.environ.get('BINANCE_SECRET_KEY')
 
 
-class BinanceExchange:
-    """BinanceExchange"""
-    name = 'binance'
+class BinanceMargin:
+    """binanceMargin"""
+    name = 'binance_margin'
     start_time = datetime(2017, 8, 17, 8)
     min_value = 10
     kl_bt_accuracy = xq.KLINE_INTERVAL_1MINUTE
 
     def __init__(self, debug=False):
         self.__client = Client(api_key, secret_key)
+        self.__spotClient = spotClient(api_key, secret_key)
 
     def __get_coinkey(self, coin):
         """转换binance格式的coin"""
@@ -96,16 +100,18 @@ class BinanceExchange:
 
     @staticmethod
     def get_kline_column_names():
-        return ['open_time', 'open','high','low','close','volume','close_time',
-            'quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume','ignore']
+        return ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time',
+                'quote_asset_volume', 'number_of_trades', 'taker_buy_base_asset_volume', 'taker_buy_quote_asset_volume', 'ignore']
 
     def __get_klines(self, symbol, interval, size, since):
         """获取k线"""
         exchange_symbol = self.__trans_symbol(symbol)
         if since is None:
-            klines = self.__client.get_klines(symbol=exchange_symbol, interval=interval, limit=size)
+            klines = self.__spotClient.get_klines(
+                symbol=exchange_symbol, interval=interval, limit=size)
         else:
-            klines = self.__client.get_klines(symbol=exchange_symbol, interval=interval, limit=size, startTime=since)
+            klines = self.__spotClient.get_klines(
+                symbol=exchange_symbol, interval=interval, limit=size, startTime=since)
 
         return klines
 
@@ -120,29 +126,60 @@ class BinanceExchange:
         """获取分钟k线"""
         return self.__get_klines(symbol, KLINE_INTERVAL_1MINUTE, size, since)
 
+    def get_klines_1hour(self, symbol, size=300, since=None):
+        """获取分钟k线"""
+        return self.__get_klines(symbol, KLINE_INTERVAL_1HOUR, size, since)
+
+    def get_order_book(self, symbol, limit=100):
+        """获取挂单列表"""
+        exchange_symbol = self.__trans_symbol(symbol)
+        books = self.__spotClient.get_order_book(
+            symbol=exchange_symbol, limit=limit)
+        return books
+
+    def transfer_to_margin(self, asset, amount):
+        return self.__client.transfer(asset=asset.upper(), amount=amount, type=1)
+
+    def transfer_from_margin(self, asset, amount):
+        return self.__client.transfer(asset=asset.upper(), amount=amount, type=2)
+
+    def loan(self, asset, amount):
+        return self.__client.loan(asset=asset.upper(), amount=amount)
+
+    def repay(self, asset, amount):
+        return self.__client.repay(asset=asset.upper(), amount=amount)
+
+    def get_loan(self, asset, startTime):
+        return self.__client.get_loan(asset=asset.upper(), startTime=startTime)
+
+    def get_repay(self, asset, startTime):
+        return self.__client.get_repay(asset=asset.upper(), startTime=startTime)
+
     def get_account(self):
         """获取账户信息"""
         coin_balances = []
         account = self.__client.get_account()
         nb = []
-        balances = account['balances']
+        balances = account['userAssets']
         for item in balances:
-            if float(item['free'])==0 and float(item['locked'])==0:
+            if float(item['free']) == 0 and float(item['locked']) == 0 and float(item['borrowed']) == 0 and float(item['interest']) == 0:
                 continue
             nb.append(item)
         account['balances'] = nb
+        del account['userAssets']
         return account
 
     def get_balances(self, *coins):
         """获取余额"""
         coin_balances = []
-        account = self.__client.get_account()
+        account = self.get_account()
         balances = account['balances']
         for coin in coins:
             coinKey = self.__get_coinkey(coin)
             for item in balances:
                 if coinKey == item['asset']:
-                    balance = xq.create_balance(coin, item['free'], item['locked'])
+                    balance = xq.create_balance(
+                        coin, item['free'], item['locked'])
                     coin_balances.append(balance)
                     break
         if len(coin_balances) <= 0:
@@ -151,14 +188,6 @@ class BinanceExchange:
             return coin_balances[0]
         else:
             return tuple(coin_balances)
-
-    def order_status_is_close(self, symbol, order_id):
-        """查询委托状态"""
-        exchange_symbol = self.__trans_symbol(symbol)
-        order = self.__client.get_order(symbol=exchange_symbol, orderId=order_id)
-        if order['status'] in [ORDER_STATUS_FILLED, ORDER_STATUS_CANCELED, ORDER_STATUS_REJECTED, ORDER_STATUS_EXPIRED]:
-            return True
-        return False
 
     def get_trades(self, symbol):
         """获取成交"""
@@ -171,13 +200,45 @@ class BinanceExchange:
         exchange_symbol = self.__trans_symbol(symbol)
         trades = self.__client.get_my_trades(symbol=exchange_symbol)
         df = pd.DataFrame(trades)
-        df[['price','qty']] = df[['price','qty']].apply(pd.to_numeric)
+        df[['price', 'qty']] = df[['price', 'qty']].apply(pd.to_numeric)
         df['value'] = df['price'] * df['qty']
 
         df_s = df.groupby('orderId')['qty', 'value'].sum()
         return df_s['qty'], df_s['value']
 
     def send_order(self, direction, action, type, symbol, price, amount, client_order_id=None):
+        target_coin, base_coin = xq.get_symbol_coins(symbol)
+        binance_side = self.__trans_side(direction, action)
+        decimal = ts.get_decimal(amount)
+
+        if binance_side is SIDE_BUY:
+            balance = self.get_balances(base_coin)
+            if balance:
+                balance = Decimal(balance['free'])
+            else:
+                balance = Decimal(0)
+            if balance < Decimal(amount) * Decimal(price):
+                loan_amount = ts.reserve_float_ceil(float(Decimal(amount) * Decimal(price) - balance), 0)
+                log.info('loan: coin(%s), amount(%f)' % (base_coin, loan_amount))
+                self.loan(base_coin, loan_amount)
+
+        elif binance_side is SIDE_SELL:
+            balance = self.get_balances(target_coin)
+            if balance:
+                balance = Decimal(balance['free'])
+            else:
+                balance = Decimal(0)
+            if balance < Decimal(amount):
+                loan_amount = ts.reserve_float_ceil(float(Decimal(amount) - balance), decimal)
+                log.info('loan: coin(%s), amount(%f)' % (target_coin.upper(), loan_amount))
+                self.loan(target_coin.upper(), loan_amount)
+        else:
+            return
+
+        return self.create_order(direction, action, type, symbol,
+                          price, amount, client_order_id)
+
+    def create_order(self, direction, action, type, symbol, price, amount, client_order_id=None):
         """提交委托"""
         exchange_symbol = self.__trans_symbol(symbol)
 
@@ -188,14 +249,17 @@ class BinanceExchange:
         if binance_type is None:
             return
 
-        log.info('send order: pair(%s), side(%s), type(%s), price(%f), amount(%f)' % (exchange_symbol, binance_side, binance_type, price, amount))
+        log.info('send order: pair(%s), side(%s), type(%s), price(%f), amount(%f)' % (
+            exchange_symbol, binance_side, binance_type, price, amount))
+        print('send order: pair(%s), side(%s), type(%s), price(%f), amount(%f)' % (
+            exchange_symbol, binance_side, binance_type, price, amount))
         ret = self.__client.create_order(symbol=exchange_symbol, side=binance_side, type=binance_type,
-            timeInForce=TIME_IN_FORCE_GTC, price=price, quantity=amount)
+                                         timeInForce=TIME_IN_FORCE_GTC, price=price, quantity=amount)
         log.debug(ret)
         try:
             if ret['orderId']:
 
-                #if ret['fills']:
+                # if ret['fills']:
 
                 # self.debug('Return buy order ID: %s' % ret['orderId'])
                 return ret['orderId']
@@ -226,9 +290,11 @@ class BinanceExchange:
         for order_id in order_ids:
             self.cancel_order(symbol, order_id)
 
-    def get_order_book(self, symbol, limit=100):
-        """获取挂单列表"""
+    def order_status_is_close(self, symbol, order_id):
+        """查询委托状态"""
         exchange_symbol = self.__trans_symbol(symbol)
-        books = self.__client.get_order_book(symbol=exchange_symbol, limit=limit)
-        return books
-
+        order = self.__client.get_order(
+            symbol=exchange_symbol, orderId=order_id)
+        if order['status'] in [ORDER_STATUS_FILLED, ORDER_STATUS_CANCELED, ORDER_STATUS_REJECTED, ORDER_STATUS_EXPIRED]:
+            return True
+        return False

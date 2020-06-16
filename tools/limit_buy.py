@@ -2,8 +2,9 @@
 import sys
 sys.path.append('../')
 import argparse
-from exchange.binanceExchange import BinanceExchange
+from exchange.exchange import create_exchange
 import common.xquant as xq
+import common.bill as bl
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='account')
@@ -17,10 +18,9 @@ if __name__ == "__main__":
         parser.print_help()
         exit(1)
 
-    if args.e == "binance":
-        exchange = BinanceExchange(debug=True)
-    else:
+    exchange = create_exchange(args.e)
+    if not exchange:
         print("exchange error!")
         exit(1)
 
-    exchange.send_order(xq.DIRECTION_LONG, xq.OPEN_POSITION, xq.ORDER_TYPE_LIMIT, args.s, float(args.p), float(args.a))
+    exchange.send_order(bl.DIRECTION_LONG, bl.OPEN_POSITION, xq.ORDER_TYPE_LIMIT, args.s, float(args.p), float(args.a))

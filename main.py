@@ -20,14 +20,6 @@ def help_print():
     print("./xp.sh config/kdjmacd_btc_usdt.jsn  search       2018-12-1~2019-1-1             寻优")
     print("./xp.sh config/kdjmacd_btc_usdt.jsn  multisearch  2018-12-1~2019-1-1             多进程寻优")
 
-def parse_date_range(date_range):
-    print("time range: [ %s )" % date_range)
-    dates = date_range.split("~")
-
-    start_time = datetime.strptime(dates[0], "%Y-%m-%d")
-    end_time = datetime.strptime(dates[1], "%Y-%m-%d")
-    return start_time, end_time
-
 
 if __name__ == "__main__":
 
@@ -68,7 +60,7 @@ if __name__ == "__main__":
             db_name = "xquant"
 
         print("db_name: %s" % (db_name))
-        logfilename = "display_" + instance_id + ".log"
+        logfilename = instance_id + ".log"
 
     elif select == "real":
         if len(sys.argv) > params_index:
@@ -105,9 +97,7 @@ if __name__ == "__main__":
             exit(1)
 
         logfilename = (
-            select
-            +"_"
-            + class_name
+            class_name
             + "_"
             + config["symbol"]
             + "_"
@@ -116,7 +106,7 @@ if __name__ == "__main__":
             + instance_id
             + ".log"
         )
-        start_time, end_time = parse_date_range(date_range)
+        start_time, end_time = ts.parse_date_range(date_range)
 
     else:
         help_print()
@@ -126,7 +116,7 @@ if __name__ == "__main__":
     server_ip = os.environ.get('LOG_SERVER_IP')
     server_port = os.environ.get('LOG_SERVER_PORT')
     print('Log server IP: %s, Log server port: %s' % (server_ip, server_port))
-    log.init(logfilename, server_ip, server_port)
+    log.init(select, logfilename, server_ip, server_port)
 
     log.info("strategy name: %s;  config: %s" % (class_name, config))
 
@@ -138,10 +128,9 @@ if __name__ == "__main__":
         engine.run(strategy, db_name)
 
     elif select == "real":
-        engine = RealEngine(instance_id, config)
+        engine = RealEngine(instance_id, config["exchange"], config, value)
         strategy = ts.createInstance(module_name, class_name, config, engine)
 
-        engine.value = value
         engine.run(strategy, debug)
 
     elif select == "backtest":
@@ -151,7 +140,7 @@ if __name__ == "__main__":
         else:
             display_switch = False
 
-        engine = BackTest(instance_id, config)
+        engine = BackTest(instance_id, config["exchange"], config)
         strategy = ts.createInstance(module_name, class_name, config, engine)
 
         engine.run(strategy, start_time, end_time, display_switch)

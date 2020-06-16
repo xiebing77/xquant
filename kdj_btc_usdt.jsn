@@ -1,15 +1,23 @@
 {
     "module_name": "strategy/kdj",
     "class_name": "KDJStrategy",
-    "exchange": "binance",
     "commission_rate": 0.001,
     "symbol": "btc_usdt",
     "digits": {"btc": 6, "usdt": 2},
+    "risk_control": {
+        "stop_loss": {
+            "condition": [],
+            "defalut": {"r": -0.08}
+        },
+        "take_profit": {
+            "base_open": []
+        }
+    },
     "sec": 60,
     "kline": {"interval": "1d", "size": 180},
     "kdj_offset": [1.5, 3.6],
     "mode": 1,
-    "limit_price_rate": {"buy": 1.01, "sell": 0.9},
+    "limit_price_rate": {"open": 0.01, "close": 0.1},
     "search": {
         "macd_rate": {"max": 0.05, "min": -0.05, "digits": 5},
         "kdj": {"max": 5, "min": 0, "digits": 2}

@@ -2,6 +2,7 @@
 """各种指标"""
 import numpy as np
 import pandas as pd
+import talib
 
 def py_ma(klines, index, period):
     """
@@ -21,6 +22,33 @@ def py_mas(klines, index, period):
             vs.pop(0)
         vs.append(float(kline[index]))
         arr.append(sum(vs)/len(vs))
+
+    return arr
+
+def py_emas(klines, index, period):
+    arr = []
+
+    for i in range(period):
+        if i==0:
+            ema = float(klines[0][index])
+        elif i >= len(klines):
+            return arr
+        else:
+            k = 2 / (i + 2)
+            v = float(klines[i][index])
+            ema = v * k + ema_y * (1 - k)
+
+        arr.append(ema)
+        ema_y = ema
+
+
+    k = 2 / (period + 1)
+    for kline in klines[period:]:
+        v = float(kline[index])
+        ema = v * k + ema_y * (1 - k)
+
+        arr.append(ema)
+        ema_y = ema
 
     return arr
 
@@ -162,6 +190,12 @@ def pd_kdj(klines_df, period=9, ksgn="close"):
     return k, d, j
 
 
+def ta_kdj(klines_df, period=9, ksgn="close"):
+    kd = talib.STOCH(high=klines_df["high"], low=klines_df["low"], close=klines_df[ksgn],
+        fastk_period=period, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
+
+    return kd
+
 def py_macd(klines, closeindex, fastperiod=12, slowperiod=26, signalperiod=9):
     arr = []
 
@@ -190,10 +224,73 @@ def pd_macd(klines_df, fastperiod=12, slowperiod=26, signalperiod=9):
 
     klines_df["12ema"] = fast_ema
     klines_df["26ema"] = slow_ema
-    klines_df["macd dif"] = fast_ema - slow_ema
-    klines_df["macd dea"] = klines_df["macd dif"].ewm(span=signalperiod, adjust=False).mean()
+    klines_df["dif"] = fast_ema - slow_ema
+    klines_df["dea"] = klines_df["dif"].ewm(span=signalperiod, adjust=False).mean()
+    klines_df["macd"] = klines_df["dif"] - klines_df["dea"]
 
     #print(klines_df)
+    return klines_df
+
+def py_rsi2(klines, closeindex, period=14):
+    closes = [kline[closeindex] for kline in klines[-period:]]
+    ur = []
+    dr = []
+    pre_close = float(closes[0])
+    for close in closes[1:]:
+        close = float(close)
+        r = close / pre_close
+        pre_close = close
+        if r > 1:
+            ur.append(r-1)
+        else:
+            dr.append(1-r)
+    if ur:
+        ua = sum(ur)/len(ur)
+    else:
+        ua = 0
+    if dr:
+        da = sum(dr)/len(dr)
+    else:
+        da = 0
+    return 100*ua/(ua+da)
+
+def py_rsis2(klines, closeindex, period=14):
+    arr = []
+    for i in range(2, len(klines)):
+        rsi = py_rsi2(klines[:i], closeindex, period)
+        arr.append(rsi)
+    return arr
+
+def py_rsi(klines, closeindex, period=14):
+    closes = [kline[closeindex] for kline in klines[-period:]]
+    us = []
+    ds = []
+    pre_close = float(closes[0])
+    for close in closes[1:]:
+        close = float(close)
+        if close > pre_close:
+            us.append(close-pre_close)
+        else:
+            ds.append(pre_close-close)
+        pre_close = close
+    if us:
+        ua = sum(us)/len(us)
+    else:
+        ua = 0
+    if ds:
+        da = sum(ds)/len(ds)
+    else:
+        da = 0
+    return 100*ua/(ua+da)
+    #rs = ua / da
+    #return 100*(1-1/(1+rs))
+
+def py_rsis(klines, closeindex, period=14):
+    arr = []
+    for i in range(2, len(klines)):
+        rsi = py_rsi(klines[:i], closeindex, period)
+        arr.append(rsi)
+    return arr
 
 def py_hl(klines, highindex, lowindex, opentimeindex, period):
 
@@ -243,3 +340,18 @@ def py_wrs(klines, highindex, lowindex, closeindex, period=14):
 
     #print(arr)
     return arr
+
+def py_ad(k, highindex, lowindex, openindex, closeindex, volumeindex):
+    m = float(k[highindex]) - float(k[lowindex])
+    if m==0:
+        return 0
+
+    l = float(k[volumeindex])
+    ad = (float(k[closeindex]) - float(k[openindex])) / m * l
+    return ad
+
+def py_ads(klines, highindex, lowindex, openindex, closeindex, volumeindex):
+    ads = []
+    for k in klines:
+        ads.append(py_ad(k, highindex, lowindex, openindex, closeindex, volumeindex))
+    return ads

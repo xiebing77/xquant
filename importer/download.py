@@ -3,9 +3,9 @@ import sys
 sys.path.append('../')
 import time
 from datetime import datetime, timedelta
-import db.mongodb as md
 import common.xquant as xq
-from exchange.binanceExchange import BinanceExchange
+from exchange.exchange import create_exchange
+from db.mongodb import get_mongodb
 from setup import *
 import pandas as pd
 from importer import add_common_arguments, split_time_range
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     collection = xq.get_kline_collection(symbol, args.k)
     #print("collection: ", collection)
 
-    db = md.MongoDB(mongo_user, mongo_pwd, args.m, db_url)
+    db = get_mongodb(args.m)
     db.ensure_index(collection, [("open_time",1)], unique=True)
 
     if args.r:
@@ -38,14 +38,11 @@ if __name__ == "__main__":
             start_time = None
         end_time = datetime.now()
 
-    if args.m == "binance":
-        open_hour = BinanceExchange.start_time.hour
-        exchange = BinanceExchange(debug=True)
-        if not start_time:
-            start_time = BinanceExchange.start_time
-    else:
+    exchange = create_exchange(args.m)
+    if not exchange:
         print("market data source error!")
         exit(1)
+    open_hour = exchange.start_time.hour
 
     if start_time.hour != open_hour:
         print("open time(%s) hour error! %s open time hour: %s" % (start_time, args.m, open_hour))

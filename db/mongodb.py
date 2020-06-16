@@ -4,7 +4,11 @@ import common.log as log
 from pymongo import MongoClient
 from pymongo.errors import BulkWriteError
 from bson import ObjectId
+from setup import mongo_user, mongo_pwd, db_url
 
+
+def get_mongodb(db_name):
+    return MongoDB(mongo_user, mongo_pwd, db_name, db_url)
 
 def get_datetime_by_id(_id):
     """get datetime from _id"""
@@ -47,8 +51,18 @@ class MongoDB:
 
     def update_one(self, collection, _id, record):
         """update_one"""
-        log.debug("mongodb %s(_id=%s) update : %s" % (collection, _id, record))
+        log.debug("mongodb %s(_id=%s) update: %s" % (collection, _id, record))
         self.__client[collection].update_one({"_id": ObjectId(_id)}, {"$set": record})
+
+    def update(self, collection, query, record):
+        """update"""
+        log.debug("mongodb %s(qurey=%s) update: %s" % (collection, query, record))
+        self.__client[collection].update_many(query, {"$set": record})
+
+    def delete_one(self, collection, query):
+        """delete_one"""
+        log.debug("mongodb %s(query=%s) delete" % (collection, query))
+        self.__client[collection].delete_one(query)
 
     def find(self, collection, query, projection=None):
         """find"""

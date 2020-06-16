@@ -2,7 +2,7 @@
 import sys
 sys.path.append('../')
 import argparse
-from exchange.binanceExchange import BinanceExchange
+from exchange.exchange import create_exchange
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='trade')
@@ -14,9 +14,8 @@ if __name__ == "__main__":
         parser.print_help()
         exit(1)
 
-    if args.e == "binance":
-        exchange = BinanceExchange(debug=True)
-    else:
+    exchange = create_exchange(args.e)
+    if not exchange:
         print("exchange error!")
         exit(1)
 

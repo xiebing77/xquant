@@ -3,13 +3,10 @@
 
 import utils.tools as ts
 from datetime import datetime, timedelta, time
+import json
 
 
-DIRECTION_LONG = "LONG"   # 做多
-DIRECTION_SHORT = "SHORT"  # 做空
-
-OPEN_POSITION = "OPEN"    # 开仓
-CLOSE_POSITION = "CLOSE"   # 平仓
+time_range_split = "~"
 
 
 KLINE_INTERVAL_1MINUTE = '1m'
@@ -199,6 +196,13 @@ def get_interval_seconds(interval):
     else:
         return None
 
+def get_next_open_time(interval, dt):
+    return get_open_time(interval, dt) + get_interval_timedelta(interval)
+
+def get_next_open_timedelta(interval, dt):
+    return get_next_open_time(interval, dt) - dt
+
+
 
 def creat_symbol(target_coin, base_coin):
     """create symbol"""
@@ -226,54 +230,36 @@ def get_balance_frozen(balance):
     return ts.str_to_float(balance["frozen"])
 
 
-def create_signal(direction, action, pst_rate, describe, rmk, can_open_time=None):
-    """创建交易信号"""
-    return {"direction": direction, "action": action, "pst_rate": pst_rate, "describe": describe, "rmk": rmk, "can_open_time": can_open_time}
+def down_area(ss, ls):
+    total_len = len(ss)
 
-def open_long_signal(pst_rate, describe, rmk, can_open_time=None):
-    """创建买信号"""
-    return create_signal(DIRECTION_LONG, OPEN_POSITION, pst_rate, describe, rmk, can_open_time)
+    ei = -1
+    i = -2
+    while i >= -total_len:
+        v = ss[i]-ls[i]
+        if v > 0:
+            return -1, -1, -1
+        if v < ss[ei]-ls[ei]:
+            break
+        ei = i
+        i -= 1
 
-def close_long_signal(pst_rate, describe, rmk, can_open_time=None):
-    """创建卖信号"""
-    return create_signal(DIRECTION_LONG, CLOSE_POSITION, pst_rate, describe, rmk, can_open_time)
+    mi = i
+    bi = i
+    while i >= -total_len:
+        v = ss[i]-ls[i]
+        if v > 0:
+            break
 
-def open_short_signal(pst_rate, describe, rmk, can_open_time=None):
-    """创建买信号"""
-    return create_signal(DIRECTION_SHORT, OPEN_POSITION, pst_rate, describe, rmk, can_open_time)
+        if ss[mi] - ls[mi] > v:
+            mi = i
+        bi = i
+        i -= 1
 
-def close_short_signal(pst_rate, describe, rmk, can_open_time=None):
-    """创建卖信号"""
-    return create_signal(DIRECTION_SHORT, CLOSE_POSITION, pst_rate, describe, rmk, can_open_time)
+    return bi, mi, ei
 
-
-def decision_signals(signals):
-    """决策交易信号"""
-    if not signals:
-        return None
-
-    ds_signal = signals[0]
-
-    for signal in signals[1:]:
-        # 暂时不支持同时做多、做空
-        if ds_signal["direction"] != signal["direction"]:
-            return None
-
-        if ds_signal["action"] == signal["action"]:
-            # 持仓率低的信号优先
-            if ds_signal["pst_rate"] > signal["pst_rate"]:
-                ds_signal = signal
-            elif ds_signal["pst_rate"] == signal["pst_rate"]:
-                # 合并信号
-                ds_signal["describe"] += ", " + signal["describe"]
-                ds_signal["rmk"] += ", " + signal["rmk"]
-                # 限制开仓时间长的优先
-                if signal["can_open_time"]:
-                    if (not ds_signal["can_open_time"]) or (ds_signal["can_open_time"] < signal["can_open_time"]):
-                        ds_signal["can_open_time"] = signal["can_open_time"]
-        else:
-            # 平仓信号优先于开仓信号
-            if ds_signal["action"] == OPEN_POSITION:
-                ds_signal = signal
-
-    return ds_signal
+def get_strategy_config(config_path):
+    fo = open(config_path, "r")
+    config = json.loads(fo.read())
+    fo.close()
+    return config

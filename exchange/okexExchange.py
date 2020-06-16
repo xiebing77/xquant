@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import os
 import common.xquant as xq
-from .exchange import Exchange
 from .okex.OkcoinSpotAPI import OKCoinSpot
 
 api_key = os.environ.get('OKEX_API_KEY')
@@ -9,7 +8,7 @@ secret_key = os.environ.get('OKEX_SECRET_KEY')
 rest_url = 'www.okex.com'
 
 
-class OkexExchange(Exchange):
+class OkexExchange:
     """docstring for OkexExchange"""
     def __init__(self, debug=False):
         self.client = OKCoinSpot(rest_url, api_key, secret_key)
