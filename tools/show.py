@@ -451,7 +451,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', help='symbol (btc_usdt)')
     parser.add_argument('-i', help='interval')
     parser.add_argument('-r', help='time range')
-    parser.add_argument('-di', help='display indicators,egg: macd,kdj,MACD,KDJ,RSI')
+    parser.add_argument('-di', nargs='*', help='display indicators,egg: MACD KDJ RSI')
 
     add_argument_overlap_studies(parser)
 
@@ -473,5 +473,5 @@ if __name__ == "__main__":
     pre_count = 150
     klines = md.get_klines(args.s, interval, pre_count+display_count, start_time-xq.get_timedelta(interval, pre_count))
 
-    show(args, klines, md.kline_column_names, display_count, ts.parse_ic_keys(args.di))
+    show(args, klines, md.kline_column_names, display_count, args.di)
 
