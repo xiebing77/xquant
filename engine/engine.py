@@ -515,13 +515,12 @@ class Engine:
         return orders
 
 
-    def analyze(self, symbol, orders, display_rmk=False):
+    def analyze(self, symbol, orders, print_switch_hl=True, display_rmk=False):
         if len(orders) == 0:
             return
 
         orders = self.stat_orders(symbol, orders)
 
-        print_switch_hl = True
         print_switch_deal = False
         print_switch_commission = False
         print_switch_profit = False

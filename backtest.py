@@ -93,7 +93,7 @@ def analyze(args):
     pprint.pprint(config, indent=4)
 
     engine = BackTest(instance_id, instance['mds'], config)
-    engine.analyze(config['symbol'], instance['orders'], args.rmk)
+    engine.analyze(config['symbol'], instance['orders'], args.hl, args.rmk)
 
 
 def chart(args):
@@ -136,6 +136,7 @@ if __name__ == "__main__":
 
     parser_analyze = subparsers.add_parser('analyze', help='analyze help')
     parser_analyze.add_argument('-sii', help='strategy instance id')
+    parser_analyze.add_argument('--hl', help='high low', action="store_true")
     parser_analyze.add_argument('--rmk', help='remark', action="store_true")
     parser_analyze.set_defaults(func=analyze)
 
