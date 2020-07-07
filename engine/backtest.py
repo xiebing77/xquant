@@ -115,11 +115,3 @@ class BackTest(Engine):
             % (tick_count, total_tick_end - total_tick_start)
         )
 
-
-    def chart(self, symbol, start_time, end_time, args):
-        interval = self.config["kline"]["interval"]
-        display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
-        print("display_count: %s" % display_count)
-
-        klines = self.md.get_klines(symbol, interval, 150+display_count)
-        self.display(args, symbol, self.orders, klines, display_count)

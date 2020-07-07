@@ -10,7 +10,9 @@ import common.xquant as xq
 import common.log as log
 from engine.backtest import BackTest
 from common.overlap_studies import *
+from common.chart import chart
 from db.mongodb import get_mongodb
+from md.dbmd import DBMD
 
 BACKTEST_INSTANCES_COLLECTION_NAME = 'bt_instances'
 
@@ -24,6 +26,7 @@ def run(args):
     print('instance_id: %s' % instance_id)
 
     config = xq.get_strategy_config(args.sc)
+    pprint.pprint(config)
 
     module_name = config["module_name"].replace("/", ".")
     class_name = config["class_name"]
@@ -56,7 +59,7 @@ def run(args):
     )
 
     if args.chart:
-        engine.chart(symbol, start_time, end_time, args)
+        chart(engine.md, engine.config, start_time, end_time, engine.orders, args)
 
 
 def get_instance(instance_id):
@@ -96,16 +99,18 @@ def analyze(args):
     engine.analyze(config['symbol'], instance['orders'], args.hl, args.rmk)
 
 
-def chart(args):
+def sub_cmd_chart(args):
     instance_id = args.sii
     instance = get_instance(instance_id)
 
-    config = xq.get_strategy_config(instance['sc'])
+    start_time = instance['start_time']
+    end_time = instance['end_time']
+    orders = instance['orders']
 
-    engine = BackTest(instance_id, instance['mds'], config)
-    engine.md.tick_time = instance['end_time']
-    engine.orders = instance['orders']
-    engine.chart(config['symbol'], instance['start_time'], instance['end_time'], args)
+    md = DBMD(instance['mds'])
+    md.tick_time = end_time
+    config = xq.get_strategy_config(instance['sc'])
+    chart(md, config, start_time, end_time, orders, args)
 
 
 if __name__ == "__main__":
@@ -143,7 +148,7 @@ if __name__ == "__main__":
     parser_chart = subparsers.add_parser('chart', help='chart help')
     parser_chart.add_argument('-sii', help='strategy instance id')
     add_argument_overlap_studies(parser_chart)
-    parser_chart.set_defaults(func=chart)
+    parser_chart.set_defaults(func=sub_cmd_chart)
 
     args = parser.parse_args()
     # print(args)
