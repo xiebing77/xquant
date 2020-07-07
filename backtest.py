@@ -8,7 +8,7 @@ import pprint
 import utils.tools as ts
 import common.xquant as xq
 import common.log as log
-from engine.backtest import BackTest
+from engine.backtestengine import BackTest
 from common.overlap_studies import *
 from common.chart import chart
 from db.mongodb import get_mongodb
@@ -59,7 +59,9 @@ def run(args):
     )
 
     if args.chart:
-        chart(engine.md, engine.config, start_time, end_time, engine.orders, args)
+        ordersets = []
+        ordersets.append(engine.orders)
+        chart(engine.md, engine.config, start_time, end_time, ordersets, args)
 
 
 def get_instance(instance_id):
@@ -110,7 +112,38 @@ def sub_cmd_chart(args):
     md = DBMD(instance['mds'])
     md.tick_time = end_time
     config = xq.get_strategy_config(instance['sc'])
-    chart(md, config, start_time, end_time, orders, args)
+    ordersets = []
+    ordersets.append(orders)
+    chart(md, config, start_time, end_time, ordersets, args)
+
+
+def sub_cmd_chart_diff(args):
+    print(args.siis)
+    print(len(args.siis))
+    siis = args.siis
+    if len(siis) != 2:
+        exit(1)
+
+    instance_a = get_instance(siis[0])
+    instance_b = get_instance(siis[1])
+    if instance_a['sc'] != instance_b['sc']:
+        print(instance_a['sc'])
+        print(instance_b['sc'])
+        exit(1)
+
+    start_time = min(instance_a['start_time'], instance_b['start_time'])
+    end_time = max(instance_a['end_time'], instance_b['end_time'])
+    orders_a = instance_a['orders']
+    orders_b = instance_b['orders']
+
+    md = DBMD(instance_a['mds'])
+    md.tick_time = end_time
+    config = xq.get_strategy_config(instance_a['sc'])
+    ordersets = []
+    ordersets.append(orders_a)
+    ordersets.append(orders_b)
+    chart(md, config, start_time, end_time, ordersets, args)
+
 
 
 if __name__ == "__main__":
@@ -149,6 +182,11 @@ if __name__ == "__main__":
     parser_chart.add_argument('-sii', help='strategy instance id')
     add_argument_overlap_studies(parser_chart)
     parser_chart.set_defaults(func=sub_cmd_chart)
+
+    parser_chart_diff = subparsers.add_parser('chart_diff', help='chart diff')
+    parser_chart_diff.add_argument('-siis', nargs='*', help='strategy instance ids')
+    add_argument_overlap_studies(parser_chart_diff)
+    parser_chart_diff.set_defaults(func=sub_cmd_chart_diff)
 
     args = parser.parse_args()
     # print(args)

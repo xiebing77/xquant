@@ -17,7 +17,7 @@ from setup import *
 from common.overlap_studies import *
 
 
-def chart_mpf(title, args, symbol, orders, klines, kline_column_names, display_count):
+def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, display_count):
     disp_ic_keys = ts.parse_ic_keys("macd,rsi")
 
     for index, value in enumerate(kline_column_names):
@@ -70,11 +70,9 @@ def chart_mpf(title, args, symbol, orders, klines, kline_column_names, display_c
         plt.subplot(gs[-1, :])
     ]
     """
-    fig, axes = plt.subplots(len(disp_ic_keys)+2, 1, sharex=True)
+    fig, axes = plt.subplots(len(disp_ic_keys)+1+len(ordersets), 1, sharex=True)
     fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
     fig.suptitle(title)
-
-    trade_times = [order["trade_time"] for order in orders]
 
     quotes = []
     for k in klines[-display_count:]:
@@ -89,7 +87,8 @@ def chart_mpf(title, args, symbol, orders, klines, kline_column_names, display_c
     axes[i].grid(True)
     axes[i].autoscale_view()
     axes[i].xaxis_date()
-    axes[i].plot(trade_times, [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
+    for orders in ordersets:
+        axes[i].plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
 
     handle_overlap_studies(args, axes[i], klines_df, close_times, display_count)
 
@@ -207,13 +206,14 @@ def chart_mpf(title, args, symbol, orders, klines, kline_column_names, display_c
         axes[i].plot(close_times, ds, "y", label="d")
         axes[i].plot(close_times, js, "m", label="j")
 
+    for orders in ordersets:
+        i += 1
+        axes[i].set_ylabel('rate')
+        axes[i].grid(True)
+        #axes[i].set_label(["position rate", "profit rate"])
+        #axes[i].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
+        axes[i].plot([order["trade_time"] for order in orders] ,[round(100*order["floating_profit_rate"], 2) for order in orders], "g", drawstyle="steps", label="profit")
 
-    i += 1
-    axes[i].set_ylabel('rate')
-    axes[i].grid(True)
-    #axes[i].set_label(["position rate", "profit rate"])
-    #axes[i].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
-    axes[i].plot(trade_times ,[round(100*order["floating_profit_rate"], 2) for order in orders], "g", drawstyle="steps", label="profit")
     """
     i += 1
     axes[i].set_ylabel('total profit rate')
@@ -245,7 +245,7 @@ def chart_mpf(title, args, symbol, orders, klines, kline_column_names, display_c
     plt.show()
 
 
-def chart(md, config, start_time, end_time, orders, args):
+def chart(md, config, start_time, end_time, ordersets, args):
     symbol = config["symbol"]
     interval = config["kline"]["interval"]
     display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
@@ -253,6 +253,6 @@ def chart(md, config, start_time, end_time, orders, args):
 
     klines = md.get_klines(symbol, interval, 150+display_count)
     title = symbol + '  ' + config['kline']['interval'] + ' ' + config['class_name']
-    chart_mpf(title, args, symbol, orders, klines, md.kline_column_names, display_count)
+    chart_mpf(title, args, symbol, ordersets, klines, md.kline_column_names, display_count)
 
 
