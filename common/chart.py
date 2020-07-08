@@ -15,11 +15,10 @@ import common.bill as bl
 from db.mongodb import get_mongodb
 from setup import *
 from common.overlap_studies import *
+from common.momentum_indicators import *
 
 
 def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, display_count):
-    disp_ic_keys = ts.parse_ic_keys("macd,rsi")
-
     for index, value in enumerate(kline_column_names):
         if value == "high":
             highindex = index
@@ -35,22 +34,6 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
             opentimeindex = index
 
     klines_df = pd.DataFrame(klines, columns=kline_column_names)
-
-    ks, ds, js = ic.pd_kdj(klines_df)
-
-    klines_df = ic.pd_macd(klines_df)
-    difs = [round(a, 2) for a in klines_df["dif"]]
-    deas = [round(a, 2) for a in klines_df["dea"]]
-    macds = [round(a, 2) for a in klines_df["macd"]]
-    difs = difs[-display_count:]
-    deas = deas[-display_count:]
-    macds = macds[-display_count:]
-
-    # display
-    ks = ks[-display_count:]
-    ds = ds[-display_count:]
-    js = js[-display_count:]
-
 
     opens = klines_df["open"][-display_count:]
     closes = klines_df["close"][-display_count:]
@@ -70,7 +53,8 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         plt.subplot(gs[-1, :])
     ]
     """
-    fig, axes = plt.subplots(len(disp_ic_keys)+1+len(ordersets), 1, sharex=True)
+    cols = 1 + get_momentum_indicators_count(args) + len(ordersets)
+    fig, axes = plt.subplots(cols, 1, sharex=True)
     fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
     fig.suptitle(title)
 
@@ -91,8 +75,9 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         axes[i].plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
 
     handle_overlap_studies(args, axes[i], klines_df, close_times, display_count)
+    handle_momentum_indicators(args, axes, i, klines_df, close_times, display_count)
 
-
+    '''
     ic_key = 'mr'
     if ic_key in disp_ic_keys:
         i += 1
@@ -121,15 +106,6 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         axes[i].plot(close_times, difrs, "m--", label="difr")
         axes[i].plot(close_times, dears, "m--", label="dear")
 
-    ic_key = 'macd'
-    if ic_key in disp_ic_keys:
-        i += 1
-        axes[i].set_ylabel('macd')
-        axes[i].grid(True)
-        axes[i].plot(close_times, difs, "y", label="dif")
-        axes[i].plot(close_times, deas, "b", label="dea")
-        axes[i].plot(close_times, macds, "r", drawstyle="steps", label="macd")
-
     ic_key = 'rsi'
     if ic_key in disp_ic_keys:
         i += 1
@@ -151,63 +127,11 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         axes[i].plot(close_times, rs3, "m", label="rsi3")
         """
 
-    ic_key = 'AD'
-    if ic_key in disp_ic_keys:
-        ads = talib.AD(klines_df["high"], klines_df["low"], klines_df["close"], klines_df["volume"])
-        i += 1
-        axes[i].set_ylabel(ic_key)
-        axes[i].grid(True)
-        axes[i].plot(close_times, ads, "y:", label=ic_key)
 
-    ic_key = 'DX'
-    if ic_key in disp_ic_keys:
-        dxs = talib.DX(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
-        dxs = dxs[-display_count:]
-        adxs = talib.ADX(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
-        adxs = adxs[-display_count:]
-        adxrs = talib.ADXR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
-        adxrs = adxrs[-display_count:]
-        i += 1
-        ts.ax(axes[i], ic_key, close_times, dxs, "r:")
-        ts.ax(axes[i], ic_key, close_times, adxs, "y:")
-        ts.ax(axes[i], ic_key, close_times, adxrs, "k:")
-
-    ic_key = 'PLUS_DM'
-    if ic_key in disp_ic_keys:
-        real = talib.PLUS_DM(klines_df["high"], klines_df["low"])
-        i += 1
-        axes[i].set_ylabel(ic_key)
-        axes[i].grid(True)
-        axes[i].plot(close_times, real[-display_count:], "y:", label=ic_key)
-
-    ic_key = 'MINUS_DM'
-    if ic_key in disp_ic_keys:
-        real = talib.MINUS_DM(klines_df["high"], klines_df["low"])
-        i += 1
-        axes[i].set_ylabel(ic_key)
-        axes[i].grid(True)
-        axes[i].plot(close_times, real[-display_count:], "y:", label=ic_key)
-
-    ic_key = 'volatility'
-    if ic_key in disp_ic_keys:
-        i += 1
-        axes[i].set_ylabel('volatility')
-        axes[i].grid(True)
-        axes[i].plot(close_times, atrs, "y:", label="ATR")
-        axes[i].plot(close_times, natrs, "k--", label="NATR")
-        axes[i].plot(close_times, tranges, "c--", label="TRANGE")
-
-    ic_key = 'kdj'
-    if ic_key in disp_ic_keys:
-        i += 1
-        axes[i].set_ylabel('kdj')
-        axes[i].grid(True)
-        axes[i].plot(close_times, ks, "b", label="k")
-        axes[i].plot(close_times, ds, "y", label="d")
-        axes[i].plot(close_times, js, "m", label="j")
-
+    '''
+    i = cols
     for orders in ordersets:
-        i += 1
+        i -= 1
         axes[i].set_ylabel('rate')
         axes[i].grid(True)
         #axes[i].set_label(["position rate", "profit rate"])
