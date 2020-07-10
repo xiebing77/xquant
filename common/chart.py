@@ -17,6 +17,7 @@ from setup import *
 from common.overlap_studies import *
 from common.momentum_indicators import *
 from common.volume_indicators import *
+from common.volatility_indicators import *
 
 
 def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, display_count):
@@ -54,7 +55,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         plt.subplot(gs[-1, :])
     ]
     """
-    cols = 1 + get_momentum_indicators_count(args) + get_volume_indicators_count(args) + len(ordersets)
+    cols = 1 + get_momentum_indicators_count(args) + get_volume_indicators_count(args) + get_volatility_indicators_count(args) + len(ordersets)
     fig, axes = plt.subplots(cols, 1, sharex=True)
     fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
     fig.suptitle(title)
@@ -80,6 +81,9 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
 
     handle_volume_indicators(args, axes, i, klines_df, close_times, display_count)
     i += get_volume_indicators_count(args)
+
+    handle_volatility_indicators(args, axes, i, klines_df, close_times, display_count)
+    i += get_volatility_indicators_count(args)
 
     '''
     ic_key = 'mr'

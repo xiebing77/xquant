@@ -12,6 +12,7 @@ from engine.backtestengine import BackTest
 from common.overlap_studies import *
 from common.momentum_indicators import *
 from common.volume_indicators import *
+from common.volatility_indicators import *
 from common.chart import chart
 from db.mongodb import get_mongodb
 from md.dbmd import DBMD
@@ -185,6 +186,7 @@ if __name__ == "__main__":
     add_argument_overlap_studies(parser_chart)
     add_argument_momentum_indicators(parser_chart)
     add_argument_volume_indicators(parser_chart)
+    add_argument_volatility_indicators(parser_chart)
     parser_chart.set_defaults(func=sub_cmd_chart)
 
     parser_chart_diff = subparsers.add_parser('chart_diff', help='chart diff')
