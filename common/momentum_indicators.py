@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import pandas as pd
 import talib
 
 import utils.tools as ts
@@ -15,6 +16,7 @@ def add_argument_momentum_indicators(parser):
     group.add_argument('--kdj', action="store_true", help='kdj')
 
     # talib
+    group = parser.add_argument_group('Momentum Indicators (TaLib)')
     group.add_argument('--ADX' , action="store_true", help='Average Directional Movement Index')
     group.add_argument('--ADXR', action="store_true", help='Average Directional Movement Index Rating')
     group.add_argument('--APO' , action="store_true", help='Absolute Price Oscillator')
@@ -138,6 +140,8 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
     if args.mr: # macd rate
         name = 'macd rate'
         klines_df = ic.pd_macd(klines_df)
+        closes = klines_df["close"][-display_count:]
+        closes = pd.to_numeric(closes)
         mrs = [round(a, 4) for a in (klines_df["macd"][-display_count:] / closes)]
         i += 1
         axes[i].set_ylabel(name)

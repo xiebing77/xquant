@@ -16,6 +16,7 @@ from db.mongodb import get_mongodb
 from setup import *
 from common.overlap_studies import *
 from common.momentum_indicators import *
+from common.volume_indicators import *
 
 
 def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, display_count):
@@ -53,7 +54,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         plt.subplot(gs[-1, :])
     ]
     """
-    cols = 1 + get_momentum_indicators_count(args) + len(ordersets)
+    cols = 1 + get_momentum_indicators_count(args) + get_volume_indicators_count(args) + len(ordersets)
     fig, axes = plt.subplots(cols, 1, sharex=True)
     fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
     fig.suptitle(title)
@@ -64,8 +65,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         quote = (dts.date2num(d), float(k[1]), float(k[4]), float(k[2]), float(k[3]))
         quotes.append(quote)
 
-    i = -1
-    i += 1
+    i = 0
     mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
     axes[i].set_ylabel('price')
     axes[i].grid(True)
@@ -73,9 +73,13 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
     axes[i].xaxis_date()
     for orders in ordersets:
         axes[i].plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
-
     handle_overlap_studies(args, axes[i], klines_df, close_times, display_count)
+
     handle_momentum_indicators(args, axes, i, klines_df, close_times, display_count)
+    i += get_momentum_indicators_count(args)
+
+    handle_volume_indicators(args, axes, i, klines_df, close_times, display_count)
+    i += get_volume_indicators_count(args)
 
     '''
     ic_key = 'mr'

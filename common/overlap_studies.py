@@ -4,12 +4,13 @@ import talib
 
 def add_argument_overlap_studies(parser):
     # Overlap Studies
-    group = parser.add_argument_group('overlap studies')
+    group = parser.add_argument_group('Overlap Studies')
 
     group.add_argument('--ABANDS', nargs='*', help='ATR Bands')
     group.add_argument('--BANDS', type=float, nargs='?', const=0.1, help=' Bands')
 
     # talib
+    group = parser.add_argument_group('Overlap Studies (TaLib)')
     group.add_argument('--BBANDS', action="store_true", help='Bollinger Bands')
     group.add_argument('--DEMA', type=int, nargs='?', const=30, help='Double Exponential Moving Average')
     group.add_argument('--EMA', nargs='*', help='Exponential Moving Average')
