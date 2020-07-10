@@ -15,6 +15,7 @@ import common.bill as bl
 from db.mongodb import get_mongodb
 from setup import *
 from common.overlap_studies import *
+from common.price_transform import *
 from common.momentum_indicators import *
 from common.volume_indicators import *
 from common.volatility_indicators import *
@@ -80,6 +81,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
     for orders in ordersets:
         axes[i].plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
     handle_overlap_studies(args, axes[i], klines_df, close_times, display_count)
+    handle_price_transform(args, axes[i], klines_df, close_times, display_count)
 
     handle_momentum_indicators(args, axes, i, klines_df, close_times, display_count)
     i += get_momentum_indicators_count(args)

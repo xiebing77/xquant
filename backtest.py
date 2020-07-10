@@ -10,6 +10,7 @@ import common.xquant as xq
 import common.log as log
 from engine.backtestengine import BackTest
 from common.overlap_studies import *
+from common.price_transform import *
 from common.momentum_indicators import *
 from common.volume_indicators import *
 from common.volatility_indicators import *
@@ -185,6 +186,7 @@ if __name__ == "__main__":
     parser_chart = subparsers.add_parser('chart', help='chart help')
     parser_chart.add_argument('-sii', help='strategy instance id')
     add_argument_overlap_studies(parser_chart)
+    add_argument_price_transform(parser_chart)
     add_argument_momentum_indicators(parser_chart)
     add_argument_volume_indicators(parser_chart)
     add_argument_volatility_indicators(parser_chart)
