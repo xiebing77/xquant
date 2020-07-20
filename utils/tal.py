@@ -39,6 +39,10 @@ def MINUS_DM(klines_df, timeperiod=14):
     real = talib.MINUS_DM(klines_df["high"], klines_df["low"], timeperiod=14)
     return [ts.reserve_float(a, 6) for a in real]
 
+def TRIX(klines_df, timeperiod=30):
+    real = talib.TRIX(klines_df["close"], timeperiod=timeperiod)
+    return [ts.reserve_float(a, 6) for a in real]
+
 def WILLR(klines_df, timeperiod=14):
     real = talib.WILLR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
     return [ts.reserve_float(a, 6) for a in real]

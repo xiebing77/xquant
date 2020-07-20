@@ -187,14 +187,11 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
     plt.show()
 
 
-def chart(md, config, start_time, end_time, ordersets, args):
-    symbol = config["symbol"]
-    interval = config["kline"]["interval"]
+def chart(title, md, symbol, interval, start_time, end_time, ordersets, args):
     display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
     print("display_count: %s" % display_count)
 
     klines = md.get_klines(symbol, interval, 150+display_count)
-    title = symbol + '  ' + config['kline']['interval'] + ' ' + config['class_name']
     chart_mpf(title, args, symbol, ordersets, klines, md.kline_column_names, display_count)
 
 

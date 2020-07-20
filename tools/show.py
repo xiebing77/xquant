@@ -18,7 +18,15 @@ import utils.tal as tal
 
 from datetime import datetime,timedelta
 from common.overlap_studies import *
+from common.price_transform import *
+from common.momentum_indicators import *
+from common.volume_indicators import *
+from common.volatility_indicators import *
+from common.cycle_indicators import *
+from common.chart import chart
 
+
+'''
 def show(args, klines, kline_column_names, display_count, disp_ic_keys):
     for index, value in enumerate(kline_column_names):
         if value == "high":
@@ -443,6 +451,7 @@ def show(args, klines, kline_column_names, display_count, disp_ic_keys):
         ts.ax(axes[i], ic_key, close_times, real[-display_count:], "y:")
 
     plt.show()
+'''
 
 
 if __name__ == "__main__":
@@ -451,27 +460,33 @@ if __name__ == "__main__":
     parser.add_argument('-s', help='symbol (btc_usdt)')
     parser.add_argument('-i', help='interval')
     parser.add_argument('-r', help='time range')
-    parser.add_argument('-di', nargs='*', help='display indicators,egg: MACD KDJ RSI')
+    #parser.add_argument('-di', nargs='*', help='display indicators,egg: MACD KDJ RSI')
 
     add_argument_overlap_studies(parser)
+    add_argument_price_transform(parser)
+    add_argument_momentum_indicators(parser)
+    add_argument_volume_indicators(parser)
+    add_argument_volatility_indicators(parser)
+    add_argument_cycle_indicators(parser)
 
     args = parser.parse_args()
     # print(args)
 
-    if not (args.r and args.i and args.s and args.di and args.e):
+    if not (args.r and args.i and args.s and args.e):
         parser.print_help()
         exit(1)
 
+    symbol = args.s
     interval = args.i
     start_time, end_time = ts.parse_date_range(args.r)
     display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
     print("display_count: %s" % display_count)
 
-
     md = DBMD(args.e)
     md.tick_time = datetime.now()
-    pre_count = 150
-    klines = md.get_klines(args.s, interval, pre_count+display_count, start_time-xq.get_timedelta(interval, pre_count))
 
-    show(args, klines, md.kline_column_names, display_count, args.di)
+    title = symbol + '  ' + interval
+
+    ordersets = []
+    chart(title, md, symbol, interval, start_time, end_time, ordersets, args)
 

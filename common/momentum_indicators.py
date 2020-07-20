@@ -40,7 +40,7 @@ def add_argument_momentum_indicators(parser):
     group.add_argument('--ROCP', action="store_true", help='Rate of change Percentage: (price-prevPrice)/prevPrice')
     group.add_argument('--ROCR', action="store_true", help='Rate of change ratio: (price/prevPrice)')
     group.add_argument('--ROCR100', action="store_true", help='Rate of change ratio 100 scale: (price/prevPrice)*100')
-    group.add_argument('--RSI', action="store_true", help='Relative Strength Index')
+    group.add_argument('--RSI', type=int, nargs='*', help='Relative Strength Index')
     group.add_argument('--STOCH', action="store_true", help='Stochastic')
     group.add_argument('--STOCHF', action="store_true", help='Stochastic Fast')
     group.add_argument('--STOCHRSI', action="store_true", help='Stochastic Relative Strength Index')
@@ -105,7 +105,7 @@ def get_momentum_indicators_count(args):
         count += 1
     if args.ROCR100: # 
         count += 1
-    if args.RSI: # RSI
+    if args.RSI is not None: # RSI
         count += 1
     if args.STOCH: # 
         count += 1
@@ -351,16 +351,21 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
         axes[i].grid(True)
         axes[i].plot(close_times, real[-display_count:], "b:", label=name)
 
-    if args.RSI: # RSI
+    if args.RSI is not None: # RSI
         name = 'RSI'
-        rsis = talib.RSI(klines_df["close"], timeperiod=14)
-        rsis = [round(a, 3) for a in rsis][-display_count:]
         i += 1
-        axes[i].set_ylabel(name)
         axes[i].grid(True)
-        axes[i].plot(close_times, rsis, "r", label="rsi")
-        axes[i].plot(close_times, [70]*len(rsis), '-', color='r')
-        axes[i].plot(close_times, [30]*len(rsis), '-', color='r')
+
+        if len(args.RSI) == 0:
+            tps = [14]
+        else:
+            tps = args.RSI
+        cs = ["r", "y", "b"]
+        axes[i].set_ylabel("%s%s"%(name, tps))
+        for idx, tp in enumerate(tps):
+            rsis = talib.RSI(klines_df["close"], timeperiod=tp)
+            rsis = [round(a, 3) for a in rsis][-display_count:]
+            axes[i].plot(close_times, rsis, cs[idx], label="rsi")
 
     if args.STOCH: # STOCH
         name = 'STOCH'

@@ -11,10 +11,10 @@ def add_argument_volatility_indicators(parser):
     # Volume Indicators
 
     # talib
-    group = parser.add_argument_group('Volume Indicators (TaLib)')
+    group = parser.add_argument_group('Volatility Indicators (TaLib)')
     group.add_argument('--ATR'   , action="store_true", help='Average True Range')
-    group.add_argument('--NATR', action="store_true", help='Normalized Average True Range')
-    group.add_argument('--TRANGE'  , action="store_true", help='On Balance Volume')
+    group.add_argument('--NATR'  , action="store_true", help='Normalized Average True Range')
+    group.add_argument('--TRANGE', action="store_true", help='On Balance Volume')
 
 
 def get_volatility_indicators_count(args):
