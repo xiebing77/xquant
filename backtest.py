@@ -116,10 +116,16 @@ def sub_cmd_chart(args):
 
     md = DBMD(instance['mds'])
     md.tick_time = end_time
+
     config = xq.get_strategy_config(instance['sc'])
+    symbol = config["symbol"]
+    interval = config["kline"]["interval"]
+    title = symbol + '  ' + config['kline']['interval'] + ' ' + config['class_name']
+
     ordersets = []
     ordersets.append(orders)
-    chart(md, config, start_time, end_time, ordersets, args)
+
+    chart(title, md, symbol, interval, start_time, end_time, ordersets, args)
 
 
 def sub_cmd_chart_diff(args):
@@ -143,11 +149,17 @@ def sub_cmd_chart_diff(args):
 
     md = DBMD(instance_a['mds'])
     md.tick_time = end_time
+
     config = xq.get_strategy_config(instance_a['sc'])
+    symbol = config["symbol"]
+    interval = config["kline"]["interval"]
+    title = symbol + '  ' + config['kline']['interval'] + ' ' + config['class_name']
+
     ordersets = []
     ordersets.append(orders_a)
     ordersets.append(orders_b)
-    chart(md, config, start_time, end_time, ordersets, args)
+
+    chart(title, md, symbol, interval, start_time, end_time, ordersets, args)
 
 
 
@@ -196,6 +208,11 @@ if __name__ == "__main__":
     parser_chart_diff = subparsers.add_parser('chart_diff', help='chart diff')
     parser_chart_diff.add_argument('-siis', nargs='*', help='strategy instance ids')
     add_argument_overlap_studies(parser_chart_diff)
+    add_argument_price_transform(parser_chart_diff)
+    add_argument_momentum_indicators(parser_chart_diff)
+    add_argument_volume_indicators(parser_chart_diff)
+    add_argument_volatility_indicators(parser_chart_diff)
+    add_argument_cycle_indicators(parser_chart_diff)
     parser_chart_diff.set_defaults(func=sub_cmd_chart_diff)
 
     args = parser.parse_args()
