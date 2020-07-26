@@ -2,19 +2,9 @@
 import sys
 sys.path.append('../')
 import argparse
-import utils.tools as ts
-import utils.indicator as ic
 import common.xquant as xq
 from md.dbmd import DBMD
 from exchange.exchange import exchange_names, BINANCE_SPOT_EXCHANGE_NAME
-
-import matplotlib.pyplot as plt
-import matplotlib.dates as dts
-from matplotlib import gridspec
-import mpl_finance as mpf
-import pandas as pd
-import talib
-import utils.tal as tal
 
 from datetime import datetime,timedelta
 from common.overlap_studies import *
@@ -462,6 +452,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', help='time range')
     #parser.add_argument('-di', nargs='*', help='display indicators,egg: MACD KDJ RSI')
 
+    parser.add_argument('--volume', action="store_true", help='volume')
     add_argument_overlap_studies(parser)
     add_argument_price_transform(parser)
     add_argument_momentum_indicators(parser)

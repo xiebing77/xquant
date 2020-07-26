@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as dts
 from matplotlib import gridspec
 import mpl_finance as mpf
+import mplfinance as mpf2
 import pandas as pd
 import talib
 from datetime import datetime,timedelta
@@ -22,7 +23,22 @@ from common.volatility_indicators import *
 from common.cycle_indicators import *
 
 
+def chart_mpf2(title, args, symbol, ordersets, klines, kline_column_names, display_count):
+    klines_df = pd.DataFrame(klines, columns=kline_column_names)
+    klines_df.index = pd.to_datetime(klines_df.index)
+    klines_df["open"] = pd.to_numeric(klines_df["open"])
+    klines_df["close"] = pd.to_numeric(klines_df["close"])
+    klines_df["high"] = pd.to_numeric(klines_df["high"])
+    klines_df["low"] = pd.to_numeric(klines_df["low"])
+    klines_df["volume"] = pd.to_numeric(klines_df["volume"])
+
+    s = mpf2.make_mpf_style(base_mpf_style='classic', rc={'figure.facecolor':'lightgray'})
+    mpf2.plot(klines_df, type='candle', figscale=1.2, figratio=(8,5), title=title, style=s, volume=True)
+    return
+
+
 def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, display_count):
+    '''
     for index, value in enumerate(kline_column_names):
         if value == "high":
             highindex = index
@@ -36,6 +52,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
             volumeindex = index
         if value == "open_time":
             opentimeindex = index
+    '''
 
     klines_df = pd.DataFrame(klines, columns=kline_column_names)
 
@@ -62,6 +79,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         + get_volatility_indicators_count(args)
         + get_cycle_indicators_count(args)
         + len(ordersets))
+
     fig, axes = plt.subplots(cols, 1, sharex=True)
     fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
     fig.suptitle(title)
@@ -82,6 +100,13 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         axes[i].plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
     handle_overlap_studies(args, axes[i], klines_df, close_times, display_count)
     handle_price_transform(args, axes[i], klines_df, close_times, display_count)
+
+    if args.volume:
+        i += 1
+        axes[i].set_ylabel('volume')
+        axes[i].grid(True)
+        axes[i].plot(klines_df["open_time"], klines_df["volume"], "g", drawstyle="steps", label="volume")
+
 
     handle_momentum_indicators(args, axes, i, klines_df, close_times, display_count)
     i += get_momentum_indicators_count(args)

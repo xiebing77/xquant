@@ -23,12 +23,16 @@ BACKTEST_INSTANCES_COLLECTION_NAME = 'bt_instances'
 
 bt_db = get_mongodb('backtest')
 
+def create_instance_id():
+    instance_id = datetime.now().strftime("%Y%m%d-%H%M%S_") + str(uuid.uuid1())  # 每次回测都是一个独立的实例
+    print('new id of instance: %s' % instance_id)
+    return instance_id
+
 def run(args):
     if not (args.m and args.sc and args.r):
         exit(1)
 
-    instance_id = datetime.now().strftime("%Y%m%d-%H%M%S_") + str(uuid.uuid1())  # 每次回测都是一个独立的实例
-    print('instance_id: %s' % instance_id)
+    instance_id = create_instance_id()
 
     config = xq.get_strategy_config(args.sc)
     pprint.pprint(config)
@@ -50,7 +54,7 @@ def run(args):
     engine = BackTest(instance_id, args.m, config)
     strategy = ts.createInstance(module_name, class_name, config, engine)
     engine.run(strategy, start_time, end_time)
-    engine.analyze(symbol, engine.orders)
+    engine.analyze(symbol, engine.orders, True, args.rmk)
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
         {
@@ -162,6 +166,50 @@ def sub_cmd_chart_diff(args):
     chart(title, md, symbol, interval, start_time, end_time, ordersets, args)
 
 
+def sub_cmd_merge(args):
+    print(args.siis)
+    print(len(args.siis))
+    siis = args.siis
+    if len(siis) != 2:
+        exit(1)
+
+    instance_a = get_instance(siis[0])
+    instance_b = get_instance(siis[1])
+
+    sc = instance_a['sc']
+    if sc != instance_b['sc']:
+        print(instance_a['sc'])
+        print(instance_b['sc'])
+        exit(1)
+
+    mds = instance_a['mds']
+    if mds != instance_b['mds']:
+        print(instance_a['mds'])
+        print(instance_b['mds'])
+        exit(1)
+
+    start_time = min(instance_a['start_time'], instance_b['start_time'])
+    end_time = max(instance_a['end_time'], instance_b['end_time'])
+
+    orders_a = instance_a['orders']
+    orders_b = instance_b['orders']
+    if instance_a['start_time'] < instance_b['start_time']:
+        orders = orders_a + orders_b
+    else:
+        orders = orders_b + orders_a
+
+    _id = bt_db.insert_one(
+        BACKTEST_INSTANCES_COLLECTION_NAME,
+        {
+            "instance_id": create_instance_id(),
+            "start_time": start_time,
+            "end_time": end_time,
+            "orders": orders,
+            "mds": mds,
+            "sc": sc,
+        },
+    )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='backtest')
@@ -183,6 +231,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
     parser.add_argument('--chart', help='chart', action="store_true")
     parser.add_argument('--log', help='log', action="store_true")
+    parser.add_argument('--rmk', help='remark', action="store_true")
     add_argument_overlap_studies(parser)
 
     parser_view = subparsers.add_parser('view', help='view help')
@@ -197,6 +246,7 @@ if __name__ == "__main__":
 
     parser_chart = subparsers.add_parser('chart', help='chart help')
     parser_chart.add_argument('-sii', help='strategy instance id')
+    parser_chart.add_argument('--volume', action="store_true", help='volume')
     add_argument_overlap_studies(parser_chart)
     add_argument_price_transform(parser_chart)
     add_argument_momentum_indicators(parser_chart)
@@ -207,6 +257,7 @@ if __name__ == "__main__":
 
     parser_chart_diff = subparsers.add_parser('chart_diff', help='chart diff')
     parser_chart_diff.add_argument('-siis', nargs='*', help='strategy instance ids')
+    parser_chart_diff.add_argument('--volume', action="store_true", help='volume')
     add_argument_overlap_studies(parser_chart_diff)
     add_argument_price_transform(parser_chart_diff)
     add_argument_momentum_indicators(parser_chart_diff)
@@ -214,6 +265,10 @@ if __name__ == "__main__":
     add_argument_volatility_indicators(parser_chart_diff)
     add_argument_cycle_indicators(parser_chart_diff)
     parser_chart_diff.set_defaults(func=sub_cmd_chart_diff)
+
+    parser_merge = subparsers.add_parser('merge', help='merge')
+    parser_merge.add_argument('-siis', nargs='*', help='strategy instance ids')
+    parser_merge.set_defaults(func=sub_cmd_merge)
 
     args = parser.parse_args()
     # print(args)
