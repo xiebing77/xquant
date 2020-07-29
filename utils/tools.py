@@ -263,7 +263,8 @@ def get_trend(ema1, ema2, std_diff_threshold=0.01, ema_diff_threshold=0.01, peri
     diff_data = ema1[period:] + ema2[period:]
     std_diff = np.std(diff_data)/sum(diff_data) * len(diff_data)
     # print(round(std_diff,5), round(abs(ema1[-1]/ema2[-1]), 3))
-    if std_diff < std_diff_threshold or abs(ema1[-1] - ema2[-1]) < ema2[-1] * ema_diff_threshold:
+    # if std_diff < std_diff_threshold or abs(ema1[-1] - ema2[-1]) < ema2[-1] * ema_diff_threshold:
+    if std_diff < std_diff_threshold:
         ret = 0
     elif ema1[-1] < ema2[-1]:
         ret = -1
