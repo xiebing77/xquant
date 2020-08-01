@@ -6,7 +6,7 @@ from exchange.exchange import create_exchange, exchange_names
 from tabulate import tabulate as tb
 import pprint
 
-from common.xquant import creat_symbol, get_balance_free, get_balance_frozen
+from common.xquant import creat_symbol, get_balance_coin, get_balance_free, get_balance_frozen
 
 
 if __name__ == "__main__":
@@ -34,17 +34,17 @@ if __name__ == "__main__":
             break
 
     total_value = 0
-    for coin in balances:
-        amount = max(get_balance_free(coin), get_balance_frozen(coin))
+    for item in balances:
+        amount = max(get_balance_free(item), get_balance_frozen(item))
         if amount <= 0:
             continue
 
-        symbol = creat_symbol(coin, args.basecoin)
+        symbol = creat_symbol(get_balance_coin(item), args.basecoin)
         klines = exchange.get_klines_1min(symbol, size=1)
         price = klines[-1][closeindex]
         value = price * amount
         total_value += value
-        coin['value'] = value
+        item['value'] = value
 
     print(tb(balances))
     print("total value: %s  %s" % (total_value, args.basecoin))

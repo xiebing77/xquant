@@ -220,6 +220,10 @@ def create_balance(coin, free, frozen):
     return {"coin": coin, "free": free, "frozen": frozen}
 
 
+def get_balance_coin(balance):
+    return balance["coin"]
+
+
 def get_balance_free(balance):
     """ 获取可用数 """
     return ts.str_to_float(balance["free"])
