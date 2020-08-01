@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     balances = exchange.get_all_balances()
     print("balances info:" )
-    print(tb(balances))
+    #print(tb(balances))
 
     for index, value in enumerate(exchange.get_kline_column_names()):
         if value == "close":
@@ -39,10 +39,16 @@ if __name__ == "__main__":
         if amount <= 0:
             continue
 
-        symbol = creat_symbol(get_balance_coin(item), args.basecoin)
-        klines = exchange.get_klines_1min(symbol, size=1)
-        price = klines[-1][closeindex]
-        value = price * amount
+        coin = get_balance_coin(item)
+        if coin.upper() == args.basecoin.upper():
+            value = amount
+        else:
+            print(coin)
+            symbol = creat_symbol(coin, args.basecoin)
+            klines = exchange.get_klines_1min(symbol, size=1)
+            price = float(klines[-1][closeindex])
+            value = price * amount
+
         total_value += value
         item['value'] = value
 
