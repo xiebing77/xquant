@@ -6,8 +6,6 @@ from exchange.exchange import create_exchange, exchange_names
 from tabulate import tabulate as tb
 import pprint
 
-from common.xquant import creat_symbol, get_balance_free, get_balance_frozen
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='account infomation')

@@ -36,14 +36,14 @@ if __name__ == "__main__":
     total_value = 0
     for item in balances:
         amount = max(get_balance_free(item), get_balance_frozen(item))
-        if amount <= 0:
+        if amount < 0:
             continue
 
         coin = get_balance_coin(item)
         if coin.upper() == args.basecoin.upper():
             value = amount
         else:
-            print(coin)
+            #print(coin)
             symbol = creat_symbol(coin, args.basecoin)
             klines = exchange.get_klines_1min(symbol, size=1)
             price = float(klines[-1][closeindex])

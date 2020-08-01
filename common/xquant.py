@@ -226,12 +226,12 @@ def get_balance_coin(balance):
 
 def get_balance_free(balance):
     """ 获取可用数 """
-    return ts.str_to_float(balance["free"])
+    return float(balance["free"])
 
 
 def get_balance_frozen(balance):
     """ 获取冻结数 """
-    return ts.str_to_float(balance["frozen"])
+    return float(balance["frozen"])
 
 
 def down_area(ss, ls):
