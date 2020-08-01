@@ -2,7 +2,7 @@
 import sys
 sys.path.append('../')
 import argparse
-from exchange.exchange import create_exchange, exchange_names, get_kline_column_names
+from exchange.exchange import create_exchange, exchange_names
 from tabulate import tabulate as tb
 import pprint
 
@@ -24,14 +24,11 @@ if __name__ == "__main__":
         print("exchange name error!")
         exit(1)
 
-    account = exchange.get_account()
-    balances = account['balances']
-    print("account info:" )
-    #pprint.pprint(account)
+    balances = exchange.get_all_balances()
+    print("balances info:" )
     print(tb(balances))
 
-    kline_column_names = get_kline_column_names(exchange)
-    for index, value in enumerate(kline_column_names):
+    for index, value in enumerate(exchange.get_kline_column_names()):
         if value == "close":
             closeindex = index
             break

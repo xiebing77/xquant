@@ -133,6 +133,17 @@ class BinanceExchange:
         account['balances'] = nb
         return account
 
+
+    def get_all_balances(self):
+        """获取余额"""
+        balances = []
+        account = self.get_account()
+        for item in account['balances']:
+            balance = xq.create_balance(item['asset'], item['free'], item['locked'])
+            balances.append(balance)
+        return balances
+
+
     def get_balances(self, *coins):
         """获取余额"""
         coin_balances = []

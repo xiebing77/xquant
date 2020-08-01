@@ -189,6 +189,16 @@ class BinanceMargin:
         else:
             return tuple(coin_balances)
 
+    def get_all_balances(self):
+        """获取余额"""
+        balances = []
+        account = self.get_account()
+        for item in account['balances']:
+            balance = xq.create_balance(item['asset'], item['free'], item['locked'])
+            balances.append(balance)
+
+        return balances
+
     def get_trades(self, symbol):
         """获取成交"""
         exchange_symbol = self.__trans_symbol(symbol)
