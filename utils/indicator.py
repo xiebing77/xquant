@@ -254,15 +254,35 @@ def py_rsi2(klines, closeindex, period=14):
         da = 0
     return 100*ua/(ua+da)
 
-def py_rsis2(klines, closeindex, period=14):
+def py_ema(pre, cur, n):
+    a = 2 / ( n + 1 )
+    return a * cur + (1 - a) * pre
+
+def py_rsis(klines, closeindex, period=14):
     arr = []
-    for i in range(2, len(klines)):
-        rsi = py_rsi2(klines[:i], closeindex, period)
+    ema_us = [0]
+    ema_ds = [0]
+    for i in range(1, len(klines)):
+        diff_close = float(klines[i][closeindex]) - float(klines[i-1][closeindex])
+        u = 0
+        d = 0
+        if diff_close > 0:
+            u = diff_close
+        elif diff_close < 0:
+            d = abs(diff_close)
+
+        ema_u = py_ema(ema_us[-1], u, period)
+        ema_d = py_ema(ema_ds[-1], d, period)
+        rsi = 100 * (ema_u / (ema_u + ema_d))
+
+        ema_us.append(ema_u)
+        ema_ds.append(ema_d)
         arr.append(rsi)
     return arr
 
-def py_rsi(klines, closeindex, period=14):
-    closes = [kline[closeindex] for kline in klines[-period:]]
+# Culter's RSI
+def py_crsi(klines, closeindex, period=14):
+    closes = [kline[closeindex] for kline in klines[-period-1:]]
     us = []
     ds = []
     pre_close = float(closes[0])
@@ -281,14 +301,18 @@ def py_rsi(klines, closeindex, period=14):
         da = sum(ds)/len(ds)
     else:
         da = 0
-    return 100*ua/(ua+da)
-    #rs = ua / da
-    #return 100*(1-1/(1+rs))
+    #return 100*ua/(ua+da)
+    if len(ds) == 0:
+        print(closes)
+        print(us)
+        print(klines)
+    rs =  sum(us) / sum(ds)
+    return 100*(rs/(1+rs))
 
-def py_rsis(klines, closeindex, period=14):
+def py_crsis(klines, closeindex, period=14):
     arr = []
-    for i in range(2, len(klines)):
-        rsi = py_rsi(klines[:i], closeindex, period)
+    for i in range(period, len(klines)):
+        rsi = py_crsi(klines[:i], closeindex, period)
         arr.append(rsi)
     return arr
 

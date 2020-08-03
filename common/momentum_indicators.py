@@ -367,49 +367,47 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
             rsis = [round(a, 3) for a in rsis][-display_count:]
             axes[i].plot(close_times, rsis, cs[idx], label="rsi")
 
-            linetype = "."
-            axes[i].plot(close_times, [80]*len(rsis), linetype, color='r')
-            axes[i].plot(close_times, [40]*len(rsis), linetype, color='r')
+            linetype = "-"
+            axes[i].plot(close_times, [90]*len(rsis), linetype, color='g')
+            axes[i].plot(close_times, [80]*len(rsis), linetype, color='g')
+            axes[i].plot(close_times, [50]*len(rsis), linetype, color='g')
+            axes[i].plot(close_times, [40]*len(rsis), linetype, color='g')
 
-            linetype = "."
+            linetype = "--"
             axes[i].plot(close_times, [65]*len(rsis), linetype, color='b')
+            axes[i].plot(close_times, [55]*len(rsis), linetype, color='b')
+            axes[i].plot(close_times, [30]*len(rsis), linetype, color='b')
             axes[i].plot(close_times, [20]*len(rsis), linetype, color='b')
 
     if args.STOCH: # STOCH
         name = 'STOCH'
         slowk, slowd = talib.STOCH(klines_df["high"], klines_df["low"], klines_df["close"],
             fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
-        slowj = 3*slowk - 2*slowd
         i += 1
         axes[i].set_ylabel(name)
         axes[i].grid(True)
-        axes[i].plot(close_times, slowk, "b", label="slowk")
-        axes[i].plot(close_times, slowd, "y", label="slowd")
-        axes[i].plot(close_times, slowj, "m", label="slowj")
+        axes[i].plot(close_times, slowk[-display_count:], "b", label="slowk")
+        axes[i].plot(close_times, slowd[-display_count:], "y", label="slowd")
 
     if args.STOCHF: # 
         name = 'STOCHF'
         fastk, fastd = talib.STOCHF(klines_df["high"], klines_df["low"], klines_df["close"],
             fastk_period=5, fastd_period=3, fastd_matype=0)
-        fastj = 3*fastk - 2*fastd
         i += 1
         axes[i].set_ylabel(name)
         axes[i].grid(True)
-        axes[i].plot(close_times, fastk, "b", label="fastk")
-        axes[i].plot(close_times, fastd, "y", label="fastd")
-        axes[i].plot(close_times, fastj, "m", label="fastj")
+        axes[i].plot(close_times, fastk[-display_count:], "b", label="fastk")
+        axes[i].plot(close_times, fastd[-display_count:], "y", label="fastd")
 
     if args.STOCHRSI: # 
         name = 'STOCHRSI'
         fastk, fastd = talib.STOCHRSI(klines_df["close"],
             timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=0)
-        fastj = 3*fastk - 2*fastd
         i += 1
         axes[i].set_ylabel(name)
         axes[i].grid(True)
-        axes[i].plot(close_times, fastk, "b", label="fastk")
-        axes[i].plot(close_times, fastd, "y", label="fastd")
-        axes[i].plot(close_times, fastj, "m", label="fastj")
+        axes[i].plot(close_times, fastk[-display_count:], "b", label="fastk")
+        axes[i].plot(close_times, fastd[-display_count:], "y", label="fastd")
 
     if args.TRIX: # 
         name = 'TRIX'
@@ -427,9 +425,10 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
         axes[i].grid(True)
         axes[i].plot(close_times, real[-display_count:], "y:", label=name)
 
-    if args.WILLR: # 
-        name = 'WILLR'
-        real = talib.WILLR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
+    if args.WILLR:
+        tp = 14
+        name = 'WILLR %s' % tp
+        real = talib.WILLR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=tp)
         i += 1
         axes[i].set_ylabel(name)
         axes[i].grid(True)
