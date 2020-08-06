@@ -367,13 +367,13 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
             rsis = [round(a, 3) for a in rsis][-display_count:]
             axes[i].plot(close_times, rsis, cs[idx], label="rsi")
 
-            linetype = "-"
-            axes[i].plot(close_times, [90]*len(rsis), linetype, color='g')
-            axes[i].plot(close_times, [80]*len(rsis), linetype, color='g')
-            axes[i].plot(close_times, [50]*len(rsis), linetype, color='g')
-            axes[i].plot(close_times, [40]*len(rsis), linetype, color='g')
+            linetype = "."
+            axes[i].plot(close_times, [90]*len(rsis), linetype, color='r')
+            axes[i].plot(close_times, [80]*len(rsis), linetype, color='r')
+            axes[i].plot(close_times, [50]*len(rsis), linetype, color='r')
+            axes[i].plot(close_times, [40]*len(rsis), linetype, color='r')
 
-            linetype = "--"
+            linetype = "."
             axes[i].plot(close_times, [65]*len(rsis), linetype, color='b')
             axes[i].plot(close_times, [55]*len(rsis), linetype, color='b')
             axes[i].plot(close_times, [30]*len(rsis), linetype, color='b')

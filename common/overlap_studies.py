@@ -69,9 +69,9 @@ def handle_overlap_studies(args, kax, klines_df, close_times, display_count):
         real = talib.DEMA(klines_df["close"], timeperiod=args.DEMA)
         kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
+    cs = ['y', 'c', 'b', 'm', 'k']
     os_key = 'EMA'
     if args.EMA:
-        cs = ['c', 'b', 'm', 'k']
         for idx, e_p in enumerate(args.EMA):
             if idx >= len(cs):
                 break
@@ -91,7 +91,6 @@ def handle_overlap_studies(args, kax, klines_df, close_times, display_count):
 
     os_key = 'MA'
     if args.MA:
-        cs = ['c', 'b', 'm', 'k']
         for idx, e_p in enumerate(args.MA):
             if idx >= len(cs):
                 break
