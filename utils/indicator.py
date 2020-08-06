@@ -231,7 +231,7 @@ def pd_macd(klines_df, fastperiod=12, slowperiod=26, signalperiod=9):
     #print(klines_df)
     return klines_df
 
-def py_rsi2(klines, closeindex, period=14):
+def py_rsis2(klines, closeindex, period=14):
     closes = [kline[closeindex] for kline in klines[-period:]]
     ur = []
     dr = []
@@ -254,29 +254,33 @@ def py_rsi2(klines, closeindex, period=14):
         da = 0
     return 100*ua/(ua+da)
 
-def py_ema(pre, cur, n):
-    a = 2 / ( n + 1 )
-    return a * cur + (1 - a) * pre
+def py_rsi_ema(pre_ema, cur, n):
+    #a = 2 / ( n + 1 )
+    a = 1 / n
+    return a * cur + (1 - a) * pre_ema
+
+def py_rsi_ua(close_pre, close_cur):
+    diff_close = close_cur - close_pre
+    if diff_close > 0:
+        u = diff_close
+        d = 0
+    elif diff_close < 0:
+        u = 0
+        d = abs(diff_close)
+    else:
+        u = 0
+        d = 0
+    return u, d
 
 def py_rsis(klines, closeindex, period=14):
     arr = []
-    ema_us = [0]
-    ema_ds = [0]
+    ema_u_pre = 0
+    ema_d_pre = 0
     for i in range(1, len(klines)):
-        diff_close = float(klines[i][closeindex]) - float(klines[i-1][closeindex])
-        u = 0
-        d = 0
-        if diff_close > 0:
-            u = diff_close
-        elif diff_close < 0:
-            d = abs(diff_close)
-
-        ema_u = py_ema(ema_us[-1], u, period)
-        ema_d = py_ema(ema_ds[-1], d, period)
+        u, d = py_rsi_ua(float(klines[i-1][closeindex]), float(klines[i][closeindex]))
+        ema_u_pre = ema_u = py_rsi_ema(ema_u_pre, u, period)
+        ema_d_pre = ema_d = py_rsi_ema(ema_d_pre, d, period)
         rsi = 100 * (ema_u / (ema_u + ema_d))
-
-        ema_us.append(ema_u)
-        ema_ds.append(ema_d)
         arr.append(rsi)
     return arr
 
