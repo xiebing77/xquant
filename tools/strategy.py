@@ -3,12 +3,13 @@ import json
 import argparse
 import sys
 sys.path.append('../')
-from common.instance import add_strategy_instance, update_strategy_instance, delete_strategy_instance
+from common.instance import add_strategy_instance, update_strategy_instance, delete_strategy_instance, get_strategy_instance
 
 """
 python3 strategy.py -m add -sii gwEma2BtcUsdt -p '{"user":"gw", "exchange" : "binance_margin","config_path" : "/home/gw/margin/xq/config/ema/ema2_btc_usdt_1d.jsn","value" : 10000}'
 python3 strategy.py -m update -sii gwEma2BtcUsdt -p '{"value" : 18000}'
 python3 strategy.py -m delete -sii gwEma2BtcUsdt
+python3 strategy.py -m show -sii gwEma2BtcUsdt
 """
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Strategy Operation')
@@ -37,6 +38,8 @@ if __name__ == "__main__":
         update_strategy_instance({"instance_id": args.sii}, json.loads(args.p))
     elif args.m == 'delete':
         delete_strategy_instance({"instance_id": args.sii})
+    elif args.m == 'show':
+        print(get_strategy_instance(args.sii))
     else:
         parser.print_help()
         exit(1)
