@@ -26,30 +26,14 @@ def py_mas(klines, index, period):
     return arr
 
 def py_emas(klines, index, period):
-    arr = []
-
-    for i in range(period):
-        if i==0:
-            ema = float(klines[0][index])
-        elif i >= len(klines):
-            return arr
-        else:
-            k = 2 / (i + 2)
-            v = float(klines[i][index])
-            ema = v * k + ema_y * (1 - k)
-
-        arr.append(ema)
-        ema_y = ema
-
+    vs_init = [ float(kline[index]) for kline in klines[:period]]
+    arr = [sum(vs_init) / period]
 
     k = 2 / (period + 1)
     for kline in klines[period:]:
         v = float(kline[index])
-        ema = v * k + ema_y * (1 - k)
-
+        ema = v * k + arr[-1] * (1 - k)
         arr.append(ema)
-        ema_y = ema
-
     return arr
 
 
