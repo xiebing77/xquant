@@ -7,13 +7,13 @@ from md.dbmd import DBMD
 from exchange.exchange import exchange_names, BINANCE_SPOT_EXCHANGE_NAME
 
 from datetime import datetime,timedelta
-from common.overlap_studies import *
-from common.price_transform import *
-from common.momentum_indicators import *
-from common.volume_indicators import *
-from common.volatility_indicators import *
-from common.cycle_indicators import *
-from common.chart import chart
+from chart.overlap_studies import *
+from chart.price_transform import *
+from chart.momentum_indicators import *
+from chart.volume_indicators import *
+from chart.volatility_indicators import *
+from chart.cycle_indicators import *
+from chart.chart import chart
 
 
 '''

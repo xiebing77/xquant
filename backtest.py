@@ -9,13 +9,13 @@ import utils.tools as ts
 import common.xquant as xq
 import common.log as log
 from engine.backtestengine import BackTest
-from common.overlap_studies import *
-from common.price_transform import *
-from common.momentum_indicators import *
-from common.volume_indicators import *
-from common.volatility_indicators import *
-from common.cycle_indicators import *
-from common.chart import chart
+from chart.overlap_studies import *
+from chart.price_transform import *
+from chart.momentum_indicators import *
+from chart.volume_indicators import *
+from chart.volatility_indicators import *
+from chart.cycle_indicators import *
+from chart.chart import chart
 from db.mongodb import get_mongodb
 from md.dbmd import DBMD
 

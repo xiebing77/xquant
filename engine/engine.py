@@ -10,7 +10,6 @@ import common.xquant as xq
 import common.bill as bl
 from db.mongodb import get_mongodb
 from setup import *
-from common.overlap_studies import *
 
 
 class Engine:

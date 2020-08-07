@@ -15,12 +15,12 @@ import common.xquant as xq
 import common.bill as bl
 from db.mongodb import get_mongodb
 from setup import *
-from common.overlap_studies import *
-from common.price_transform import *
-from common.momentum_indicators import *
-from common.volume_indicators import *
-from common.volatility_indicators import *
-from common.cycle_indicators import *
+from chart.overlap_studies import *
+from chart.price_transform import *
+from chart.momentum_indicators import *
+from chart.volume_indicators import *
+from chart.volatility_indicators import *
+from chart.cycle_indicators import *
 
 
 def chart_mpf2(title, args, symbol, ordersets, klines, kline_column_names, display_count):
