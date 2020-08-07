@@ -36,6 +36,12 @@ def py_emas(klines, index, period):
         arr.append(ema)
     return arr
 
+def py_biases(v1s, v2s):
+    biases = []
+    for i in range(-len(v2s), 0):
+        bias = (v1s[i] - v2s[i]) / v2s[i]
+        biases.append(bias)
+    return biases
 
 def py_json_kdj(klines, period=9):
     M1 = 3
