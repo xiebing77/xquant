@@ -2,7 +2,7 @@
 import sys
 sys.path.append('../')
 import argparse
-from exchange.exchange import create_exchange, exchange_names
+from exchange.exchange import create_exchange, exchange_names, BINANCE_SPOT_EXCHANGE_NAME
 from tabulate import tabulate as tb
 import pprint
 
@@ -11,7 +11,7 @@ from common.xquant import creat_symbol, get_balance_coin, get_balance_free, get_
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='account infomation')
-    parser.add_argument('-exchange', choices=exchange_names, help='exchange name')
+    parser.add_argument('-exchange', default=BINANCE_SPOT_EXCHANGE_NAME, choices=exchange_names, help='exchange name')
     parser.add_argument('-basecoin', default='usdt', help='assert sum by base coin')
     args = parser.parse_args()
     # print(args)
