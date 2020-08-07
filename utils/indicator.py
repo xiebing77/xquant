@@ -43,6 +43,9 @@ def py_biases(v1s, v2s):
         biases.append(bias)
     return biases
 
+def pd_biases(v1s, v2s):
+    return v1s / v2s - 1
+
 def py_json_kdj(klines, period=9):
     M1 = 3
     M2 = 3
@@ -263,10 +266,17 @@ def py_rsi_ua(close_pre, close_cur):
     return u, d
 
 def py_rsis(klines, closeindex, period=14):
+    us = []
+    ds = []
+    for i in range(1, period):
+        u, d = py_rsi_ua(float(klines[i-1][closeindex]), float(klines[i][closeindex]))
+        us.append(u)
+        ds.append(d)
+
     arr = []
-    ema_u_pre = 0
-    ema_d_pre = 0
-    for i in range(1, len(klines)):
+    ema_u_pre = sum(us) / period
+    ema_d_pre = sum(ds) / period
+    for i in range(period, len(klines)):
         u, d = py_rsi_ua(float(klines[i-1][closeindex]), float(klines[i][closeindex]))
         ema_u_pre = ema_u = py_rsi_ema(ema_u_pre, u, period)
         ema_d_pre = ema_d = py_rsi_ema(ema_d_pre, d, period)
