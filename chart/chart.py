@@ -21,6 +21,7 @@ from chart.momentum_indicators import *
 from chart.volume_indicators import *
 from chart.volatility_indicators import *
 from chart.cycle_indicators import *
+from chart.other_indicators import *
 
 
 def chart_mpf2(title, args, symbol, ordersets, klines, kline_column_names, display_count):
@@ -78,6 +79,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         + get_volume_indicators_count(args)
         + get_volatility_indicators_count(args)
         + get_cycle_indicators_count(args)
+        + get_other_indicators_count(args)
         + len(ordersets))
 
     fig, axes = plt.subplots(cols, 1, sharex=True)
@@ -119,6 +121,9 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
 
     handle_cycle_indicators(args, axes, i, klines_df, close_times, display_count)
     i += get_cycle_indicators_count(args)
+
+    handle_other_indicators(args, axes, i, klines_df, close_times, display_count)
+    i += get_other_indicators_count(args)
 
     '''
     ic_key = 'mr'
@@ -219,4 +224,12 @@ def chart(title, md, symbol, interval, start_time, end_time, ordersets, args):
     klines = md.get_klines(symbol, interval, 150+display_count)
     chart_mpf(title, args, symbol, ordersets, klines, md.kline_column_names, display_count)
 
+def chart_add_all_argument(parser):
+    add_argument_overlap_studies(parser)
+    add_argument_price_transform(parser)
+    add_argument_momentum_indicators(parser)
+    add_argument_volume_indicators(parser)
+    add_argument_volatility_indicators(parser)
+    add_argument_cycle_indicators(parser)
+    add_argument_other_indicators(parser)
 

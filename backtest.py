@@ -9,13 +9,7 @@ import utils.tools as ts
 import common.xquant as xq
 import common.log as log
 from engine.backtestengine import BackTest
-from chart.overlap_studies import *
-from chart.price_transform import *
-from chart.momentum_indicators import *
-from chart.volume_indicators import *
-from chart.volatility_indicators import *
-from chart.cycle_indicators import *
-from chart.chart import chart
+from chart.chart import chart, chart_add_all_argument
 from db.mongodb import get_mongodb
 from md.dbmd import DBMD
 
@@ -232,7 +226,6 @@ if __name__ == "__main__":
     parser.add_argument('--chart', help='chart', action="store_true")
     parser.add_argument('--log', help='log', action="store_true")
     parser.add_argument('--rmk', help='remark', action="store_true")
-    add_argument_overlap_studies(parser)
 
     parser_view = subparsers.add_parser('view', help='view help')
     parser_view.add_argument('-sii', help='strategy instance id')
@@ -247,23 +240,13 @@ if __name__ == "__main__":
     parser_chart = subparsers.add_parser('chart', help='chart help')
     parser_chart.add_argument('-sii', help='strategy instance id')
     parser_chart.add_argument('--volume', action="store_true", help='volume')
-    add_argument_overlap_studies(parser_chart)
-    add_argument_price_transform(parser_chart)
-    add_argument_momentum_indicators(parser_chart)
-    add_argument_volume_indicators(parser_chart)
-    add_argument_volatility_indicators(parser_chart)
-    add_argument_cycle_indicators(parser_chart)
+    chart_add_all_argument(parser_chart)
     parser_chart.set_defaults(func=sub_cmd_chart)
 
     parser_chart_diff = subparsers.add_parser('chart_diff', help='chart diff')
     parser_chart_diff.add_argument('-siis', nargs='*', help='strategy instance ids')
     parser_chart_diff.add_argument('--volume', action="store_true", help='volume')
-    add_argument_overlap_studies(parser_chart_diff)
-    add_argument_price_transform(parser_chart_diff)
-    add_argument_momentum_indicators(parser_chart_diff)
-    add_argument_volume_indicators(parser_chart_diff)
-    add_argument_volatility_indicators(parser_chart_diff)
-    add_argument_cycle_indicators(parser_chart_diff)
+    chart_add_all_argument(parser_chart_diff)
     parser_chart_diff.set_defaults(func=sub_cmd_chart_diff)
 
     parser_merge = subparsers.add_parser('merge', help='merge')

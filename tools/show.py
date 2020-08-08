@@ -2,18 +2,13 @@
 import sys
 sys.path.append('../')
 import argparse
+import utils.tools as ts
 import common.xquant as xq
 from md.dbmd import DBMD
 from exchange.exchange import exchange_names, BINANCE_SPOT_EXCHANGE_NAME
 
 from datetime import datetime,timedelta
-from chart.overlap_studies import *
-from chart.price_transform import *
-from chart.momentum_indicators import *
-from chart.volume_indicators import *
-from chart.volatility_indicators import *
-from chart.cycle_indicators import *
-from chart.chart import chart
+from chart.chart import chart, chart_add_all_argument
 
 
 '''
@@ -453,12 +448,7 @@ if __name__ == "__main__":
     #parser.add_argument('-di', nargs='*', help='display indicators,egg: MACD KDJ RSI')
 
     parser.add_argument('--volume', action="store_true", help='volume')
-    add_argument_overlap_studies(parser)
-    add_argument_price_transform(parser)
-    add_argument_momentum_indicators(parser)
-    add_argument_volume_indicators(parser)
-    add_argument_volatility_indicators(parser)
-    add_argument_cycle_indicators(parser)
+    chart_add_all_argument(parser)
 
     args = parser.parse_args()
     # print(args)
