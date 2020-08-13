@@ -8,6 +8,7 @@ import pprint
 import utils.tools as ts
 import common.xquant as xq
 import common.log as log
+from exchange.exchange import BINANCE_SPOT_EXCHANGE_NAME
 from engine.backtestengine import BackTest
 from chart.chart import chart, chart_add_all_argument
 from db.mongodb import get_mongodb
@@ -220,7 +221,7 @@ if __name__ == "__main__":
     add_argument_overlap_studies(parser_run)
     parser_run.set_defaults(func=run)
     """
-    parser.add_argument('-m', help='market data source')
+    parser.add_argument('-m', default=BINANCE_SPOT_EXCHANGE_NAME, help='market data source')
     parser.add_argument('-sc', help='strategy config')
     parser.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
     parser.add_argument('--chart', help='chart', action="store_true")

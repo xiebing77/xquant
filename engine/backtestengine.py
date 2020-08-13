@@ -82,6 +82,11 @@ class BackTest(Engine):
 
     def run(self, strategy, start_time, end_time):
         """ run """
+        secs = strategy.config["sec"]
+        if secs < 60:
+            secs = 60
+        td_secs = timedelta(seconds=secs)
+
         total_tick_start = datetime.now()
         self.md.tick_time = start_time
         tick_count = 0
@@ -95,16 +100,17 @@ class BackTest(Engine):
             self.log_info("tick  cost: %s \n\n" % (tick_end - tick_start))
 
             tick_count += 1
-            self.md.tick_time += timedelta(seconds=strategy.config["sec"])
+            self.md.tick_time += td_secs
             progress = (self.md.tick_time - start_time).total_seconds() / (
                 end_time - start_time
             ).total_seconds()
             sys.stdout.write(
-                "  tick: %s,  cost: %s,  progress: %d%% \r"
+                "%s  progress: %d%%,  cost: %s,  tick: %s\r"
                 % (
-                    self.md.tick_time.strftime("%Y-%m-%d %H:%M:%S"),
-                    tick_end - total_tick_start,
+                    " "*36,
                     progress * 100,
+                    tick_end - total_tick_start,
+                    self.md.tick_time.strftime("%Y-%m-%d %H:%M:%S"),
                 )
             )
             sys.stdout.flush()
