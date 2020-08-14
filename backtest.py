@@ -105,6 +105,22 @@ def analyze(args):
     engine.analyze(config['symbol'], instance['orders'], args.hl, args.rmk)
 
 
+def sub_cmd_refresh(args):
+    instance_id = args.sii
+    instance = get_instance(instance_id)
+    print('marketing data src: %s  strategy config path: %s  ' % (instance['mds'], instance['sc']))
+
+    config = xq.get_strategy_config(instance['sc'])
+    pprint.pprint(config, indent=4)
+
+    engine = BackTest(instance_id, instance['mds'], config)
+    module_name = config["module_name"].replace("/", ".")
+    class_name = config["class_name"]
+    strategy = ts.createInstance(module_name, class_name, config, engine)
+    engine.refresh(strategy, [ datetime.fromtimestamp(order["create_time"]) for order in instance['orders']])
+    engine.analyze(config['symbol'], engine.orders, False, True)
+
+
 def sub_cmd_chart(args):
     instance_id = args.sii
     instance = get_instance(instance_id)
@@ -237,6 +253,10 @@ if __name__ == "__main__":
     parser_analyze.add_argument('--hl', help='high low', action="store_true")
     parser_analyze.add_argument('--rmk', help='remark', action="store_true")
     parser_analyze.set_defaults(func=analyze)
+
+    parser_refresh = subparsers.add_parser('refresh', help='refresh order info')
+    parser_refresh.add_argument('-sii', help='strategy instance id')
+    parser_refresh.set_defaults(func=sub_cmd_refresh)
 
     parser_chart = subparsers.add_parser('chart', help='chart help')
     parser_chart.add_argument('-sii', help='strategy instance id')

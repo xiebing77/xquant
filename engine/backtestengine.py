@@ -121,3 +121,38 @@ class BackTest(Engine):
             % (tick_count, total_tick_end - total_tick_start)
         )
 
+
+    def refresh(self, strategy, times):
+        """ refresh """
+        total_tick_count = len(times)
+        total_tick_start = datetime.now()
+        tick_count = 0
+        for t in times:
+            self.md.tick_time = t
+            self.log_info("tick_time: %s" % self.md.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
+            tick_start = datetime.now()
+
+            strategy.on_tick()
+
+            tick_end = datetime.now()
+            self.log_info("tick  cost: %s \n\n" % (tick_end - tick_start))
+
+            tick_count += 1
+            progress = tick_count / total_tick_count
+            sys.stdout.write(
+                "%s  progress: %d%%,  cost: %s,  tick: %s\r"
+                % (
+                    " "*36,
+                    progress * 100,
+                    tick_end - total_tick_start,
+                    self.md.tick_time.strftime("%Y-%m-%d %H:%M:%S"),
+                )
+            )
+            sys.stdout.flush()
+
+        total_tick_end = datetime.now()
+        print(
+            "\n  total tick count: %d cost: %s"
+            % (tick_count, total_tick_end - total_tick_start)
+        )
+
