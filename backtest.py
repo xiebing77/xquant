@@ -118,7 +118,15 @@ def sub_cmd_refresh(args):
     class_name = config["class_name"]
     strategy = ts.createInstance(module_name, class_name, config, engine)
     engine.refresh(strategy, [ datetime.fromtimestamp(order["create_time"]) for order in instance['orders']])
-    engine.analyze(config['symbol'], engine.orders, False, True)
+    orders = engine.orders
+    for idx, order in enumerate(engine.orders):
+        old_order = instance['orders'][idx]
+        if "high" in old_order:
+            order["high"] = old_order["high"]
+            order["high_time"] = old_order["high_time"]
+            order["low"] = old_order["low"]
+            order["low_time"] = old_order["low_time"]
+    engine.analyze(config['symbol'], engine.orders, True, True)
 
 
 def sub_cmd_chart(args):
