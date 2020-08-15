@@ -40,7 +40,7 @@ def run(args):
     start_time, end_time = ts.parse_date_range(time_range)
 
     if args.log:
-        logfilename = class_name + "_"+ symbol + "_" + time_range + "_" + instance_id + ".log"
+        logfilename = class_name + "_"+ symbol + "_" + instance_id + ".log"
         print(logfilename)
         log.init("backtest", logfilename)
         log.info("strategy name: %s;  config: %s" % (class_name, config))
@@ -48,7 +48,7 @@ def run(args):
 
     engine = BackTest(instance_id, args.m, config)
     strategy = ts.createInstance(module_name, class_name, config, engine)
-    engine.run(strategy, start_time, end_time)
+    end_time = engine.run(strategy, start_time, end_time)
     engine.analyze(symbol, engine.orders, True, args.rmk)
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
@@ -103,6 +103,46 @@ def analyze(args):
 
     engine = BackTest(instance_id, instance['mds'], config)
     engine.analyze(config['symbol'], instance['orders'], args.hl, args.rmk)
+
+
+def sub_cmd_continue(args):
+    old_instance = get_instance(args.sii)
+    mds_name = old_instance['mds']
+    sc = old_instance['sc']
+    print('marketing data src: %s  strategy config path: %s  ' % (mds_name, sc))
+
+    config = xq.get_strategy_config(sc)
+    pprint.pprint(config, indent=4)
+
+    module_name = config["module_name"].replace("/", ".")
+    class_name = config["class_name"]
+    symbol = config['symbol']
+
+    c_start_time = old_instance["end_time"]
+    instance_id = create_instance_id()
+    if args.log:
+        logfilename = class_name + "_"+ symbol + "_" + instance_id + ".log"
+        print(logfilename)
+        log.init("backtest", logfilename)
+        log.info("strategy name: %s;  config: %s" % (class_name, config))
+
+
+    engine = BackTest(instance_id, mds_name, config)
+    strategy = ts.createInstance(module_name, class_name, config, engine)
+    engine.orders = old_instance["orders"]
+    end_time = engine.run(strategy, c_start_time)
+    engine.analyze(symbol, engine.orders, True, args.rmk)
+    _id = bt_db.insert_one(
+        BACKTEST_INSTANCES_COLLECTION_NAME,
+        {
+            "instance_id": instance_id,
+            "start_time": c_start_time,
+            "end_time": end_time,
+            "orders": engine.orders,
+            "mds": mds_name,
+            "sc": sc,
+        },
+    )
 
 
 def sub_cmd_refresh(args):
@@ -261,6 +301,12 @@ if __name__ == "__main__":
     parser_analyze.add_argument('--hl', help='high low', action="store_true")
     parser_analyze.add_argument('--rmk', help='remark', action="store_true")
     parser_analyze.set_defaults(func=analyze)
+
+    parser_continue = subparsers.add_parser('continue', help='run continue')
+    parser_continue.add_argument('-sii', help='strategy instance id')
+    parser_continue.add_argument('--log', help='log', action="store_true")
+    parser_continue.add_argument('--rmk', help='remark', action="store_true")
+    parser_continue.set_defaults(func=sub_cmd_continue)
 
     parser_refresh = subparsers.add_parser('refresh', help='refresh order info')
     parser_refresh.add_argument('-sii', help='strategy instance id')

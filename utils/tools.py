@@ -12,7 +12,7 @@ MATH_CEIL = 1  # 向上，
 MATH_ROUND = 2  # 四舍五入
 
 def parse_date_range(date_range):
-    print("time range: [ %s )" % date_range)
+    #print("time range: [ %s )" % date_range)
     dates = date_range.split("~")
 
     start_time = datetime.strptime(dates[0], "%Y-%m-%d")
@@ -112,72 +112,6 @@ def cacl_period_fall_rate(klines, start_time, cur_price):
     )
     return period_fall_rate
 
-
-def is_increment(arr):
-    for i in range(1, len(arr)):
-        if arr[i-1] >= arr[i]:
-            return False
-    return True
-
-def is_decrement(arr):
-    for i in range(1, len(arr)):
-        if arr[i-1] <= arr[i]:
-            return False
-    return True
-
-def get_inc_step(arr):
-    i = -1
-    while i >= -len(arr)+1:
-        if arr[i-1] > arr[i]:
-            break
-        i -= 1
-
-    return -i-1
-
-def get_dec_step(arr):
-    i = -1
-    while i >= -len(arr)+1:
-        if arr[i-1] < arr[i]:
-            break
-        i -= 1
-
-    return -i-1
-
-def is_more(arr, c=2):
-    for i in range(c, len(arr)):
-        if min(arr[i-c:i]) > arr[i]:
-            return False
-    return True
-
-def is_less(arr, c=2):
-    for i in range(c, len(arr)):
-        if max(arr[i-c:i]) < arr[i]:
-            return False
-    return True
-
-def get_more_step(arr, c=2):
-    i = -1
-    while i >= -len(arr)+c:
-        if min(arr[i-c:i]) > arr[i]:
-            break
-        i -= 1
-
-    if i == -1:
-        return 0
-
-    return -1-i
-
-def get_less_step(arr, c=2):
-    i = -1
-    while i >= -len(arr)+c:
-        if max(arr[i-c:i]) < arr[i]:
-            break
-        i -= 1
-
-    if i == -1:
-        return 0
-
-    return -1-i
 
 def get_min_seat(arr):
     i_min  = -len(arr)
