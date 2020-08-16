@@ -80,13 +80,16 @@ class BackTest(Engine):
         """ 撤掉本策略的所有挂单委托 """
         pass
 
-    def run(self, strategy, start_time, end_time=None):
+    def run(self, strategy, start_time=None, end_time=None):
         """ run """
         secs = strategy.config["sec"]
         if secs < 60:
             secs = 60
         td_secs = timedelta(seconds=secs)
 
+        oldest_time = self.md.get_oldest_time(strategy.config['symbol'], xq.KLINE_INTERVAL_1MINUTE)
+        if not start_time or start_time < oldest_time:
+            start_time = oldest_time
         latest_time = self.md.get_latest_time(strategy.config['symbol'], xq.KLINE_INTERVAL_1MINUTE)
         if not end_time or end_time > latest_time:
             end_time = latest_time
@@ -125,7 +128,7 @@ class BackTest(Engine):
             "\n  total tick count: %d cost: %s"
             % (tick_count, total_tick_end - total_tick_start)
         )
-        return end_time
+        return start_time, end_time
 
     def refresh(self, strategy, times):
         """ refresh """

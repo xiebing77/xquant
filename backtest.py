@@ -24,7 +24,7 @@ def create_instance_id():
     return instance_id
 
 def run(args):
-    if not (args.m and args.sc and args.r):
+    if not (args.m and args.sc):
         exit(1)
 
     instance_id = create_instance_id()
@@ -36,8 +36,10 @@ def run(args):
     class_name = config["class_name"]
 
     symbol = config['symbol']
-    time_range = args.r
-    start_time, end_time = ts.parse_date_range(time_range)
+    if args.r:
+        start_time, end_time = ts.parse_date_range(args.r)
+    else:
+        start_time = end_time = None
 
     if args.log:
         logfilename = class_name + "_"+ symbol + "_" + instance_id + ".log"
@@ -48,7 +50,7 @@ def run(args):
 
     engine = BackTest(instance_id, args.m, config)
     strategy = ts.createInstance(module_name, class_name, config, engine)
-    end_time = engine.run(strategy, start_time, end_time)
+    start_time, end_time = engine.run(strategy, start_time, end_time)
     engine.analyze(symbol, engine.orders, True, args.rmk)
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
@@ -118,7 +120,6 @@ def sub_cmd_continue(args):
     class_name = config["class_name"]
     symbol = config['symbol']
 
-    c_start_time = old_instance["end_time"]
     instance_id = create_instance_id()
     if args.log:
         logfilename = class_name + "_"+ symbol + "_" + instance_id + ".log"
@@ -130,13 +131,13 @@ def sub_cmd_continue(args):
     engine = BackTest(instance_id, mds_name, config)
     strategy = ts.createInstance(module_name, class_name, config, engine)
     engine.orders = old_instance["orders"]
-    end_time = engine.run(strategy, c_start_time)
+    start_time, end_time = engine.run(strategy, old_instance["end_time"])
     engine.analyze(symbol, engine.orders, True, args.rmk)
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
         {
             "instance_id": instance_id,
-            "start_time": c_start_time,
+            "start_time": start_time,
             "end_time": end_time,
             "orders": engine.orders,
             "mds": mds_name,

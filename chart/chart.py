@@ -177,9 +177,9 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
 
 
     '''
-    i = cols
+    #i = cols
     for orders in ordersets:
-        i -= 1
+        i += 1
         axes[i].set_ylabel('rate')
         axes[i].grid(True)
         #axes[i].set_label(["position rate", "profit rate"])

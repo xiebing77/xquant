@@ -30,6 +30,13 @@ class DBMD(MarketingData):
 
         self.klines_cache = {}
 
+    def get_oldest_time(self, symbol, kline_type):
+        collection = xq.get_kline_collection(symbol, kline_type)
+        klines = self.md_db.find_sort(collection, {}, 'open_time', 1, 1)
+        if len(klines) <= 0:
+            return None
+        return (datetime.fromtimestamp(klines[0]["open_time"]/1000))
+
     def get_latest_time(self, symbol, kline_type):
         collection = xq.get_kline_collection(symbol, kline_type)
         interval = timedelta(seconds=xq.get_interval_seconds(kline_type))
