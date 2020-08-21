@@ -177,14 +177,16 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
 
 
     '''
-    #i = cols
     for orders in ordersets:
         i += 1
-        axes[i].set_ylabel('rate')
+        axes[i].set_ylabel('profit rate')
         axes[i].grid(True)
         #axes[i].set_label(["position rate", "profit rate"])
         #axes[i].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
-        axes[i].plot([order["trade_time"] for order in orders] ,[round(100*order["floating_profit_rate"], 2) for order in orders], "g", drawstyle="steps", label="profit")
+        trade_times = [order["trade_time"] for order in orders]
+        axes[i].plot(trade_times,[round(100*order["floating_profit_rate"], 2) for order in orders], "g", drawstyle="steps", label="single profit")
+        if args.tp:
+            axes[i].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "go--")
 
     """
     i += 1

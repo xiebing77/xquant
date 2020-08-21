@@ -45,7 +45,7 @@ class DBMD(MarketingData):
             return None
         return (datetime.fromtimestamp(klines[0]["open_time"]/1000) + interval)
 
-    def __get_klines(self, collection, s_time, e_time):
+    def get_original_klines(self, collection, s_time, e_time):
         """ 获取k线 """
         ks = self.md_db.find(
             collection,
@@ -61,12 +61,12 @@ class DBMD(MarketingData):
 
     def __get_klines_1min(self, symbol, s_time, e_time):
         """ 获取分钟k线 """
-        return self.__get_klines(xq.get_kline_collection(symbol, xq.KLINE_INTERVAL_1MINUTE), s_time, e_time)
+        return self.get_original_klines(xq.get_kline_collection(symbol, xq.KLINE_INTERVAL_1MINUTE), s_time, e_time)
 
     '''
     def __get_klines_1day(self, symbol, s_time, e_time):
         """ 获取日k线 """
-        return self.__get_klines(xq.get_kline_collection(symbol, xq.KLINE_INTERVAL_1DAY), s_time, e_time)
+        return self.get_original_klines(xq.get_kline_collection(symbol, xq.KLINE_INTERVAL_1DAY), s_time, e_time)
     '''
 
     def __get_klines_cache(self, symbol, interval, s_time, e_time):
@@ -77,7 +77,7 @@ class DBMD(MarketingData):
             or e_time != self.klines_cache[interval]["e_time"]
         ):
             cache = {}
-            cache["data"] = self.__get_klines(xq.get_kline_collection(symbol, interval), s_time, e_time)
+            cache["data"] = self.get_original_klines(xq.get_kline_collection(symbol, interval), s_time, e_time)
             cache["s_time"] = s_time
             cache["e_time"] = e_time
             self.klines_cache[interval] = cache

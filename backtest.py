@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import sys
-sys.path.append('../')
+#sys.path.append('../')
 import argparse
 from datetime import datetime
 import uuid
@@ -50,7 +50,16 @@ def run(args):
 
     engine = BackTest(instance_id, args.m, config)
     strategy = ts.createInstance(module_name, class_name, config, engine)
-    start_time, end_time = engine.run(strategy, start_time, end_time)
+
+    oldest_time = engine.md.get_oldest_time(strategy.config['symbol'], xq.KLINE_INTERVAL_1MINUTE)
+    if not start_time or start_time < oldest_time:
+        start_time = oldest_time
+    latest_time = engine.md.get_latest_time(strategy.config['symbol'], xq.KLINE_INTERVAL_1MINUTE)
+    if not end_time or end_time > latest_time:
+        end_time = latest_time
+    print("  run time range: %s ~ %s" % (start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S")))
+
+    engine.run(strategy, start_time, end_time)
     engine.analyze(symbol, engine.orders, True, args.rmk)
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
@@ -316,12 +325,14 @@ if __name__ == "__main__":
     parser_chart = subparsers.add_parser('chart', help='chart help')
     parser_chart.add_argument('-sii', help='strategy instance id')
     parser_chart.add_argument('--volume', action="store_true", help='volume')
+    parser_chart.add_argument('--tp', action="store_true", help=' total profit ratio')
     chart_add_all_argument(parser_chart)
     parser_chart.set_defaults(func=sub_cmd_chart)
 
     parser_chart_diff = subparsers.add_parser('chart_diff', help='chart diff')
     parser_chart_diff.add_argument('-siis', nargs='*', help='strategy instance ids')
     parser_chart_diff.add_argument('--volume', action="store_true", help='volume')
+    parser_chart_diff.add_argument('--tp', action="store_true", help=' total profit ratio')
     chart_add_all_argument(parser_chart_diff)
     parser_chart_diff.set_defaults(func=sub_cmd_chart_diff)
 
