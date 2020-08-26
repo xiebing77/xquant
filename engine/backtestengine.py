@@ -138,6 +138,9 @@ class BackTest(Engine):
         size = strategy.config["kline"]["size"]
         interval_klines = md.get_original_klines(interval_collection, start_time - interval_td * size, end_time)
 
+        if md.kline_data_type == kl.KLINE_DATA_TYPE_JSON and hasattr(strategy, 'json_bt_init'):
+            strategy.json_bt_init(interval_klines)
+
         kl_key_open_time = md.kline_key_open_time
         for i in range(size+1):
             if datetime.fromtimestamp(interval_klines[i][kl_key_open_time]/1000) >= start_time:

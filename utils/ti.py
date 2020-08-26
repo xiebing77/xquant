@@ -1,7 +1,11 @@
 #!/usr/bin/python
 """json接口 技术指标"""
 from .indicator import py_rsi_ema, py_rsi_ua
+from datetime import datetime
 
+def print_kl_info(key, kl):
+    pass
+    #print("%12s:  "%key, datetime.fromtimestamp(kl["open_time"]/1000), ""*10, datetime.fromtimestamp(kl["close_time"]/1000) )
 
 def get_ema_key(period):
     return "ema_%s" % (period)
@@ -14,8 +18,15 @@ def EMA(kls, vkey, period):
         kls[-1][key] = float(kls[-1][vkey]) * k + kls[-2][key] * (1 - k)
         return
 
+    if key in kls[-3]:
+        kls[-2][key] = float(kls[-2][vkey]) * k + kls[-3][key] * (1 - k)
+        kls[-1][key] = float(kls[-1][vkey]) * k + kls[-2][key] * (1 - k)
+        return
+
     if len(kls) < period:
         return
+
+    print_kl_info(key, kls[-1])
 
     vs_init = [ float(kl[vkey]) for kl in kls[:period]]
     kls[period-1][key] = sum(vs_init) / period
@@ -37,8 +48,17 @@ def BIAS(kls, period_s, period_l):
         kl[key] = (kl[eskey] - kl[elkey]) / kl[elkey]
         return
 
+    kl = kls[-2]
+    if key in kls[-3] and eskey in kl and elkey in kl:
+        kl[key] = (kl[eskey] - kl[elkey]) / kl[elkey]
+        kl = kls[-1]
+        kl[key] = (kl[eskey] - kl[elkey]) / kl[elkey]
+        return
+
     if len(kls) < period_l:
         return
+
+    print_kl_info(key, kls[-1])
 
     for kl in kls:
         if eskey in kl and elkey in kl:
@@ -66,8 +86,22 @@ def RSI(kls, vkey, period=14):
         kls[-1][key] = 100 * (ema_u / (ema_u + ema_d))
         return
 
+    if key in kls[-3]:
+        u, d = py_rsi_ua(float(kls[-3][vkey]), float(kls[-2][vkey]))
+        kls[-2][ukey] = ema_u = py_rsi_ema(kls[-3][ukey], u, period)
+        kls[-2][dkey] = ema_d = py_rsi_ema(kls[-3][dkey], d, period)
+        kls[-2][key] = 100 * (ema_u / (ema_u + ema_d))
+
+        u, d = py_rsi_ua(float(kls[-2][vkey]), float(kls[-1][vkey]))
+        kls[-1][ukey] = ema_u = py_rsi_ema(kls[-2][ukey], u, period)
+        kls[-1][dkey] = ema_d = py_rsi_ema(kls[-2][dkey], d, period)
+        kls[-1][key] = 100 * (ema_u / (ema_u + ema_d))
+        return
+
     if len(kls) < period:
         return
+
+    print_kl_info(key, kls[-1])
 
     us = []
     ds = []
