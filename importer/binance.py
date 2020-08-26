@@ -5,6 +5,7 @@ import time
 from datetime import datetime, timedelta
 import db.mongodb as md
 import common.xquant as xq
+import common.kline as kl
 from exchange.binanceExchange import BinanceExchange
 from setup import *
 import pandas as pd
@@ -19,9 +20,9 @@ if __name__ == "__main__":
         exit(1)
 
     symbol = args.s
-    interval = timedelta(seconds=xq.get_interval_seconds(args.k))
+    interval = timedelta(seconds=kl.get_interval_seconds(args.k))
 
-    collection = xq.get_kline_collection(symbol, args.k)
+    collection = kl.get_kline_collection(symbol, args.k)
     #print("collection: ", collection)
 
     db = md.MongoDB(mongo_user, mongo_pwd, args.m, db_url)

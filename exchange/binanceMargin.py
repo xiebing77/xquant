@@ -5,6 +5,7 @@ from datetime import datetime
 import common.log as log
 import pandas as pd
 import common.xquant as xq
+import common.kline as kl
 import common.bill as bl
 from .binance.margin import Client
 from .binance.client import Client as spotClient
@@ -21,7 +22,30 @@ class BinanceMargin:
     name = 'binance_margin'
     start_time = datetime(2017, 8, 17, 8)
     min_value = 10
-    kl_bt_accuracy = xq.KLINE_INTERVAL_1MINUTE
+    kl_bt_accuracy = kl.KLINE_INTERVAL_1MINUTE
+
+    kline_data_type = kl.KLINE_DATA_TYPE_LIST
+
+    kline_key_open_time  = kl.KLINE_KEY_OPEN_TIME
+    kline_key_close_time = kl.KLINE_KEY_CLOSE_TIME
+    kline_key_open       = kl.KLINE_KEY_OPEN
+    kline_key_close      = kl.KLINE_KEY_CLOSE
+    kline_key_high       = kl.KLINE_KEY_HIGH
+    kline_key_low        = kl.KLINE_KEY_LOW
+    kline_key_volume     = kl.KLINE_KEY_VOLUME
+
+    kline_column_names = [kline_key_open_time, kline_key_open, kline_key_high, kline_key_low,
+            kline_key_close, kline_key_volume, kline_key_close_time,
+            'quote_asset_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume','ignore']
+
+    kline_idx_open_time   = kl.get_kline_index(kl.KLINE_KEY_OPEN_TIME, kline_column_names)
+    kline_idx_close_time  = kl.get_kline_index(kl.KLINE_KEY_CLOSE_TIME, kline_column_names)
+    kline_idx_open        = kl.get_kline_index(kl.KLINE_KEY_OPEN, kline_column_names)
+    kline_idx_close       = kl.get_kline_index(kl.KLINE_KEY_CLOSE, kline_column_names)
+    kline_idx_high        = kl.get_kline_index(kl.KLINE_KEY_HIGH, kline_column_names)
+    kline_idx_low         = kl.get_kline_index(kl.KLINE_KEY_LOW, kline_column_names)
+    kline_idx_volume      = kl.get_kline_index(kl.KLINE_KEY_VOLUME, kline_column_names)
+
 
     def __init__(self, debug=False):
         self.__client = Client(api_key, secret_key)
@@ -60,48 +84,43 @@ class BinanceMargin:
             return None
 
     def __trans_interval(self, interval):
-        if interval == xq.KLINE_INTERVAL_1MINUTE:
+        if interval == kl.KLINE_INTERVAL_1MINUTE:
             return KLINE_INTERVAL_1MINUTE
-        elif interval == xq.KLINE_INTERVAL_3MINUTE:
+        elif interval == kl.KLINE_INTERVAL_3MINUTE:
             return KLINE_INTERVAL_3MINUTE
-        elif interval == xq.KLINE_INTERVAL_5MINUTE:
+        elif interval == kl.KLINE_INTERVAL_5MINUTE:
             return KLINE_INTERVAL_5MINUTE
-        elif interval == xq.KLINE_INTERVAL_15MINUTE:
+        elif interval == kl.KLINE_INTERVAL_15MINUTE:
             return KLINE_INTERVAL_15MINUTE
-        elif interval == xq.KLINE_INTERVAL_30MINUTE:
+        elif interval == kl.KLINE_INTERVAL_30MINUTE:
             return KLINE_INTERVAL_30MINUTE
 
-        elif interval == xq.KLINE_INTERVAL_1HOUR:
+        elif interval == kl.KLINE_INTERVAL_1HOUR:
             return KLINE_INTERVAL_1HOUR
-        elif interval == xq.KLINE_INTERVAL_2HOUR:
+        elif interval == kl.KLINE_INTERVAL_2HOUR:
             return KLINE_INTERVAL_2HOUR
-        elif interval == xq.KLINE_INTERVAL_4HOUR:
+        elif interval == kl.KLINE_INTERVAL_4HOUR:
             return KLINE_INTERVAL_4HOUR
-        elif interval == xq.KLINE_INTERVAL_6HOUR:
+        elif interval == kl.KLINE_INTERVAL_6HOUR:
             return KLINE_INTERVAL_6HOUR
-        elif interval == xq.KLINE_INTERVAL_8HOUR:
+        elif interval == kl.KLINE_INTERVAL_8HOUR:
             return KLINE_INTERVAL_8HOUR
-        elif interval == xq.KLINE_INTERVAL_12HOUR:
+        elif interval == kl.KLINE_INTERVAL_12HOUR:
             return KLINE_INTERVAL_12HOUR
 
-        elif interval == xq.KLINE_INTERVAL_1DAY:
+        elif interval == kl.KLINE_INTERVAL_1DAY:
             return KLINE_INTERVAL_1DAY
-        elif interval == xq.KLINE_INTERVAL_3DAY:
+        elif interval == kl.KLINE_INTERVAL_3DAY:
             return KLINE_INTERVAL_3DAY
 
-        elif interval == xq.KLINE_INTERVAL_1WEEK:
+        elif interval == kl.KLINE_INTERVAL_1WEEK:
             return KLINE_INTERVAL_1WEEK
 
-        elif interval == xq.KLINE_INTERVAL_1MONTH:
+        elif interval == kl.KLINE_INTERVAL_1MONTH:
             return KLINE_INTERVAL_1MONTH
 
         else:
             return None
-
-    @staticmethod
-    def get_kline_column_names():
-        return ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time',
-                'quote_asset_volume', 'number_of_trades', 'taker_buy_base_asset_volume', 'taker_buy_quote_asset_volume', 'ignore']
 
     def __get_klines(self, symbol, interval, size, since):
         """获取k线"""

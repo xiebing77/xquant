@@ -19,9 +19,9 @@ class KDJStrategy(Strategy):
         klines = self.engine.md.get_klines(
             symbol, self.kline["interval"], self.kline["size"]
         )
-        self.cur_price = float(klines[-1][self.closeindex])
+        self.cur_price = float(klines[-1][self.closeseat])
 
-        kdj_arr = ic.py_kdj(klines, self.highindex, self.lowindex, self.closeindex)
+        kdj_arr = ic.py_kdj(klines, self.highseat, self.lowseat, self.closeseat)
 
         cur_k = kdj_arr[-1][1]
         cur_d = kdj_arr[-1][2]

@@ -7,6 +7,7 @@ import uuid
 import pprint
 import utils.tools as ts
 import common.xquant as xq
+import common.kline as kl
 import common.log as log
 from exchange.exchange import BINANCE_SPOT_EXCHANGE_NAME
 from engine.backtestengine import BackTest
@@ -51,15 +52,18 @@ def run(args):
     engine = BackTest(instance_id, args.m, config)
     strategy = ts.createInstance(module_name, class_name, config, engine)
 
-    oldest_time = engine.md.get_oldest_time(strategy.config['symbol'], xq.KLINE_INTERVAL_1MINUTE)
+    oldest_time = engine.md.get_oldest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
     if not start_time or start_time < oldest_time:
         start_time = oldest_time
-    latest_time = engine.md.get_latest_time(strategy.config['symbol'], xq.KLINE_INTERVAL_1MINUTE)
+    latest_time = engine.md.get_latest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
     if not end_time or end_time > latest_time:
         end_time = latest_time
     print("  run time range: %s ~ %s" % (start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S")))
 
-    engine.run(strategy, start_time, end_time)
+    print("run2  kline_data_type: %s "% (engine.md.kline_data_type))
+    tick_count = engine.run2(strategy, start_time, end_time)
+    print("\n  total tick count: %d" % (tick_count))
+
     engine.analyze(symbol, engine.orders, True, args.rmk)
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
@@ -140,13 +144,26 @@ def sub_cmd_continue(args):
     engine = BackTest(instance_id, mds_name, config)
     strategy = ts.createInstance(module_name, class_name, config, engine)
     engine.orders = old_instance["orders"]
-    start_time, end_time = engine.run(strategy, old_instance["end_time"])
+
+    continue_time = old_instance["end_time"]
+    oldest_time = engine.md.get_oldest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
+    if continue_time < oldest_time:
+        continue_time = oldest_time
+    latest_time = engine.md.get_latest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
+    end_time = latest_time
+    print("  time range old( %s ~ %s );    continue( %s ~ %s )" % (
+        old_instance["start_time"].strftime("%Y-%m-%d %H:%M"),
+        old_instance["end_time"].strftime("%Y-%m-%d %H:%M"),
+        continue_time.strftime("%Y-%m-%d %H:%M"),
+        end_time.strftime("%Y-%m-%d %H:%M")))
+
+    engine.run(strategy, continue_time, end_time)
     engine.analyze(symbol, engine.orders, True, args.rmk)
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
         {
             "instance_id": instance_id,
-            "start_time": start_time,
+            "start_time": old_instance["start_time"],
             "end_time": end_time,
             "orders": engine.orders,
             "mds": mds_name,

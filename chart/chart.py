@@ -12,6 +12,7 @@ import common.log as log
 import utils.tools as ts
 import utils.indicator as ic
 import common.xquant as xq
+import common.kline as kl
 import common.bill as bl
 from db.mongodb import get_mongodb
 from setup import *
@@ -24,47 +25,31 @@ from chart.cycle_indicators import *
 from chart.other_indicators import *
 
 
-def chart_mpf2(title, args, symbol, ordersets, klines, kline_column_names, display_count):
-    klines_df = pd.DataFrame(klines, columns=kline_column_names)
+def chart_mpf2(title, args, symbol, ordersets, klines, md, display_count):
+    klines_df = pd.DataFrame(klines, columns=md.kline_column_names)
     klines_df.index = pd.to_datetime(klines_df.index)
-    klines_df["open"] = pd.to_numeric(klines_df["open"])
-    klines_df["close"] = pd.to_numeric(klines_df["close"])
-    klines_df["high"] = pd.to_numeric(klines_df["high"])
-    klines_df["low"] = pd.to_numeric(klines_df["low"])
-    klines_df["volume"] = pd.to_numeric(klines_df["volume"])
+    klines_df[md.kline_key_open] = pd.to_numeric(klines_df[md.kline_key_open])
+    klines_df[md.kline_key_close] = pd.to_numeric(klines_df[md.kline_key_close])
+    klines_df[md.kline_key_high] = pd.to_numeric(klines_df[md.kline_key_high])
+    klines_df[md.kline_key_low] = pd.to_numeric(klines_df[md.kline_key_low])
+    klines_df[md.kline_key_volume] = pd.to_numeric(klines_df[md.kline_key_volume])
 
     s = mpf2.make_mpf_style(base_mpf_style='classic', rc={'figure.facecolor':'lightgray'})
     mpf2.plot(klines_df, type='candle', figscale=1.2, figratio=(8,5), title=title, style=s, volume=True)
     return
 
 
-def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, display_count):
-    '''
-    for index, value in enumerate(kline_column_names):
-        if value == "high":
-            highindex = index
-        if value == "low":
-            lowindex = index
-        if value == "open":
-            openindex = index
-        if value == "close":
-            closeindex = index
-        if value == "volume":
-            volumeindex = index
-        if value == "open_time":
-            opentimeindex = index
-    '''
+def chart_mpf(title, args, symbol, ordersets, klines, md, display_count):
+    klines_df = pd.DataFrame(klines, columns=md.kline_column_names)
 
-    klines_df = pd.DataFrame(klines, columns=kline_column_names)
-
-    opens = klines_df["open"][-display_count:]
-    closes = klines_df["close"][-display_count:]
+    opens = klines_df[md.kline_key_open][-display_count:]
+    closes = klines_df[md.kline_key_close][-display_count:]
     opens = pd.to_numeric(opens)
     closes = pd.to_numeric(closes)
     base_close = closes.values[0]
 
-    open_times = [datetime.fromtimestamp((float(open_time)/1000)) for open_time in klines_df["open_time"][-display_count:]]
-    close_times = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_df["close_time"][-display_count:]]
+    open_times = [datetime.fromtimestamp((float(open_time)/1000)) for open_time in klines_df[md.kline_key_open_time][-display_count:]]
+    close_times = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_df[md.kline_key_close_time][-display_count:]]
     """
     gs = gridspec.GridSpec(8, 1)
     gs.update(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
@@ -88,8 +73,8 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
 
     quotes = []
     for k in klines[-display_count:]:
-        d = datetime.fromtimestamp(k[0]/1000)
-        quote = (dts.date2num(d), float(k[1]), float(k[4]), float(k[2]), float(k[3]))
+        d = datetime.fromtimestamp(k[md.get_kline_seat_open_time()]/1000)
+        quote = (dts.date2num(d), float(k[md.get_kline_seat_open()]), float(k[md.get_kline_seat_close()]), float(k[md.get_kline_seat_high()]), float(k[md.get_kline_seat_low()]))
         quotes.append(quote)
 
     i = 0
@@ -107,7 +92,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
         i += 1
         axes[i].set_ylabel('volume')
         axes[i].grid(True)
-        axes[i].plot(klines_df["open_time"], klines_df["volume"], "g", drawstyle="steps", label="volume")
+        axes[i].plot(klines_df[md.kline_key_open_time], klines_df[md.kline_key_volume], "g", drawstyle="steps", label=md.kline_key_volume)
 
 
     handle_momentum_indicators(args, axes, i, klines_df, close_times, display_count)
@@ -220,11 +205,11 @@ def chart_mpf(title, args, symbol, ordersets, klines, kline_column_names, displa
 
 
 def chart(title, md, symbol, interval, start_time, end_time, ordersets, args):
-    display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
+    display_count = int((end_time - start_time).total_seconds()/kl.get_interval_seconds(interval))
     print("display_count: %s" % display_count)
 
     klines = md.get_klines(symbol, interval, 150+display_count)
-    chart_mpf(title, args, symbol, ordersets, klines, md.kline_column_names, display_count)
+    chart_mpf(title, args, symbol, ordersets, klines, md, display_count)
 
 def chart_add_all_argument(parser):
     add_argument_overlap_studies(parser)

@@ -5,17 +5,19 @@ from datetime import datetime, timedelta, time
 import uuid
 import utils.tools as ts
 import common.xquant as xq
+import common.kline as kl
 from db.mongodb import get_mongodb
+import exchange.exchange as ex
 from .md import MarketingData
 
 
 class DBMD(MarketingData):
     """来源于本地数据库的市场数据"""
+    kline_data_type = kl.KLINE_DATA_TYPE_JSON
 
-    def __init__(self, exchange):
-        super().__init__(exchange)
-
-        self.md_db = get_mongodb(exchange)
+    def __init__(self, exchange_name):
+        super().__init__(exchange_name)
+        self.md_db = get_mongodb(exchange_name)
 
         self.tick_time = None
 
@@ -31,26 +33,26 @@ class DBMD(MarketingData):
         self.klines_cache = {}
 
     def get_oldest_time(self, symbol, kline_type):
-        collection = xq.get_kline_collection(symbol, kline_type)
-        klines = self.md_db.find_sort(collection, {}, 'open_time', 1, 1)
+        collection = kl.get_kline_collection(symbol, kline_type)
+        klines = self.md_db.find_sort(collection, {}, self.kline_key_open_time, 1, 1)
         if len(klines) <= 0:
             return None
-        return (datetime.fromtimestamp(klines[0]["open_time"]/1000))
+        return (datetime.fromtimestamp(klines[0][self.kline_key_open_time]/1000))
 
     def get_latest_time(self, symbol, kline_type):
-        collection = xq.get_kline_collection(symbol, kline_type)
-        interval = timedelta(seconds=xq.get_interval_seconds(kline_type))
-        klines = self.md_db.find_sort(collection, {}, 'open_time', -1, 1)
+        collection = kl.get_kline_collection(symbol, kline_type)
+        interval = timedelta(seconds=kl.get_interval_seconds(kline_type))
+        klines = self.md_db.find_sort(collection, {}, self.kline_key_open_time, -1, 1)
         if len(klines) <= 0:
             return None
-        return (datetime.fromtimestamp(klines[0]["open_time"]/1000) + interval)
+        return (datetime.fromtimestamp(klines[0][self.kline_key_open_time]/1000) + interval)
 
     def get_original_klines(self, collection, s_time, e_time):
         """ 获取k线 """
         ks = self.md_db.find(
             collection,
             {
-                "open_time": {
+                self.kline_key_open_time: {
                     "$gte": s_time.timestamp() * 1000,
                     "$lt": e_time.timestamp() * 1000,
                 }
@@ -61,12 +63,12 @@ class DBMD(MarketingData):
 
     def __get_klines_1min(self, symbol, s_time, e_time):
         """ 获取分钟k线 """
-        return self.get_original_klines(xq.get_kline_collection(symbol, xq.KLINE_INTERVAL_1MINUTE), s_time, e_time)
+        return self.get_original_klines(kl.get_kline_collection(symbol, kl.KLINE_INTERVAL_1MINUTE), s_time, e_time)
 
     '''
     def __get_klines_1day(self, symbol, s_time, e_time):
         """ 获取日k线 """
-        return self.get_original_klines(xq.get_kline_collection(symbol, xq.KLINE_INTERVAL_1DAY), s_time, e_time)
+        return self.get_original_klines(kl.get_kline_collection(symbol, kl.KLINE_INTERVAL_1DAY), s_time, e_time)
     '''
 
     def __get_klines_cache(self, symbol, interval, s_time, e_time):
@@ -77,7 +79,7 @@ class DBMD(MarketingData):
             or e_time != self.klines_cache[interval]["e_time"]
         ):
             cache = {}
-            cache["data"] = self.get_original_klines(xq.get_kline_collection(symbol, interval), s_time, e_time)
+            cache["data"] = self.get_original_klines(kl.get_kline_collection(symbol, interval), s_time, e_time)
             cache["s_time"] = s_time
             cache["e_time"] = e_time
             self.klines_cache[interval] = cache
@@ -87,8 +89,8 @@ class DBMD(MarketingData):
     def __join_klines(self, symbol, interval, size, since=None):
         """ 拼接k线 """
         # print("tick_time     : ", self.tick_time)
-        tick_open_time = xq.get_open_time(interval, self.tick_time)
-        td = xq.get_timedelta(interval, size)
+        tick_open_time = kl.get_open_time(interval, self.tick_time)
+        td = kl.get_timedelta(interval, size)
         #print("tick_open_time: ", tick_open_time)
 
         if since is None:
@@ -96,7 +98,7 @@ class DBMD(MarketingData):
             s_time = tick_open_time - td
             e_time = tick_open_time
         else:
-            s_time = xq.get_open_time(interval, since)
+            s_time = kl.get_open_time(interval, since)
             e_time = s_time + td
             #print("%s~%s"%(s_time, e_time))
 
@@ -109,7 +111,7 @@ class DBMD(MarketingData):
         return ks + k
 
     def get_json_klines(self, symbol, interval, size, since=None):
-        if interval == xq.KLINE_INTERVAL_1MINUTE:
+        if interval == kl.KLINE_INTERVAL_1MINUTE:
             klines = self.get_klines_1min(symbol, interval, size, since)
         else:
             klines = self.__join_klines(symbol, interval, size, since)
@@ -117,7 +119,10 @@ class DBMD(MarketingData):
 
     def get_klines(self, symbol, interval, size, since=None):
         klines = self.get_json_klines(symbol, interval, size, since)
-        return [[(kline[column_name] if (column_name in kline) else "0") for column_name in self.get_kline_column_names()] for kline in klines]
+        if self.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
+            return kl.trans_from_json_to_list(klines, self.kline_column_names)
+        else:
+            return klines
 
     def get_klines_1min(self, symbol, interval, size, since=None):
         """ 获取分钟k线 """
@@ -139,9 +144,9 @@ class DBMD(MarketingData):
     def __get_klines_1min_cache(self, symbol, interval, s_time, e_time):
         """ 获取分钟k线 """
         if interval in self.k1ms_cache:
-            if self.k1ms_cache[interval][0]["open_time"] == s_time.timestamp() * 1000:
+            if self.k1ms_cache[interval][0][self.kline_key_open_time] == s_time.timestamp() * 1000:
                 s_time = datetime.fromtimestamp(
-                    self.k1ms_cache[interval][-1]["open_time"] / 1000
+                    self.k1ms_cache[interval][-1][self.kline_key_open_time] / 1000
                 ) + timedelta(minutes=1)
             else:
                 del self.k1ms_cache[interval]
@@ -163,7 +168,7 @@ class DBMD(MarketingData):
             and self.k1ms_cache_s_time[interval] != s_time
         ):
             # 把整个间隔的分钟k线都取下来
-            next_interval_time = s_time + xq.get_interval_timedelta(interval)
+            next_interval_time = s_time + kl.get_interval_timedelta(interval)
             self.k1ms_cache[interval] = self.__get_klines_1min(symbol, s_time, next_interval_time)
             self.k1ms_cache_s_time[interval] = s_time
 
@@ -173,7 +178,7 @@ class DBMD(MarketingData):
 
         e_timestamp = e_time.timestamp() * 1000
         while tmp_len > 0:
-            if self.k1ms_cache[interval][tmp_len]["open_time"] <= e_timestamp:
+            if self.k1ms_cache[interval][tmp_len][self.kline_key_open_time] <= e_timestamp:
                 break
             tmp_len -= 1
         return self.k1ms_cache[interval][:tmp_len]
@@ -199,9 +204,9 @@ class DBMD(MarketingData):
             return []
 
         last_k1m = k1ms[-1]
-        max_high = float(last_k1m["high"])
-        min_low = float(last_k1m["low"])
-        total_volume = float(last_k1m["volume"])
+        max_high = float(last_k1m[self.kline_key_high])
+        min_low = float(last_k1m[self.kline_key_low])
+        total_volume = float(last_k1m[self.kline_key_volume])
 
         index = len(k1ms) - 2
         while index >= 0:
@@ -214,11 +219,11 @@ class DBMD(MarketingData):
                 total_volume += float(k1m["total_volume"])
                 break
             else:
-                if max_high < float(k1m["high"]):
-                    max_high = float(k1m["high"])
-                if min_low > float(k1m["low"]):
-                    min_low = float(k1m["low"])
-                total_volume += float(k1m["volume"])
+                if max_high < float(k1m[self.kline_key_high]):
+                    max_high = float(k1m[self.kline_key_high])
+                if min_low > float(k1m[self.kline_key_low]):
+                    min_low = float(k1m[self.kline_key_low])
+                total_volume += float(k1m[self.kline_key_volume])
             index -= 1
 
         last_k1m["max_high"] = max_high
@@ -226,13 +231,13 @@ class DBMD(MarketingData):
         last_k1m["total_volume"] = total_volume
 
         kline = {
-            "open_time": k1ms[0]["open_time"],
-            "open": k1ms[0]["open"],
-            "high": max_high,
-            "low": min_low,
-            "close": k1ms[-1]["close"],
-            "volume": total_volume,
-            "close_time": k1ms[-1]["close_time"],
+            self.kline_key_open_time: k1ms[0][self.kline_key_open_time],
+            self.kline_key_open: k1ms[0][self.kline_key_open],
+            self.kline_key_high: max_high,
+            self.kline_key_low: min_low,
+            self.kline_key_close: k1ms[-1][self.kline_key_close],
+            self.kline_key_volume: total_volume,
+            self.kline_key_close_time: k1ms[-1][self.kline_key_close_time],
         }
         return [kline]
 

@@ -2,6 +2,7 @@
 import sys
 sys.path.append('../')
 import argparse
+import common.kline as kl
 from exchange.exchange import create_exchange, exchange_names, BINANCE_SPOT_EXCHANGE_NAME
 from tabulate import tabulate as tb
 import pprint
@@ -28,10 +29,10 @@ if __name__ == "__main__":
     print("balances info:" )
     #print(tb(balances))
 
-    for index, value in enumerate(exchange.get_kline_column_names()):
-        if value == "close":
-            closeindex = index
-            break
+    if exchange.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
+        closeseat = exchange.kline_idx_close
+    else:
+        closeseat = exchange.kline_key_close
 
     total_value = 0
     for item in balances:
@@ -46,7 +47,7 @@ if __name__ == "__main__":
             #print(coin)
             symbol = creat_symbol(coin, args.basecoin)
             klines = exchange.get_klines_1min(symbol, size=1)
-            price = float(klines[-1][closeindex])
+            price = float(klines[-1][closeseat])
             value = price * amount
 
         total_value += value

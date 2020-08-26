@@ -7,6 +7,7 @@ import common.log as log
 import utils.tools as ts
 import utils.indicator as ic
 import common.xquant as xq
+import common.kline as kl
 import common.bill as bl
 from db.mongodb import get_mongodb
 from setup import *
@@ -118,12 +119,12 @@ class Engine:
         delay_timedelta_cfg_name = "d_td"
 
         if next_open_time_cfg_name in cfg:
-            _t1 = xq.get_next_open_time(cfg[next_open_time_cfg_name], self.now())
+            _t1 = kl.get_next_open_time(cfg[next_open_time_cfg_name], self.now())
         else:
             _t1 = None
 
         if delay_timedelta_cfg_name in cfg:
-            _t2 = self.now() + xq.get_interval_timedelta(cfg[delay_timedelta_cfg_name])
+            _t2 = self.now() + kl.get_interval_timedelta(cfg[delay_timedelta_cfg_name])
         else:
             _t2 = None
 
@@ -151,8 +152,8 @@ class Engine:
             self.log_error("请选择额度模式，默认是0")
 
         sl_cfg = self.config["risk_control"]["stop_loss"]
-        #sl_t = xq.get_next_open_time(self.kline_interval, self.now())
-        sl_t = self.now() + max(xq.get_next_open_timedelta(xq.KLINE_INTERVAL_1DAY, self.now()), timedelta(hours=4))
+        #sl_t = kl.get_next_open_time(self.kline_interval, self.now())
+        sl_t = self.now() + max(kl.get_next_open_timedelta(kl.KLINE_INTERVAL_1DAY, self.now()), timedelta(hours=4))
         if "base_value" in sl_cfg and sl_cfg["base_value"] > 0 and limit_value * sl_cfg["base_value"] + position_info["floating_profit"] <= 0:
             sl_bills.append(bl.create_bill(position_info["direction"], bl.CLOSE_POSITION, 0, "stop loss", "亏损金额超过额度的{:8.2%}".format(sl_cfg["base_value"]), sl_t))
 

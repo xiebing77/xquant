@@ -4,6 +4,7 @@ sys.path.append('../')
 import time
 from datetime import datetime, timedelta
 import common.xquant as xq
+import common.kline as kl
 from exchange.exchange import create_exchange
 from db.mongodb import get_mongodb
 from setup import *
@@ -19,9 +20,9 @@ if __name__ == "__main__":
         exit(1)
 
     symbol = args.s
-    interval = timedelta(seconds=xq.get_interval_seconds(args.k))
+    interval = timedelta(seconds=kl.get_interval_seconds(args.k))
 
-    collection = xq.get_kline_collection(symbol, args.k)
+    collection = kl.get_kline_collection(symbol, args.k)
     #print("collection: ", collection)
 
     db = get_mongodb(args.m)
@@ -66,7 +67,7 @@ if __name__ == "__main__":
          # print(batch)
 
         klines = exchange.get_klines(symbol, args.k, size=batch, since=1000*int(tmp_time.timestamp()))
-        klines_df = pd.DataFrame(klines, columns=exchange.get_kline_column_names())
+        klines_df = pd.DataFrame(klines, columns=exchange.kline_column_names)
         klen = len(klines)
         print("klines len: ", klen)
         for i in range(klen-1, -1, -1):

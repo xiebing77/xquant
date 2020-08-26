@@ -4,6 +4,7 @@ sys.path.append('../')
 import argparse
 import utils.tools as ts
 import common.xquant as xq
+import common.kline as kl
 from md.dbmd import DBMD
 from exchange.exchange import exchange_names, BINANCE_SPOT_EXCHANGE_NAME
 
@@ -460,7 +461,7 @@ if __name__ == "__main__":
     symbol = args.s
     interval = args.i
     start_time, end_time = ts.parse_date_range(args.r)
-    display_count = int((end_time - start_time).total_seconds()/xq.get_interval_seconds(interval))
+    display_count = int((end_time - start_time).total_seconds()/kl.get_interval_seconds(interval))
     print("display_count: %s" % display_count)
 
     md = DBMD(args.e)

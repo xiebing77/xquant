@@ -2,6 +2,7 @@
 import sys
 sys.path.append('../')
 from datetime import datetime,timedelta
+import common.kline as kl
 import db.mongodb as md
 from setup import *
 from importer import add_common_arguments, split_time_range
@@ -41,12 +42,12 @@ if __name__ == "__main__":
     start_time, end_time = split_time_range(args.r)
 
     interval = args.k
-    collection = xq.get_kline_collection(args.s, interval)
-    td = xq.get_interval_timedelta(interval)
-    period = xq.get_interval_seconds(interval)
-    tick_time = xq.get_open_time(interval, start_time)
+    collection = kl.get_kline_collection(args.s, interval)
+    td = kl.get_interval_timedelta(interval)
+    period = kl.get_interval_seconds(interval)
+    tick_time = kl.get_open_time(interval, start_time)
     if tick_time < start_time:
-        tick_time = xq.get_open_time(interval, start_time+td)
+        tick_time = kl.get_open_time(interval, start_time+td)
 
     db = md.MongoDB(mongo_user, mongo_pwd, args.m, db_url)
 

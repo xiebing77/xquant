@@ -8,12 +8,19 @@ class Strategy:
         self.config = strategy_config
         self.engine = engine
 
-        self.highindex = self.engine.md.highindex
-        self.lowindex = self.engine.md.lowindex
-        self.openindex = self.engine.md.openindex
-        self.closeindex = self.engine.md.closeindex
-        self.volumeindex = self.engine.md.volumeindex
-        self.opentimeindex = self.engine.md.opentimeindex
+        self.highkey     = self.engine.md.kline_key_high
+        self.lowkey      = self.engine.md.kline_key_low
+        self.openkey     = self.engine.md.kline_key_open
+        self.closekey    = self.engine.md.kline_key_close
+        self.volumekey   = self.engine.md.kline_key_volume
+        self.opentimekey = self.engine.md.kline_key_open_time
+
+        self.highseat     = self.engine.md.get_kline_seat_high()
+        self.lowseat      = self.engine.md.get_kline_seat_low()
+        self.openseat     = self.engine.md.get_kline_seat_open()
+        self.closeseat    = self.engine.md.get_kline_seat_close()
+        self.volumeseat   = self.engine.md.get_kline_seat_volume()
+        self.opentimeseat = self.engine.md.get_kline_seat_open_time()
 
         self.aligning_log = "\n%4s" % " "
         self.aligning_info = "\n%68s" % " "

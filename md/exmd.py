@@ -14,6 +14,8 @@ class ExchangeMD(MarketingData):
         super().__init__(exchange.name)
 
         self.__exchange = exchange
+        self.kline_data_type = exchange.kline_data_type
+
 
     def get_klines(self, symbol, interval, size):
         """ 获取日k线 """

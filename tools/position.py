@@ -29,7 +29,7 @@ if __name__ == "__main__":
     if len(klines) <= 0:
         exit(1)
 
-    cur_price = float(klines[-1][re.md.closeindex])
+    cur_price = float(klines[-1][re.md.get_kline_seat_close()])
     pst_info = re.get_position(symbol, cur_price)
     if args.action == bl.OPEN_POSITION:
         pst_rate = 1

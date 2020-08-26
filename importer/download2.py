@@ -6,6 +6,7 @@ import time
 from datetime import datetime, timedelta
 import db.mongodb as md
 import common.xquant as xq
+import common.kline as kl
 from exchange.exchange import create_exchange
 from db.mongodb import get_mongodb
 from setup import *
@@ -15,22 +16,23 @@ from importer import add_common_arguments, split_time_range
 
 def download_from_exchange(exchange, db, symbol, kline_type, time_range):
     print('%12s %6s   ' % (' ', kline_type), end = '' )
-    collection = xq.get_kline_collection(symbol, kline_type)
-    db.ensure_index(collection, [("open_time",1)], unique=True)
+    collection = kl.get_kline_collection(symbol, kline_type)
+    open_time_key = exchange.kline_key_open_time
+    db.ensure_index(collection, [(open_time_key,1)], unique=True)
 
-    interval = timedelta(seconds=xq.get_interval_seconds(kline_type))
+    interval = timedelta(seconds=kl.get_interval_seconds(kline_type))
     if time_range:
         start_time, end_time = split_time_range(time_range)
     else:
         # 续接db中最后一条记录，至今天之前
-        klines = db.find_sort(collection, {}, 'open_time', -1, 1)
+        klines = db.find_sort(collection, {}, open_time_key, -1, 1)
         if len(klines) > 0:
-            start_time = (datetime.fromtimestamp(klines[0]["open_time"]/1000) + interval)
+            start_time = (datetime.fromtimestamp(klines[0][open_time_key]/1000) + interval)
         else:
             start_time = exchange.start_time
         end_time = datetime.now()
 
-    #print(xq.get_open_time(kline_type, end_time))
+    #print(kl.get_open_time(kline_type, end_time))
     """
     if start_time.hour != exchange.start_time.hour:
         print("open time(%s) hour error! %s open time hour: %s" % (start_time, exchange.name, exchange.start_time.hour))
@@ -42,7 +44,7 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
     """
 
     end_time = end_time.replace(minute=0, second=0, microsecond=0)
-    end_time = xq.get_open_time(kline_type, end_time)
+    end_time = kl.get_open_time(kline_type, end_time)
     print("time range:  %s ~ %s " % (start_time, end_time))
 
     size = 1000
@@ -56,11 +58,11 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
          # print(batch)
 
         klines = exchange.get_klines(symbol, kline_type, size=batch, since=1000*int(tmp_time.timestamp()))
-        klines_df = pd.DataFrame(klines, columns=exchange.get_kline_column_names())
+        klines_df = pd.DataFrame(klines, columns=exchange.kline_column_names)
         klen = len(klines)
         print(" %20s start time:  %s   %s" % (' ', tmp_time, klen))
         for i in range(klen-1, -1, -1):
-            last_open_time = datetime.fromtimestamp(klines_df["open_time"].values[i]/1000)
+            last_open_time = datetime.fromtimestamp(klines_df[open_time_key].values[i]/1000)
             if last_open_time + interval <= end_time:
                 break
             klines_df = klines_df.drop([i])
@@ -71,7 +73,7 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
             for item in klines_df.to_dict('records'):
                 db.insert_one(collection, item)
 
-        last_time = datetime.fromtimestamp(klines_df["open_time"].values[-1]/1000) + interval
+        last_time = datetime.fromtimestamp(klines_df[open_time_key].values[-1]/1000) + interval
         if last_time > tmp_time + batch * interval:
             batch = int((last_time - tmp_time)/interval)
         tmp_time += batch * interval
