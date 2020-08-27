@@ -9,7 +9,6 @@ import utils.indicator as ic
 import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
-from db.mongodb import get_mongodb
 
 
 class Engine:
