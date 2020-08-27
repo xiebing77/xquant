@@ -49,7 +49,7 @@ def run(args):
         log.info("strategy name: %s;  config: %s" % (class_name, config))
 
 
-    engine = BackTest(instance_id, args.m, config)
+    engine = BackTest(instance_id, args.m, config, args.log)
     strategy = ts.createInstance(module_name, class_name, config, engine)
 
     oldest_time = engine.md.get_oldest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
@@ -141,7 +141,7 @@ def sub_cmd_continue(args):
         log.info("strategy name: %s;  config: %s" % (class_name, config))
 
 
-    engine = BackTest(instance_id, mds_name, config)
+    engine = BackTest(instance_id, mds_name, config, args.log)
     strategy = ts.createInstance(module_name, class_name, config, engine)
     engine.orders = old_instance["orders"]
 

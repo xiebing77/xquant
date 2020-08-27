@@ -12,7 +12,7 @@ from setup import *
 
 
 def look(instance_id, config, value):
-    engine = Engine(instance_id, config, value, db_order_name)
+    engine = Engine(instance_id, config, value, trade_db_name)
     orders = engine.td_db.find("orders", {"instance_id": instance_id})
     engine.analyze(config["symbol"], orders)
 

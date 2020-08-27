@@ -8,6 +8,7 @@ import common.bill as bl
 from .engine import Engine
 from exchange.exchange import create_exchange
 from md.exmd import ExchangeMD
+import setup
 
 
 DB_ORDERS_NAME = "orders"
@@ -16,8 +17,12 @@ DB_ORDERS_NAME = "orders"
 class RealEngine(Engine):
     """实盘引擎"""
 
-    def __init__(self, instance_id, exchange_name, config, value):
-        super().__init__(instance_id, config, value, DB_ORDERS_NAME)
+    def __init__(self, instance_id, exchange_name, config, value, log_switch=False):
+        super().__init__(instance_id, config, value, log_switch)
+
+        self.db_orders_name = DB_ORDERS_NAME
+        self.td_db = get_mongodb(setup.trade_db_name)
+        self.td_db.ensure_index(self.db_orders_name, [("instance_id",1),("symbol",1)])
 
         self.__exchange = create_exchange(exchange_name)
         if not self.__exchange:

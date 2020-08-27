@@ -5,7 +5,7 @@ import setup
 STRATEGY_INSTANCE_COLLECTION_NAME = 'strategies'
 
 def get_strategy_instance(sii):
-    db = get_mongodb(setup.db_order_name)
+    db = get_mongodb(setup.trade_db_name)
     db.ensure_index(STRATEGY_INSTANCE_COLLECTION_NAME, [("instance_id",1)])
 
     instances = db.find(STRATEGY_INSTANCE_COLLECTION_NAME, {"instance_id": sii})
@@ -18,13 +18,13 @@ def get_strategy_instance(sii):
     return instances[0]
 
 def add_strategy_instance(record):
-    db = get_mongodb(setup.db_order_name)
+    db = get_mongodb(setup.trade_db_name)
     db.insert_one(STRATEGY_INSTANCE_COLLECTION_NAME, record)
 
 def update_strategy_instance(query, record):
-    db = get_mongodb(setup.db_order_name)
+    db = get_mongodb(setup.trade_db_name)
     db.update(STRATEGY_INSTANCE_COLLECTION_NAME, query, record)
 
 def delete_strategy_instance(query):
-    db = get_mongodb(setup.db_order_name)
+    db = get_mongodb(setup.trade_db_name)
     db.delete_one(STRATEGY_INSTANCE_COLLECTION_NAME, query)

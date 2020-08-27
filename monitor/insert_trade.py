@@ -9,7 +9,7 @@ from setup import *
 # Example:
 # python3.6 insert_trade.py -i gbtc -d buy -s btc_usdt -p 11000.23 -a 1.11
 
-db_name = db_order_name
+db_name = trade_db_name
 collection = 'orders'
 record = {
     "create_time": time.time(),

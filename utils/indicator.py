@@ -26,6 +26,9 @@ def py_mas(klines, index, period):
     return arr
 
 def py_emas(klines, index, period):
+    if len(klines) < period:
+        return
+
     vs_init = [ float(kline[index]) for kline in klines[:period]]
     arr = [sum(vs_init) / period]
 

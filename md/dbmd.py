@@ -13,11 +13,11 @@ from .md import MarketingData
 
 class DBMD(MarketingData):
     """来源于本地数据库的市场数据"""
-    kline_data_type = kl.KLINE_DATA_TYPE_JSON
 
-    def __init__(self, exchange_name):
+    def __init__(self, exchange_name, kline_data_type=kl.KLINE_DATA_TYPE_JSON):
         super().__init__(exchange_name)
         self.md_db = get_mongodb(exchange_name)
+        self.kline_data_type = kline_data_type
 
         self.tick_time = None
 

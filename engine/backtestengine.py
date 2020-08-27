@@ -14,10 +14,10 @@ from md.dbmd import DBMD
 class BackTest(Engine):
     """回测引擎"""
 
-    def __init__(self, instance_id, exchange_name, config, value=10000, *symbols):
-        super().__init__(instance_id, config, value)
+    def __init__(self, instance_id, exchange_name, config, log_switch=False, *symbols):
+        super().__init__(instance_id, config, 10000, log_switch)
 
-        self.md = DBMD(exchange_name)
+        self.md = DBMD(exchange_name, kl.KLINE_DATA_TYPE_JSON)
         self.orders = []
 
     def now(self):
@@ -92,12 +92,12 @@ class BackTest(Engine):
         self.md.tick_time = start_time
         tick_count = 0
         while self.md.tick_time < end_time:
-            #self.log_info("tick_time: %s" % self.md.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
+            self.log_info("tick_time: %s" % self.md.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
 
             strategy.on_tick()
 
             tick_cost_time = datetime.now()
-            #self.log_info("tick  cost: %s \n\n" % (tick_cost_time - pre_tick_cost_time))
+            self.log_info("tick  cost: %s \n\n" % (tick_cost_time - pre_tick_cost_time))
 
             tick_count += 1
             self.md.tick_time += td_secs
@@ -165,7 +165,7 @@ class BackTest(Engine):
             tick_klines = md.get_original_klines(tick_collection, interval_open_time, interval_open_time + interval_td)
             for j, tick_kl in enumerate(tick_klines):
                 tick_open_time = datetime.fromtimestamp(tick_kl[kl_key_open_time]/1000)
-                #self.log_info("tick_time: %s" % tick_open_time.strftime("%Y-%m-%d %H:%M:%S"))
+                self.log_info("tick_time: %s" % tick_open_time.strftime("%Y-%m-%d %H:%M:%S"))
                 #print(tick_open_time)
                 if j == 0:
                     new_interval_kl = tick_kl
@@ -184,7 +184,7 @@ class BackTest(Engine):
                 strategy.on_tick(kls)
 
                 tick_cost_time = datetime.now()
-                #self.log_info("tick  cost: %s \n\n" % (tick_cost_time - pre_tick_cost_time))
+                self.log_info("tick  cost: %s \n\n" % (tick_cost_time - pre_tick_cost_time))
                 pre_tick_cost_time = tick_cost_time
                 tick_count += 1
 

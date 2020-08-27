@@ -10,45 +10,45 @@ import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
 from db.mongodb import get_mongodb
-from setup import *
 
 
 class Engine:
     """引擎"""
 
-    def __init__(self, instance_id, config, value, db_orders_name=None):
+    def __init__(self, instance_id, config, value, log_switch):
         self.instance_id = instance_id
         self.config = config
         self.value = value
-
-        self.td_db = get_mongodb(db_order_name)
-
-        if db_orders_name:
-            self.db_orders_name = db_orders_name
-            self.td_db.ensure_index(db_orders_name, [("instance_id",1),("symbol",1)])
 
         self.can_open_long_time = None
         self.can_open_short_time = None
 
         self.tp_cc = {"base_open": 0}
 
+        self.log_switch = log_switch
+
         #self.kline_interval = config["kline"]["interval"]
 
 
     def log_info(self, info):
-        log.info(info)
+        if self.log_switch:
+            log.info(info)
 
     def log_warning(self, info):
-        log.warngin(info)
+        if self.log_switch:
+            log.warngin(info)
 
     def log_error(self, info):
-        log.error(info)
+        if self.log_switch:
+            log.error(info)
 
     def log_critical(self, info):
-        log.critical(info)
+        if self.log_switch:
+            log.critical(info)
 
     def log_debug(self, info):
-        log.debug(info)
+        if self.log_switch:
+            log.debug(info)
 
 
     def get_floating_profit(self, direction, amount, value, commission, cur_price):
