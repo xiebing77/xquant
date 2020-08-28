@@ -205,3 +205,11 @@ def get_kline_index(key, kline_column_names):
 def trans_from_json_to_list(kls, kline_column_names):
     return [[(kline[column_name] if (column_name in kline) else "0") for column_name in kline_column_names] for kline in kls]
 
+def trans_from_list_to_json(kls_list, kline_column_names):
+    kls_json = []
+    for kl_list in kls_list:
+        kl_json = {}
+        for idx, v in enumerate(kl_list):
+            kl_json[kline_column_names[idx]] = v
+        kls_json.append(kl_json)
+    return kls_json

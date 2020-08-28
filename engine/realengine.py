@@ -4,6 +4,7 @@ import time
 import datetime
 import utils.tools as ts
 import common.xquant as xq
+import common.kline as kl
 import common.bill as bl
 from .engine import Engine
 from exchange.exchange import create_exchange
@@ -30,7 +31,7 @@ class RealEngine(Engine):
             print("Wrong exchange name: %s" % exchange_name)
             exit(1)
 
-        self.md = ExchangeMD(self.__exchange)
+        self.md = ExchangeMD(self.__exchange, kl.KLINE_DATA_TYPE_JSON)
 
     def now(self):
         return datetime.datetime.now()
