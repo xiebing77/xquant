@@ -14,10 +14,10 @@ elif six.PY3:
     from urllib.parse import urlencode
 
 
-class Future(object):
+class Client(object):
 
     API_URL = 'https://fapi.binance.com/fapi'
-    TRANSFER_API_URL = 'https://api.binance.com/wapi'
+    TRANSFER_API_URL = 'https://api.binance.com/sapi'
     PUBLIC_API_VERSION = 'v1'
     PRIVATE_API_VERSION = 'v1'
     TRANSFER_API_VERSION = 'v1'
@@ -146,7 +146,7 @@ class Future(object):
         return self._request(method, uri, signed, **kwargs)
 
     def _request_transfer_api(self, method, path, signed=False, version=TRANSFER_API_VERSION, **kwargs):
-        uri = self._create_transfer_api_uri(path, signed, version)
+        uri = self._create_transfer_api_uri(path)
 
         return self._request(method, uri, signed, **kwargs)
 

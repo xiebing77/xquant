@@ -141,7 +141,6 @@ class BinanceExchange:
 
     def get_account(self):
         """获取账户信息"""
-        coin_balances = []
         account = self.__client.get_account()
         nb = []
         balances = account['balances']
