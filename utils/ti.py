@@ -3,10 +3,14 @@
 from .indicator import py_rsi_ema, py_rsi_ua
 from datetime import datetime
 
+
 def print_kl_info(key, kl):
     pass
     #print("%12s:  "%key, datetime.fromtimestamp(kl["open_time"]/1000), ""*10, datetime.fromtimestamp(kl["close_time"]/1000) )
 
+
+
+##### EMA ####################################################################
 def get_ema_key(period):
     return "ema_%s" % (period)
 
@@ -35,6 +39,8 @@ def EMA(kls, vkey, period):
         kls[i][key] = float(kls[i][vkey]) * k + kls[i-1][key] * (1 - k)
     return key
 
+
+##### BIAS ####################################################################
 def get_bias_key(period_s, period_l):
     return "bias_%s_%s" % (period_s, period_l)
 
@@ -66,6 +72,7 @@ def BIAS(kls, period_s, period_l):
     return key
 
 
+##### RSI ####################################################################
 def get_rsi_key(period):
     return "rsi_%s" % (period)
 
@@ -119,4 +126,19 @@ def RSI(kls, vkey, period=14):
         kls[i][key] = 100 * (ema_u / (ema_u + ema_d))
     return key
 
+##### STEP ####################################################################
+
+def get_above_step(kls, vkey, v):
+    for idx in range(-1, -len(kls)-1, -1):
+        kl = kls[idx]
+        if (vkey not in kl) or kl[vkey] >= v:
+            return -1-idx
+    return len(kls)
+
+def get_below_step(kls, vkey, v):
+    for idx in range(-1, -len(kls)-1, -1):
+        kl = kls[idx]
+        if (vkey not in kl) or  kl[vkey] <= v:
+            return -1-idx
+    return len(kls)
 
