@@ -2,7 +2,7 @@
 import sys
 #sys.path.append('../')
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta, time
 import uuid
 import pprint
 import utils.tools as ts
@@ -24,7 +24,164 @@ def create_instance_id():
     print('new id of instance: %s' % instance_id)
     return instance_id
 
-def run(args):
+
+def run(engine, md, strategy, start_time, end_time):
+    """ run """
+    secs = strategy.config["sec"]
+    if secs < 60:
+        secs = 60
+    td_secs = timedelta(seconds=secs)
+
+    pre_tick_cost_time = total_tick_cost_start = datetime.now()
+    md.tick_time = start_time
+    tick_count = 0
+    while md.tick_time < end_time:
+        engine.log_info("tick_time: %s" % md.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
+
+        strategy.on_tick()
+
+        tick_cost_time = datetime.now()
+        engine.log_info("tick  cost: %s \n\n" % (tick_cost_time - pre_tick_cost_time))
+
+        tick_count += 1
+        md.tick_time += td_secs
+        progress = (md.tick_time - start_time).total_seconds() / (
+            end_time - start_time
+        ).total_seconds()
+        sys.stdout.write(
+            "%s  progress: %d%%,  cost: %s,  tick: %s\r"
+            % (
+                " "*36,
+                progress * 100,
+                tick_cost_time - total_tick_cost_start,
+                md.tick_time.strftime("%Y-%m-%d %H:%M:%S"),
+            )
+        )
+        sys.stdout.flush()
+
+    return tick_count
+
+
+def run2(engine, md, strategy, start_time, end_time):
+    """ run advance"""
+    secs = strategy.config["sec"]
+    if secs < 60:
+        secs = 60
+    td_secs = timedelta(seconds=secs)
+
+    symbol = strategy.config["symbol"]
+
+    tick_interval = kl.KLINE_INTERVAL_1MINUTE
+    tick_collection = kl.get_kline_collection(symbol, tick_interval)
+    tick_td = kl.get_interval_timedelta(tick_interval)
+
+    interval = strategy.config["kline"]["interval"]
+    interval_collection = kl.get_kline_collection(symbol, interval)
+    interval_td = kl.get_interval_timedelta(interval)
+    size = strategy.config["kline"]["size"]
+    interval_klines = md.get_original_klines(interval_collection, start_time - interval_td * size, end_time)
+
+    if md.kline_data_type == kl.KLINE_DATA_TYPE_JSON and hasattr(strategy, 'json_bt_init'):
+        strategy.json_bt_init(interval_klines)
+
+    kl_key_open_time = md.kline_key_open_time
+    for i in range(size+1):
+        if datetime.fromtimestamp(interval_klines[i][kl_key_open_time]/1000) >= start_time:
+            break
+    interval_idx = i
+
+    pre_tick_cost_time = total_tick_cost_start = datetime.now()
+    tick_count = 0
+    for i in range(interval_idx, len(interval_klines)):
+        interval_open_time = datetime.fromtimestamp(interval_klines[i][kl_key_open_time]/1000)
+
+        start_i = i - size
+        if start_i < 0:
+            start_i = 0
+        history_kls = interval_klines[start_i:i]
+        #print(len(history_kls))
+
+        interval_open_ts = interval_klines[i][kl_key_open_time]
+        interval_open_time = datetime.fromtimestamp(interval_open_ts/1000)
+        #print(interval_open_time)
+
+        tick_klines = md.get_original_klines(tick_collection, interval_open_time, interval_open_time + interval_td)
+        for j, tick_kl in enumerate(tick_klines):
+            tick_open_time = datetime.fromtimestamp(tick_kl[kl_key_open_time]/1000)
+            engine.log_info("tick_time: %s" % tick_open_time.strftime("%Y-%m-%d %H:%M:%S"))
+            #print(tick_open_time)
+            if j == 0:
+                new_interval_kl = tick_kl
+            else:
+                new_interval_kl[md.kline_key_close] = tick_kl[md.kline_key_close]
+                new_interval_kl[md.kline_key_close_time] = tick_kl[md.kline_key_close_time]
+                if new_interval_kl[md.kline_key_high] < tick_kl[md.kline_key_high]:
+                    new_interval_kl[md.kline_key_high] = tick_kl[md.kline_key_high]
+                if new_interval_kl[md.kline_key_low] > tick_kl[md.kline_key_low]:
+                    new_interval_kl[md.kline_key_low] = tick_kl[md.kline_key_low]
+
+            kls = history_kls + [new_interval_kl]
+            if md.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
+                kls = kl.trans_from_json_to_list(kls, md.kline_column_names)
+            md.tick_time = tick_open_time + tick_td
+            strategy.on_tick(kls)
+
+            tick_cost_time = datetime.now()
+            engine.log_info("tick  cost: %s \n\n" % (tick_cost_time - pre_tick_cost_time))
+            pre_tick_cost_time = tick_cost_time
+            tick_count += 1
+
+        progress = (i + 1 - interval_idx) / (len(interval_klines) - interval_idx)
+        sys.stdout.write(
+            "%s  progress: %d%%,  cost: %s, next open time: %s\r"
+            % (
+                " "*36,
+                progress * 100,
+                tick_cost_time - total_tick_cost_start,
+                (interval_open_time+interval_td).strftime("%Y-%m-%d %H:%M:%S"),
+            )
+        )
+        sys.stdout.flush()
+
+    return tick_count
+
+
+def refresh(engine, md, strategy, times):
+    """ refresh """
+    total_tick_count = len(times)
+    total_tick_start = datetime.now()
+    tick_count = 0
+    for t in times:
+        md.tick_time = t
+        engine.log_info("tick_time: %s" % md.tick_time.strftime("%Y-%m-%d %H:%M:%S"))
+        tick_start = datetime.now()
+
+        strategy.on_tick()
+
+        tick_end = datetime.now()
+        engine.log_info("tick  cost: %s \n\n" % (tick_end - tick_start))
+
+        tick_count += 1
+        progress = tick_count / total_tick_count
+        sys.stdout.write(
+            "%s  progress: %d%%,  cost: %s,  tick: %s\r"
+            % (
+                " "*36,
+                progress * 100,
+                tick_end - total_tick_start,
+                md.tick_time.strftime("%Y-%m-%d %H:%M:%S"),
+            )
+        )
+        sys.stdout.flush()
+
+    total_tick_end = datetime.now()
+    print(
+        "\n  total tick count: %d cost: %s"
+        % (tick_count, total_tick_end - total_tick_start)
+    )
+
+
+def sub_cmd_run(args):
     if not (args.m and args.sc):
         exit(1)
 
@@ -61,7 +218,7 @@ def run(args):
     print("  run time range: %s ~ %s" % (start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S")))
 
     print("run2  kline_data_type: %s "% (engine.md.kline_data_type))
-    tick_count = engine.run2(strategy, start_time, end_time)
+    tick_count = run2(engine, engine.md, strategy, start_time, end_time)
     print("\n  total tick count: %d" % (tick_count))
 
     engine.analyze(symbol, engine.orders, True, args.rmk)
@@ -157,7 +314,9 @@ def sub_cmd_continue(args):
         continue_time.strftime("%Y-%m-%d %H:%M"),
         end_time.strftime("%Y-%m-%d %H:%M")))
 
-    engine.run(strategy, continue_time, end_time)
+    print("run2  kline_data_type: %s "% (engine.md.kline_data_type))
+    tick_count = run2(engine, engine.md, strategy, continue_time, end_time)
+    print("\n  total tick count: %d" % (tick_count))
     engine.analyze(symbol, engine.orders, True, args.rmk)
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
@@ -184,7 +343,7 @@ def sub_cmd_refresh(args):
     module_name = config["module_name"].replace("/", ".")
     class_name = config["class_name"]
     strategy = ts.createInstance(module_name, class_name, config, engine)
-    engine.refresh(strategy, [ datetime.fromtimestamp(order["create_time"]) for order in instance['orders']])
+    refresh(engine, engine.md, strategy, [ datetime.fromtimestamp(order["create_time"]) for order in instance['orders']])
     orders = engine.orders
     for idx, order in enumerate(engine.orders):
         old_order = instance['orders'][idx]
@@ -310,7 +469,7 @@ if __name__ == "__main__":
     parser_run.add_argument('--cs', help='chart show', action="store_true")
     parser_run.add_argument('--log', help='log', action="store_true")
     add_argument_overlap_studies(parser_run)
-    parser_run.set_defaults(func=run)
+    parser_run.set_defaults(func=sub_cmd_run)
     """
     parser.add_argument('-m', default=BINANCE_SPOT_EXCHANGE_NAME, help='market data source')
     parser.add_argument('-sc', help='strategy config')
@@ -363,4 +522,4 @@ if __name__ == "__main__":
         args.func(args)
     else:
         #parser.print_help()
-        run(args)
+        sub_cmd_run(args)
