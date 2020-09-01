@@ -1,4 +1,4 @@
-"""bill"""
+"""signal"""
 
 
 def create_signal(name, describe="", result=None):

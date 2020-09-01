@@ -14,6 +14,7 @@ class Strategy:
         self.closekey    = self.engine.md.kline_key_close
         self.volumekey   = self.engine.md.kline_key_volume
         self.opentimekey = self.engine.md.kline_key_open_time
+        self.closetimekey = self.engine.md.kline_key_close_time
 
         self.highseat     = self.engine.md.get_kline_seat_high()
         self.lowseat      = self.engine.md.get_kline_seat_low()
@@ -21,6 +22,7 @@ class Strategy:
         self.closeseat    = self.engine.md.get_kline_seat_close()
         self.volumeseat   = self.engine.md.get_kline_seat_volume()
         self.opentimeseat = self.engine.md.get_kline_seat_open_time()
+        self.closetimeseat = self.engine.md.get_kline_seat_close_time()
 
         self.aligning_log = "\n%4s" % " "
         self.aligning_info = "\n%68s" % " "

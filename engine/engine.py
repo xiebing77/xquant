@@ -510,6 +510,12 @@ class Engine:
         return orders
 
 
+    def handle(self, symbol, strategy, price, create_time, info):
+        position_info = self.get_position(symbol, price)
+        check_bills = strategy.check_bill(symbol, position_info)
+        self.handle_order(symbol, position_info, price, check_bills, info)
+
+
     def analyze(self, symbol, orders, print_switch_hl=True, display_rmk=False):
         if len(orders) == 0:
             return

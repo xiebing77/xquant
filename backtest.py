@@ -11,6 +11,7 @@ import common.kline as kl
 import common.log as log
 from exchange.exchange import BINANCE_SPOT_EXCHANGE_NAME
 from engine.backtestengine import BackTest
+from engine.signalengine import TestSignal
 from chart.chart import chart, chart_add_all_argument
 from db.mongodb import get_mongodb
 from md.dbmd import DBMD
@@ -179,6 +180,69 @@ def refresh(engine, md, strategy, times):
         "\n  total tick count: %d cost: %s"
         % (tick_count, total_tick_end - total_tick_start)
     )
+
+
+def sub_cmd_signal(args):
+    if not (args.m and args.sc):
+        exit(1)
+
+    instance_id = create_instance_id()
+
+    config = xq.get_strategy_config(args.sc)
+    pprint.pprint(config)
+
+    module_name = config["module_name"].replace("/", ".")
+    class_name = config["class_name"]
+
+    symbol = config['symbol']
+    interval = config["kline"]["interval"]
+    if args.r:
+        start_time, end_time = ts.parse_date_range(args.r)
+    else:
+        start_time = end_time = None
+
+    if args.log:
+        logfilename = class_name + "_"+ symbol + "_" + instance_id + ".log"
+        print(logfilename)
+        log.init("testsignal", logfilename)
+        log.info("strategy name: %s;  config: %s" % (class_name, config))
+
+    exchange_name = args.m
+    md = DBMD(exchange_name, kl.KLINE_DATA_TYPE_JSON)
+    engine = TestSignal(md, instance_id, config, args.log)
+    strategy = ts.createInstance(module_name, class_name, config, engine)
+
+    oldest_time = md.get_oldest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
+    if not start_time or start_time < oldest_time:
+        start_time = oldest_time
+    latest_time = md.get_latest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
+    if not end_time or end_time > latest_time:
+        end_time = latest_time
+    print("  run time range: %s ~ %s" % (start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S")))
+
+    print("run2  kline_data_type: %s "% (md.kline_data_type))
+    tick_count = run2(engine, md, strategy, start_time, end_time)
+    print("\n  total tick count: %d" % (tick_count))
+
+    #engine.analyze(symbol, engine.signals, True, args.rmk)
+    #pprint.pprint(engine.signals)
+    print(len(engine.signals))
+    """"
+    _id = bt_db.insert_one(
+        BACKTEST_INSTANCES_COLLECTION_NAME,
+        {
+            "instance_id": instance_id,
+            "start_time": start_time,
+            "end_time": end_time,
+            "signals": engine.signals,
+            "mds": args.m,
+            "sc": args.sc,
+        },
+    )
+    """
+    if args.chart:
+        signalsets = engine.get_signalsets()
+        chart("", engine.md, symbol, interval, start_time, end_time, [], args, signalsets)
 
 
 def sub_cmd_run(args):
@@ -477,6 +541,15 @@ if __name__ == "__main__":
     parser.add_argument('--chart', help='chart', action="store_true")
     parser.add_argument('--log', help='log', action="store_true")
     parser.add_argument('--rmk', help='remark', action="store_true")
+
+    parser_signal = subparsers.add_parser('signal', help='test signal')
+    parser_signal.add_argument('-m', default=BINANCE_SPOT_EXCHANGE_NAME, help='market data source')
+    parser_signal.add_argument('-sc', help='strategy config')
+    parser_signal.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
+    parser_signal.add_argument('--chart', help='chart', default=True, action="store_true")
+    parser_signal.add_argument('--volume', action="store_true", help='volume')
+    chart_add_all_argument(parser_signal)
+    parser_signal.set_defaults(func=sub_cmd_signal)
 
     parser_view = subparsers.add_parser('view', help='view help')
     parser_view.add_argument('-sii', help='strategy instance id')

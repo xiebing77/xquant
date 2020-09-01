@@ -8,6 +8,7 @@ import mplfinance as mpf2
 import pandas as pd
 import talib
 from datetime import datetime,timedelta
+from pprint import pprint
 import common.log as log
 import utils.tools as ts
 import utils.indicator as ic
@@ -39,7 +40,7 @@ def chart_mpf2(title, args, symbol, ordersets, klines, md, display_count):
     return
 
 
-def chart_mpf(title, args, symbol, ordersets, klines, md, display_count):
+def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signalsets=[]):
     klines_df = pd.DataFrame(klines, columns=md.kline_column_names)
 
     opens = klines_df[md.kline_key_open][-display_count:]
@@ -67,6 +68,11 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count):
         + get_other_indicators_count(args)
         + len(ordersets))
 
+    if cols == 1:
+        cols += 1
+        args.volume = True
+    print("cols: ", cols)
+
     fig, axes = plt.subplots(cols, 1, sharex=True)
     fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
     fig.suptitle(title)
@@ -85,6 +91,11 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count):
     axes[i].xaxis_date()
     for orders in ordersets:
         axes[i].plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
+    #pprint(signalsets)
+    for key in signalsets:
+        signals = signalsets[key]
+        #pprint(signals)
+        axes[i].plot([signal["create_time"] for signal in signals], [signal["price"] for signal in signals], "o")
     handle_overlap_studies(args, axes[i], klines_df, close_times, display_count)
     handle_price_transform(args, axes[i], klines_df, close_times, display_count)
 
@@ -92,8 +103,9 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count):
         i += 1
         axes[i].set_ylabel('volume')
         axes[i].grid(True)
-        axes[i].plot(klines_df[md.kline_key_open_time], klines_df[md.kline_key_volume], "g", drawstyle="steps", label=md.kline_key_volume)
-
+        volumes = [float(volume) for volume in klines_df[md.kline_key_volume][-display_count:]]
+        #axes[i].plot(open_times, volumes, "g", drawstyle="steps", label=md.kline_key_volume)
+        axes[i].bar(open_times, volumes, label=md.kline_key_volume, width=0.1)
 
     handle_momentum_indicators(args, axes, i, klines_df, close_times, display_count)
     i += get_momentum_indicators_count(args)
@@ -204,12 +216,12 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count):
     plt.show()
 
 
-def chart(title, md, symbol, interval, start_time, end_time, ordersets, args):
+def chart(title, md, symbol, interval, start_time, end_time, ordersets, args, signalsets=[]):
     display_count = int((end_time - start_time).total_seconds()/kl.get_interval_seconds(interval))
     print("display_count: %s" % display_count)
 
     klines = md.get_klines(symbol, interval, 150+display_count)
-    chart_mpf(title, args, symbol, ordersets, klines, md, display_count)
+    chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signalsets)
 
 def chart_add_all_argument(parser):
     add_argument_overlap_studies(parser)
