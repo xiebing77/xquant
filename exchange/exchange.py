@@ -3,10 +3,12 @@
 
 from exchange.binanceExchange import BinanceExchange
 from exchange.binanceMargin import BinanceMargin
+from exchange.binanceFuture import BinanceFuture
 from exchange.okexExchange import OkexExchange
 
 BINANCE_SPOT_EXCHANGE_NAME = 'binance'
 BINANCE_MARGIN_EXCHANGE_NAME = 'binance_margin'
+BINANCE_FUTURE_EXCHANGE_NAME = 'binance_future'
 
 OKEX_SPOT_EXCHANGE_NAME = 'okex'
 
@@ -17,6 +19,8 @@ def create_exchange(exchange_name):
         return BinanceExchange(debug=True)
     elif exchange_name == BINANCE_MARGIN_EXCHANGE_NAME:
         return BinanceMargin(debug=True)
+    elif exchange_name == BINANCE_FUTURE_EXCHANGE_NAME:
+        return BinanceFuture(debug=True)
     elif exchange_name == OKEX_SPOT_EXCHANGE_NAME:
         return OkexExchange(debug=True)
     else:
