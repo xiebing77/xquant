@@ -94,7 +94,8 @@ def get_pst_by_orders(orders, commission_rate):
             POSITON_AMOUNT_KEY: 0,
             POSITON_VALUE_KEY: 0,
             POSITON_COMMISSION_KEY: 0,
-            HISTORY_PROFIT_KEY: 0
+            HISTORY_PROFIT_KEY: 0,
+            HISTORY_COMMISSION_KEY: 0,
         }
 
     cur_order = orders[-1]
