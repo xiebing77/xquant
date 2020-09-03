@@ -9,6 +9,8 @@ import utils.indicator as ic
 import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
+from .order import get_pst_by_orders, POSITON_AMOUNT_KEY, POSITON_HIGH_KEY, POSITON_HIGH_TIME_KEY, POSITON_LOW_KEY, POSITON_LOW_TIME_KEY, ORDER_ACTION_KEY
+from pprint import pprint
 
 
 class Engine:
@@ -63,34 +65,43 @@ class Engine:
     def _get_position(self, symbol, orders, cur_price):
         target_coin, base_coin = xq.get_symbol_coins(symbol)
 
-        info = self._get_position_from_orders(symbol, orders)
-
-        total_profit = info["history_profit"]
-        if info["amount"] > 0:
-            cycle_profit = self.get_floating_profit(info["direction"], info["amount"], info["value"], info["commission"], cur_price)
-            total_profit += cycle_profit
-
-            open_value = self.value
-            if self.config["mode"] == 1:
-                open_value += info["history_profit"]
-
-            info["floating_profit"] = cycle_profit
-            info["floating_profit_rate"] = cycle_profit / open_value
+        #info = self._get_position_from_orders(symbol, orders)
+        info = get_pst_by_orders(orders, self.config["commission_rate"])
 
         if orders:
             info["pst_rate"] = orders[-1]["pst_rate"]
+            for pst_first_order in reversed(orders):
+                if pst_first_order[ORDER_ACTION_KEY] == bl.OPEN_POSITION:
+                    break
+            info[POSITON_HIGH_KEY]      = pst_first_order[POSITON_HIGH_KEY]
+            info[POSITON_HIGH_TIME_KEY] = pst_first_order[POSITON_HIGH_TIME_KEY]
+            info[POSITON_LOW_KEY]       = pst_first_order[POSITON_LOW_KEY]
+            info[POSITON_LOW_TIME_KEY]  = pst_first_order[POSITON_LOW_TIME_KEY]
 
-        sub_info1 = "amount: %f,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g," % (
-            info["amount"], info["price"], info["cost_price"], info["value"], info["commission"], self.value, info["floating_profit"]) if info["amount"] else ""
-        sub_info2 = "  profit rate: %g%%," % (info["floating_profit_rate"] * 100) if info["value"] else ""
-        sub_info3 = "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S") if "start_time" in info and info["start_time"] else ""
-        sub_info4 = "  history_profit: %g,  history_commission: %g,  history_profit_rate: %g%%," % (
-            info["history_profit"], info["history_commission"], (info["history_profit"] * 100 / self.value))
+        if self.log_switch:
+            total_profit = info["history_profit"]
+            if info["amount"] > 0:
+                cycle_profit = self.get_floating_profit(info["direction"], info["amount"], info["value"], info["commission"], cur_price)
+                total_profit += cycle_profit
 
-        self.log_info(
-            "symbol( %s ); current price( %g ); position(%s%s%s%s  total_profit_rate: %g%%)" % (
-            symbol, cur_price, sub_info1, sub_info2, sub_info3, sub_info4, (total_profit / self.value) * 100)
-        )
+                open_value = self.value
+                if self.config["mode"] == 1:
+                    open_value += info["history_profit"]
+
+                info["floating_profit"] = cycle_profit
+                info["floating_profit_rate"] = cycle_profit / open_value
+
+            sub_info1 = "amount: %f,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g," % (
+                info["amount"], info["price"], info["cost_price"], info["value"], info["commission"], self.value, info["floating_profit"]) if info["amount"] else ""
+            sub_info2 = "  profit rate: %g%%," % (info["floating_profit_rate"] * 100) if info["value"] else ""
+            sub_info3 = "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S") if "start_time" in info and info["start_time"] else ""
+            sub_info4 = "  history_profit: %g,  history_commission: %g,  history_profit_rate: %g%%," % (
+                info["history_profit"], info["history_commission"], (info["history_profit"] * 100 / self.value))
+
+            self.log_info(
+                "symbol( %s ); current price( %g ); position(%s%s%s%s  total_profit_rate: %g%%)" % (
+                symbol, cur_price, sub_info1, sub_info2, sub_info3, sub_info4, (total_profit / self.value) * 100)
+            )
         # print(info)
         return info
 
@@ -324,7 +335,10 @@ class Engine:
             if "pst_rate" in position_info and position_info["pst_rate"] >= pst_rate:
                 return
 
-            pst_cost = abs(position_info["value"]) + position_info["commission"]
+            if position_info[POSITON_AMOUNT_KEY] == 0:
+                pst_cost = 0
+            else:
+                pst_cost = abs(position_info["value"]) + position_info["commission"]
             base_amount = limit_value * pst_rate - pst_cost
             if base_amount <= 0:
                 return
