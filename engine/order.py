@@ -117,5 +117,5 @@ def get_pst_by_orders(orders, commission_rate):
     init_history(first_pst)
     orders[0][POSITON_KEY] = first_pst
     for idx in range(1, len(orders)):
-        calc_pst_by_order(orders[idx-1], orders[idx])
+        calc_pst_by_order(orders[idx-1], orders[idx], commission_rate)
     return orders[idx][POSITON_KEY]
