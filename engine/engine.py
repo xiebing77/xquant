@@ -9,7 +9,7 @@ import utils.indicator as ic
 import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
-from .order import get_pst_by_orders, POSITON_AMOUNT_KEY, POSITON_HIGH_KEY, POSITON_HIGH_TIME_KEY, POSITON_LOW_KEY, POSITON_LOW_TIME_KEY, ORDER_ACTION_KEY
+from .order import get_pst_by_orders, get_cost_price, get_floating_profit, POSITON_AMOUNT_KEY, POSITON_HIGH_KEY, POSITON_HIGH_TIME_KEY, POSITON_LOW_KEY, POSITON_LOW_TIME_KEY, ORDER_ACTION_KEY
 from pprint import pprint
 
 
@@ -79,21 +79,16 @@ class Engine:
             info[POSITON_LOW_TIME_KEY]  = pst_first_order[POSITON_LOW_TIME_KEY]
 
         if self.log_switch:
-            total_profit = info["history_profit"]
-            if info["amount"] > 0:
-                cycle_profit = self.get_floating_profit(info["direction"], info["amount"], info["value"], info["commission"], cur_price)
-                total_profit += cycle_profit
-
-                open_value = self.value
-                if self.config["mode"] == 1:
-                    open_value += info["history_profit"]
-
-                info["floating_profit"] = cycle_profit
-                info["floating_profit_rate"] = cycle_profit / open_value
+            open_value = self.value
+            if self.config["mode"] == 1:
+                open_value += info["history_profit"]
+            floating_profit = get_floating_profit(info, cur_price)
+            floating_profit_rate = floating_profit / open_value
+            total_profit = floating_profit + info["history_profit"]
 
             sub_info1 = "amount: %f,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g," % (
-                info["amount"], info["price"], info["cost_price"], info["value"], info["commission"], self.value, info["floating_profit"]) if info["amount"] else ""
-            sub_info2 = "  profit rate: %g%%," % (info["floating_profit_rate"] * 100) if info["value"] else ""
+                info["amount"], info["price"], get_cost_price(info), info["value"], info["commission"], self.value, floating_profit) if info["amount"] else ""
+            sub_info2 = "  profit rate: %g%%," % (floating_profit_rate * 100) if info["value"] else ""
             sub_info3 = "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S") if "start_time" in info and info["start_time"] else ""
             sub_info4 = "  history_profit: %g,  history_commission: %g,  history_profit_rate: %g%%," % (
                 info["history_profit"], info["history_commission"], (info["history_profit"] * 100 / self.value))

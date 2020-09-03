@@ -36,15 +36,6 @@ def get_order_value(order):
     else:
         return order[ORDER_DEAL_VALUE_KEY]
 
-def get_floating_profit(pst, cur_price):
-    tmp_value = cur_price * pst[POSITON_AMOUNT_KEY]
-    if pst[POSITON_DIRECTION_KEY] == bl.DIRECTION_LONG:
-        pst_profit = tmp_value + pst[POSITON_VALUE_KEY]
-    else:
-        pst_profit = pst[POSITON_VALUE_KEY] - tmp_value
-    pst_profit -= pst[POSITON_COMMISSION_KEY]
-    return pst_profit
-
 def init_history(pst):
     pst[HISTORY_COMMISSION_KEY] = 0
     pst[HISTORY_PROFIT_KEY] = 0
@@ -119,3 +110,23 @@ def get_pst_by_orders(orders, commission_rate):
     for idx in range(1, len(orders)):
         calc_pst_by_order(orders[idx-1], orders[idx], commission_rate)
     return orders[idx][POSITON_KEY]
+
+
+def get_floating_profit(pst, cur_price):
+    if pst[POSITON_AMOUNT_KEY] == 0:
+        return 0
+    tmp_value = cur_price * pst[POSITON_AMOUNT_KEY]
+    if pst[POSITON_DIRECTION_KEY] == bl.DIRECTION_LONG:
+        pst_profit = tmp_value + pst[POSITON_VALUE_KEY]
+    else:
+        pst_profit = pst[POSITON_VALUE_KEY] - tmp_value
+    pst_profit -= pst[POSITON_COMMISSION_KEY]
+    return pst_profit
+
+def get_cost_price(pst):
+    if pst[POSITON_AMOUNT_KEY] == 0:
+        return 0
+    if pst[POSITON_DIRECTION_KEY] == bl.DIRECTION_LONG:
+        return (pst[POSITON_COMMISSION_KEY] - pst[POSITON_VALUE_KEY]) / pst[POSITON_AMOUNT_KEY]
+    else:
+        return (pst[POSITON_VALUE_KEY] - pst[POSITON_COMMISSION_KEY]) / pst[POSITON_AMOUNT_KEY]
