@@ -82,9 +82,6 @@ def run2(engine, md, strategy, start_time, end_time):
     size = strategy.config["kline"]["size"]
     interval_klines = md.get_original_klines(interval_collection, start_time - interval_td * size, end_time)
 
-    if md.kline_data_type == kl.KLINE_DATA_TYPE_JSON and hasattr(strategy, 'json_bt_init'):
-        strategy.json_bt_init(interval_klines)
-
     kl_key_open_time = md.kline_key_open_time
     for i in range(size+1):
         if datetime.fromtimestamp(interval_klines[i][kl_key_open_time]/1000) >= start_time:
@@ -226,8 +223,8 @@ def sub_cmd_signal(args):
 
     #engine.analyze(symbol, engine.signals, True, args.rmk)
     #pprint.pprint(engine.signals)
-    print(len(engine.signals))
-    """"
+    print("signal count: ", len(engine.signals))
+    '''
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
         {
@@ -239,10 +236,11 @@ def sub_cmd_signal(args):
             "sc": args.sc,
         },
     )
-    """
+    '''
     if args.chart:
         signalsets = engine.get_signalsets()
-        chart("", engine.md, symbol, interval, start_time, end_time, [], args, signalsets)
+        title = "signal:  " + symbol + '  ' + config['kline']['interval'] + ' ' + config['class_name']
+        chart(title, engine.md, symbol, interval, start_time, end_time, [], args, signalsets)
 
 
 def sub_cmd_run(args):

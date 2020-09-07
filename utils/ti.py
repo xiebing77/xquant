@@ -14,17 +14,20 @@ def print_kl_info(key, kl):
 def get_ema_key(period):
     return "ema_%s" % (period)
 
+def calc_ema(kls, vkey, key, k, idx):
+    kls[idx][key] = float(kls[idx][vkey]) * k + kls[idx-1][key] * (1 - k)
+
 def EMA(kls, vkey, period):
     k = 2 / (float(period) + 1)
     key = get_ema_key(period)
 
     if key in kls[-2]:
-        kls[-1][key] = float(kls[-1][vkey]) * k + kls[-2][key] * (1 - k)
+        calc_ema(kls, vkey, key, k, -1)
         return key
 
     if key in kls[-3]:
-        kls[-2][key] = float(kls[-2][vkey]) * k + kls[-3][key] * (1 - k)
-        kls[-1][key] = float(kls[-1][vkey]) * k + kls[-2][key] * (1 - k)
+        calc_ema(kls, vkey, key, k, -2)
+        calc_ema(kls, vkey, key, k, -1)
         return key
 
     if len(kls) < period:
@@ -36,13 +39,16 @@ def EMA(kls, vkey, period):
     kls[period-1][key] = sum(vs_init) / period
 
     for i in range(period, len(kls)):
-        kls[i][key] = float(kls[i][vkey]) * k + kls[i-1][key] * (1 - k)
+        calc_ema(kls, vkey, key, k, i)
     return key
 
 
 ##### BIAS ####################################################################
 def get_bias_key(period_s, period_l):
     return "bias_%s_%s" % (period_s, period_l)
+
+def calc_bias(kl, eskey, elkey, key):
+    kl[key] = (kl[eskey] - kl[elkey]) / kl[elkey]
 
 def BIAS(kls, period_s, period_l):
     key = get_bias_key(period_s, period_l)
@@ -51,14 +57,13 @@ def BIAS(kls, period_s, period_l):
 
     kl = kls[-1]
     if key in kls[-2] and eskey in kl and elkey in kl:
-        kl[key] = (kl[eskey] - kl[elkey]) / kl[elkey]
+        calc_bias(kls[-1], eskey, elkey, key)
         return key
 
     kl = kls[-2]
     if key in kls[-3] and eskey in kl and elkey in kl:
-        kl[key] = (kl[eskey] - kl[elkey]) / kl[elkey]
-        kl = kls[-1]
-        kl[key] = (kl[eskey] - kl[elkey]) / kl[elkey]
+        calc_bias(kls[-2], eskey, elkey, key)
+        calc_bias(kls[-1], eskey, elkey, key)
         return key
 
     if len(kls) < period_l:
@@ -68,7 +73,7 @@ def BIAS(kls, period_s, period_l):
 
     for kl in kls:
         if eskey in kl and elkey in kl:
-            kl[key] = (kl[eskey] - kl[elkey]) / kl[elkey]
+            calc_bias(kl, eskey, elkey, key)
     return key
 
 
@@ -82,28 +87,24 @@ def get_rsi_ema_u_key(period):
 def get_rsi_ema_d_key(period):
     return "%s_ema_d" % get_rsi_key(period)
 
+def calc_rsi(kls, vkey, ukey, dkey, key, period, idx):
+    u, d = py_rsi_ua(float(kls[idx-1][vkey]), float(kls[idx][vkey]))
+    kls[idx][ukey] = ema_u = py_rsi_ema(kls[idx-1][ukey], u, period)
+    kls[idx][dkey] = ema_d = py_rsi_ema(kls[idx-1][dkey], d, period)
+    kls[idx][key] = 100 * (ema_u / (ema_u + ema_d))
+
 def RSI(kls, vkey, period=14):
     key = get_rsi_key(period)
     ukey = get_rsi_ema_u_key(period)
     dkey = get_rsi_ema_d_key(period)
 
     if key in kls[-2]:
-        u, d = py_rsi_ua(float(kls[-2][vkey]), float(kls[-1][vkey]))
-        kls[-1][ukey] = ema_u = py_rsi_ema(kls[-2][ukey], u, period)
-        kls[-1][dkey] = ema_d = py_rsi_ema(kls[-2][dkey], d, period)
-        kls[-1][key] = 100 * (ema_u / (ema_u + ema_d))
+        calc_rsi(kls, vkey, ukey, dkey, key, period, -1)
         return key
 
     if key in kls[-3]:
-        u, d = py_rsi_ua(float(kls[-3][vkey]), float(kls[-2][vkey]))
-        kls[-2][ukey] = ema_u = py_rsi_ema(kls[-3][ukey], u, period)
-        kls[-2][dkey] = ema_d = py_rsi_ema(kls[-3][dkey], d, period)
-        kls[-2][key] = 100 * (ema_u / (ema_u + ema_d))
-
-        u, d = py_rsi_ua(float(kls[-2][vkey]), float(kls[-1][vkey]))
-        kls[-1][ukey] = ema_u = py_rsi_ema(kls[-2][ukey], u, period)
-        kls[-1][dkey] = ema_d = py_rsi_ema(kls[-2][dkey], d, period)
-        kls[-1][key] = 100 * (ema_u / (ema_u + ema_d))
+        calc_rsi(kls, vkey, ukey, dkey, key, period, -2)
+        calc_rsi(kls, vkey, ukey, dkey, key, period, -1)
         return key
 
     if len(kls) < period:
@@ -120,10 +121,7 @@ def RSI(kls, vkey, period=14):
     kls[i][ukey] = sum(us) / period
     kls[i][dkey] = sum(ds) / period
     for i in range(period, len(kls)):
-        u, d = py_rsi_ua(float(kls[i-1][vkey]), float(kls[i][vkey]))
-        kls[i][ukey] = ema_u = py_rsi_ema(kls[i-1][ukey], u, period)
-        kls[i][dkey] = ema_d = py_rsi_ema(kls[i-1][dkey], d, period)
-        kls[i][key] = 100 * (ema_u / (ema_u + ema_d))
+        calc_rsi(kls, vkey, ukey, dkey, key, period, i)
     return key
 
 ##### STEP ####################################################################
