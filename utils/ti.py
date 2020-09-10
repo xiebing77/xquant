@@ -20,7 +20,7 @@ def calc_ema(kls, vkey, key, k, idx):
 def get_ema_k(period):
     return 2 / (float(period) + 1)
 
-def EMA(kls, vkey, period):
+def EMA(kls, vkey, period, start_idx=0):
     k = get_ema_k(period)
     key = get_ema_key(vkey, period)
 
@@ -33,14 +33,11 @@ def EMA(kls, vkey, period):
         calc_ema(kls, vkey, key, k, -1)
         return key
 
-    if len(kls) < period:
+    if len(kls) < start_idx+period:
         return
 
     print_kl_info(key, kls[-1])
 
-    for start_idx in range(0, len(kls)):
-        if vkey in kls[start_idx]:
-            break
     vs_init = [ float(kl[vkey]) for kl in kls[start_idx:start_idx+period]]
     kls[start_idx+period-1][key] = sum(vs_init) / period
 
@@ -166,17 +163,17 @@ def MACD(kls, vkey, fastperiod=12, slowperiod=26, signalperiod=9):
         return difkey, signalkey, histkey
 
     if len(kls) < fastperiod:
-        return
+        return None, None, None
     EMA(kls, vkey, fastperiod)
 
     if len(kls) < slowperiod:
-        return
+        return None, None, None
     EMA(kls, vkey, slowperiod)
 
     for kl in kls[slowperiod-1:]:
         kl[difkey] =  kl[fastkey] - kl[slowkey]
 
-    EMA(kls, difkey, signalperiod)
+    EMA(kls, difkey, signalperiod, slowperiod-1)
 
     for kl in kls[signalperiod+slowperiod:]:
         kl[histkey] = kl[difkey] - kl[signalkey]
