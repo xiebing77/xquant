@@ -136,7 +136,7 @@ def RSI(kls, vkey, period=14):
 
 
 ##### MACD ####################################################################
-def calc_macd(kls, fastkey, slowkey, difkey, signalkey, histkey, signal_k, idx):
+def calc_macd(kls, vkey, fastkey, slowkey, difkey, signalkey, histkey, fast_k, slow_k, signal_k, idx):
     calc_ema(kls, vkey, fastkey, fast_k, idx)
     calc_ema(kls, vkey, slowkey, slow_k, idx)
     kl = kls[idx]
