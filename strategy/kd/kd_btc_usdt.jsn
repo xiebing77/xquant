@@ -1,6 +1,6 @@
 {
-    "module_name": "strategy/kdj",
-    "class_name": "KDJStrategy",
+    "module_name": "strategy/kd/kd",
+    "class_name": "KDStrategy",
     "commission_rate": 0.001,
     "symbol": "btc_usdt",
     "digits": {"btc": 6, "usdt": 2},

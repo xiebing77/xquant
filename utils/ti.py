@@ -181,28 +181,81 @@ def MACD(kls, vkey, fastperiod=12, slowperiod=26, signalperiod=9):
     return difkey, signalkey, histkey
 
 
+##### KD ####################################################################
+def get_rsv_key(period):
+    return "rsv_%s" % (period)
+
+def calc_rsv(kls, closekey, rsvkey, max_high, min_low, idx):
+    kls[idx][rsvkey] = 100 * (float(kls[idx][closekey]) - min_low) / (max_high - min_low)
+
+def calc_kd(kls, rsvkey, kkey, dkey, idx):
+    M_K = 3
+    M_D = 3
+    a_k = 1 / M_K
+    a_d = 1 / M_D
+
+    kls[idx][kkey] = a_k * kls[idx][rsvkey] + (1 - a_k) * kls[idx-1][kkey]
+    kls[idx][dkey] = a_d * kls[idx][kkey] + (1 - a_d) * kls[idx-1][dkey]
+
+def calc_kd_all(kls, closekey, highkey, lowkey, rsvkey, kkey, dkey, period, idx):
+    highs = [float(kl[highkey]) for kl in kls[-period:]]
+    lows = [float(kl[lowkey]) for kl in kls[-period:]]
+    calc_rsv(kls, closekey, rsvkey, max(highs), min(lows), idx)
+    calc_kd(kls, rsvkey, kkey, dkey, idx)
+
+def KD(kls, closekey, highkey, lowkey, period=9):
+    rsvkey = get_rsv_key(period)
+    kkey = "KD_K_%s" % (period)
+    dkey = "KD_D_%s" % (period)
+
+    '''
+    if dkey in kls[-2]:
+        calc_kd_all(kls, closekey, highkey, lowkey, rsvkey, kkey, dkey, period, -1)
+    if dkey in kls[-3]:
+        calc_kd_all(kls, closekey, highkey, lowkey, rsvkey, kkey, dkey, period, -2)
+        calc_kd_all(kls, closekey, highkey, lowkey, rsvkey, kkey, dkey, period, -1)
+    '''
+    if len(kls) < period:
+        return None, None
+
+    highs = [float(kl[highkey]) for kl in kls[:period]]
+    lows = [float(kl[lowkey]) for kl in kls[:period]]
+    calc_rsv(kls, closekey, rsvkey, max(highs), min(lows), period-1)
+    kls[period-1][dkey] = kls[period-1][kkey] = kls[period-1][rsvkey]
+
+    for i in range(period, len(kls)):
+        highs.pop(0)
+        lows.pop(0)
+        highs.append(float(kls[i][highkey]))
+        lows.append(float(kls[i][lowkey]))
+        calc_rsv(kls, closekey, rsvkey, max(highs), min(lows), i)
+        calc_kd(kls, rsvkey, kkey, dkey, i)
+    return kkey, dkey
+
 #####  ####################################################################
 
 def MAX(kls, vkey):
     if vkey not in kls[-1]:
         return
-    max_v = kls[-1][vkey]
+    max_v = float(kls[-1][vkey])
     for kl in kls[-2::-1]:
         if vkey not in kl:
             break
-        if kl[vkey] > max_v:
-            max_v = kl[vkey]
+        cur_v = float(kl[vkey])
+        if cur_v > max_v:
+            max_v = cur_v
     return max_v
 
 def MIN(kls, vkey):
     if vkey not in kls[-1]:
         return
-    min_v = kls[-1][vkey]
+    min_v = float(kls[-1][vkey])
     for kl in kls[-2::-1]:
         if vkey not in kl:
             break
-        if kl[vkey] < min_v:
-            min_v = kl[vkey]
+        cur_v = float(kl[vkey])
+        if cur_v < min_v:
+            min_v = cur_v
     return min_v
 
 ##### STEP ####################################################################

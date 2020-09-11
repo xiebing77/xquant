@@ -14,6 +14,10 @@ import common.xquant as xq
 import common.kline as kl
 import exchange.exchange  as ex
 
+def print_test_title(name):
+    print("\n", "-"*8, "test", name, "-"*100)
+
+
 class TestIndicator(unittest.TestCase):
 
     def setUp(self):
@@ -31,7 +35,12 @@ class TestIndicator(unittest.TestCase):
         self.klines_df = pd.DataFrame(self.klines, columns=self.md.get_kline_column_names())
 
         self.closeseat = self.md.get_kline_seat_close()
+        self.highseat = self.md.get_kline_seat_high()
+        self.lowseat = self.md.get_kline_seat_low()
+
         self.closekey = ex.get_kline_key_close(exchange_name)
+        self.highkey = ex.get_kline_key_high(exchange_name)
+        self.lowkey = ex.get_kline_key_low(exchange_name)
 
         self.count = 5000
         self.steps = 1
@@ -43,7 +52,7 @@ class TestIndicator(unittest.TestCase):
 
 
     def test_ema(self):
-        print("\n  test ema")
+        print_test_title("ema")
         period = 55
 
         kls =self.klines
@@ -58,7 +67,7 @@ class TestIndicator(unittest.TestCase):
 
 
     def test_bias(self):
-        print("\n  test bias")
+        print_test_title("bias")
         period_s = 21
         period_l = 55
 
@@ -86,7 +95,7 @@ class TestIndicator(unittest.TestCase):
 
 
     def test_rsi(self):
-        print("\n  test rsi")
+        print_test_title("rsi")
 
         kls =self.klines
         rsi_key = ti.RSI(kls, self.closekey)
@@ -98,7 +107,7 @@ class TestIndicator(unittest.TestCase):
             self.assertTrue(abs(kls[i][rsi_key] - ta_rsis.values[i]) < 0.01)
 
     def test_macd(self):
-        print("\n  test macd")
+        print_test_title("macd")
 
         kls =self.klines
         dif_key, signal_key, hist_key = ti.MACD(kls, self.closekey)
@@ -117,6 +126,47 @@ class TestIndicator(unittest.TestCase):
             self.assertTrue(abs(kls[i][signal_key] - signals.values[i]) < 0.01)
             self.assertTrue(abs(kls[i][hist_key] - hists.values[i]) < 0.01)
 
+    def perf_macd(self):
+        for i in range(self.count):
+            kls = self.md.get_klines(self.symbol, self.interval, 150 + self.display_count)
+            dif_key, signal_key, hist_key = ti.MACD(kls, self.closekey)
+
+            kls_df = pd.DataFrame(kls, columns=self.md.get_kline_column_names())
+            difs, signals, hists = talib.MACD(kls_df[self.closekey])
+
+            i = -1
+            self.assertTrue(abs(kls[i][dif_key] - difs.values[i]) < 0.01)
+            self.assertTrue(abs(kls[i][signal_key] - signals.values[i]) < 0.01)
+            self.assertTrue(abs(kls[i][hist_key] - hists.values[i]) < 0.01)
+
+            self.md.tick_time += self.td
+
+    def test_kd(self):
+        print_test_title("kd")
+        period = 9
+        kls =self.klines
+        kkey, dkey = ti.KD(kls, self.closekey, self.highkey, self.lowkey, period)
+        '''
+        kls_df = self.klines_df
+        slowk, slowd = talib.STOCH(high=kls_df[self.highkey], low=kls_df[self.lowkey], close=kls_df[self.closekey],
+            fastk_period=period, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
+        '''
+        kds = ic.py_kdj(kls, self.highseat, self.lowseat, self.closeseat)
+
+
+        print("      ti  kd ks:  ", [round(kl[kkey], self.digits) for kl in kls[-self.display_count:]])
+        #print("TA-Lib  kd ks:  ", [round(k, self.digits) for k in slowk][-self.display_count:])
+        print("indicator kd ks:  ", [round(kd[1], self.digits) for kd in kds[-self.display_count:]])
+
+        print("      ti  kd ds:  ", [round(kl[dkey], self.digits) for kl in kls[-self.display_count:]])
+        #print("TA-Lib  kd ds:  ", [round(d, self.digits) for d in slowd][-self.display_count:])
+        print("indicator kd ds:  ", [round(kd[2], self.digits) for kd in kds[-self.display_count:]])
+
+        for i in range(-self.display_count, 0):
+            #self.assertTrue(abs(kls[i][kkey] - slowk.values[i]) < 0.01)
+            #self.assertTrue(abs(kls[i][dkey] - slowd.values[i]) < 0.01)
+            self.assertTrue(abs(kls[i][kkey] - kds[i][1]) < 0.01)
+            self.assertTrue(abs(kls[i][dkey] - kds[i][2]) < 0.01)
 
 
 if __name__ == '__main__':
