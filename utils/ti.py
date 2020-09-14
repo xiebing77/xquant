@@ -9,6 +9,35 @@ def print_kl_info(key, kl):
     #print("%12s:  "%key, datetime.fromtimestamp(kl["open_time"]/1000), ""*10, datetime.fromtimestamp(kl["close_time"]/1000) )
 
 
+##### MA ####################################################################
+def get_ma_key(vkey, period):
+    return "ma_%s_%s" % (vkey, period)
+
+def calc_ma(kls, vkey, key, period, idx):
+    kls[idx][key] = (float(kls[idx][vkey]) - float(kls[idx-period][vkey])) / period + kls[idx-1][key]
+
+def MA(kls, vkey, period):
+    key = get_ma_key(vkey, period)
+
+    if key in kls[-2]:
+        calc_ma(kls, vkey, key, period, -1)
+        return key
+
+    if key in kls[-3]:
+        calc_ma(kls, vkey, key, period, -2)
+        calc_ma(kls, vkey, key, period, -1)
+        return key
+
+    if len(kls) < period:
+        return
+
+    vs_init = [ float(kl[vkey]) for kl in kls[:period]]
+    kls[period-1][key] = sum(vs_init) / period
+
+    for i in range(period, len(kls)):
+        calc_ma(kls, vkey, key, period, i)
+    return key
+
 
 ##### EMA ####################################################################
 def get_ema_key(vkey, period):

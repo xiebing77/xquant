@@ -50,6 +50,20 @@ class TestIndicator(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_ma(self):
+        print_test_title("ma")
+        period = 55
+
+        kls =self.klines
+        ma_key = ti.MA(kls, self.closekey, period)
+        print("    ti  mas:  ", [round(kl[ma_key], self.digits) for kl in kls[-self.display_count:]])
+
+        tas = talib.MA(self.klines_df[self.closekey], period)
+        print("TA-Lib  mas:  ", [round(a, self.digits) for a in tas][-self.display_count:])
+
+        for i in range(-self.display_count, 0):
+            self.assertTrue(abs(kls[i][ma_key] - tas.values[i]) < 0.01)
+
 
     def test_ema(self):
         print_test_title("ema")
