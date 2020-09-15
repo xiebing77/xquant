@@ -11,7 +11,7 @@ def print_kl_info(key, kl):
 
 ##### MA ####################################################################
 def get_ma_key(vkey, period):
-    return "ma_%s_%s" % (vkey, period)
+    return "%s_ma_%s" % (vkey, period)
 
 def calc_ma(kls, vkey, key, period, idx):
     kls[idx][key] = (float(kls[idx][vkey]) - float(kls[idx-period][vkey])) / period + kls[idx-1][key]
@@ -41,7 +41,7 @@ def MA(kls, vkey, period):
 
 ##### EMA ####################################################################
 def get_ema_key(vkey, period):
-    return "ema_%s_%s" % (vkey, period)
+    return "%s_ema_%s" % (vkey, period)
 
 def calc_ema(kls, vkey, key, k, idx):
     kls[idx][key] = float(kls[idx][vkey]) * k + kls[idx-1][key] * (1 - k)
@@ -118,10 +118,10 @@ def get_rsi_key(period):
     return "rsi_%s" % (period)
 
 def get_rsi_ema_u_key(period):
-    return "%s_ema_u" % get_rsi_key(period)
+    return "u_ema_%s" % get_rsi_key(period)
 
 def get_rsi_ema_d_key(period):
-    return "%s_ema_d" % get_rsi_key(period)
+    return "d_ema_%s" % get_rsi_key(period)
 
 def calc_rsi(kls, vkey, ukey, dkey, key, period, idx):
     u, d = py_rsi_ua(float(kls[idx-1][vkey]), float(kls[idx][vkey]))
@@ -260,6 +260,80 @@ def KD(kls, closekey, highkey, lowkey, period=9):
         calc_rsv(kls, closekey, rsvkey, max(highs), min(lows), i)
         calc_kd(kls, rsvkey, kkey, dkey, i)
     return kkey, dkey
+
+
+##### ATR ####################################################################
+def get_truerange_key():
+    return "truerange"
+
+def calc_truerange(kls, highkey, lowkey, closekey, trkey, idx):
+    pre_close = float(kls[idx-1][closekey])
+    kls[idx][trkey] = max(float(kls[idx][highkey]), pre_close) - min(float(kls[idx][lowkey]), pre_close)
+
+def TrueRange(kls, highkey, lowkey, closekey, period=14):
+    key = get_truerange_key()
+
+    if key in kls[-2]:
+        calc_truerange(kls, highkey, lowkey, closekey, key, -1)
+        return key
+
+    if key in kls[-3]:
+        calc_truerange(kls, highkey, lowkey, closekey, key, -2)
+        calc_truerange(kls, highkey, lowkey, closekey, key, -1)
+        return key
+
+    if len(kls) < period:
+        return
+
+    for i in range(1, len(kls)):
+        calc_truerange(kls, highkey, lowkey, closekey, key, i)
+    return key
+
+
+def _ATR(kls, highkey, lowkey, closekey, period=14):
+    trkey = TrueRange(kls, highkey, lowkey, closekey, period)
+    key = EMA(kls, trkey, period, 1)
+    return key
+
+
+##### TRIX ####################################################################
+def get_trix_key(period):
+    return "trix_%d" % (period)
+
+def calc_trix(kls, closekey, ema_key_1, ema_key_2, ema_key_3, period, idx):
+    calc_ema(kls, closekey, ema_key_1, idx)
+    calc_ema(kls, ema_key_1, ema_key_2, idx)
+    calc_ema(kls, ema_key_2, ema_key_3, idx)
+    kls[idx][key] = ((kls[idx][ema_key_3] / kls[idx-1][ema_key_3]) -1 ) * 100
+
+def TRIX(kls, closekey, period=30):
+    key = get_trix_key(period)
+    ema_key_1 = get_ema_key(closekey, period)
+    ema_key_2 = get_ema_key(ema_key_1, period)
+    ema_key_3 = get_ema_key(ema_key_2, period)
+
+    if key in kls[-2]:
+        calc_trix(kls, closekey, ema_key_1, ema_key_3, ema_key_3, period, -1)
+        return key
+    if key in kls[-3]:
+        calc_trix(kls, closekey, ema_key_1, ema_key_3, ema_key_3, period, -2)
+        calc_trix(kls, closekey, ema_key_1, ema_key_3, ema_key_3, period, -1)
+        return key
+
+    kls_len = len(kls)
+    if kls_len < period:
+        return
+    EMA(kls, closekey, period)
+    if kls_len < 2*period:
+        return
+    EMA(kls, ema_key_1, period, period)
+    if kls_len < 3*period:
+        return
+    EMA(kls, ema_key_2, period, 2*period)
+    for i in range(3*period, kls_len):
+        kls[i][key] = ((kls[i][ema_key_3] / kls[i-1][ema_key_3]) -1 ) * 100
+    return key
+
 
 #####  ####################################################################
 

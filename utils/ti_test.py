@@ -182,6 +182,34 @@ class TestIndicator(unittest.TestCase):
             self.assertTrue(abs(kls[i][kkey] - kds[i][1]) < 0.01)
             self.assertTrue(abs(kls[i][dkey] - kds[i][2]) < 0.01)
 
+    def _test_atr(self):
+        name = "atr"
+        period = 14
+        print_test_title(name)
+
+        kls =self.klines
+        ti_key = ti._ATR(kls, self.highkey, self.lowkey, self.closekey, period)
+        tas = talib.ATR(self.klines_df[self.highkey], self.klines_df[self.lowkey], self.klines_df[self.closekey], timeperiod=period)
+        print("    ti  %ss:  %s" % (name, [round(kl[ti_key], self.digits) for kl in kls[-self.display_count:]]))
+        print("TA-Lib  %ss:  %s" % (name, [round(a, self.digits) for a in tas][-self.display_count:]))
+
+        for i in range(-self.display_count, 0):
+            self.assertTrue(abs(kls[i][ti_key] - tas.values[i]) < 0.01)
+
+    def test_trix(self):
+        name = "trix"
+        print_test_title(name)
+        period = 30
+
+        kls =self.klines
+        ti_key = ti.TRIX(kls, self.closekey, period)
+        tas = talib.TRIX(self.klines_df[self.closekey], timeperiod=period)
+        print("    ti  %ss:  %s" % (name, [round(kl[ti_key], self.digits) for kl in kls[-self.display_count:]]))
+        print("TA-Lib  %ss:  %s" % (name, [round(a, self.digits) for a in tas][-self.display_count:]))
+
+        for i in range(-self.display_count, 0):
+            self.assertTrue(abs(kls[i][ti_key] - tas.values[i]) < 0.01)
+
 
 if __name__ == '__main__':
     unittest.main()
