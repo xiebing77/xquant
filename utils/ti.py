@@ -300,10 +300,10 @@ def _ATR(kls, highkey, lowkey, closekey, period=14):
 def get_trix_key(period):
     return "trix_%d" % (period)
 
-def calc_trix(kls, closekey, ema_key_1, ema_key_2, ema_key_3, period, idx):
-    calc_ema(kls, closekey, ema_key_1, idx)
-    calc_ema(kls, ema_key_1, ema_key_2, idx)
-    calc_ema(kls, ema_key_2, ema_key_3, idx)
+def calc_trix(kls, closekey, ema_key_1, ema_key_2, ema_key_3, key, k, period, idx):
+    calc_ema(kls, closekey, ema_key_1, k, idx)
+    calc_ema(kls, ema_key_1, ema_key_2, k, idx)
+    calc_ema(kls, ema_key_2, ema_key_3, k, idx)
     kls[idx][key] = ((kls[idx][ema_key_3] / kls[idx-1][ema_key_3]) -1 ) * 100
 
 def TRIX(kls, closekey, period=30):
@@ -311,13 +311,14 @@ def TRIX(kls, closekey, period=30):
     ema_key_1 = get_ema_key(closekey, period)
     ema_key_2 = get_ema_key(ema_key_1, period)
     ema_key_3 = get_ema_key(ema_key_2, period)
+    k = get_ema_k(period)
 
     if key in kls[-2]:
-        calc_trix(kls, closekey, ema_key_1, ema_key_3, ema_key_3, period, -1)
+        calc_trix(kls, closekey, ema_key_1, ema_key_2, ema_key_3, key, k, period, -1)
         return key
     if key in kls[-3]:
-        calc_trix(kls, closekey, ema_key_1, ema_key_3, ema_key_3, period, -2)
-        calc_trix(kls, closekey, ema_key_1, ema_key_3, ema_key_3, period, -1)
+        calc_trix(kls, closekey, ema_key_1, ema_key_2, ema_key_3, key, k, period, -2)
+        calc_trix(kls, closekey, ema_key_1, ema_key_2, ema_key_3, key, k, period, -1)
         return key
 
     kls_len = len(kls)
