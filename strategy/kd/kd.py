@@ -1,3 +1,4 @@
+import random
 import common.bill as bl
 import utils.indicator as ic
 import utils.ti as ti
@@ -10,8 +11,15 @@ class KDStrategy(Strategy):
     def __init__(self, strategy_config, engine):
         super().__init__(strategy_config, engine)
         self.kline = strategy_config["kline"]
-        self.offset = strategy_config["kdj_offset"]
+        self.kd_offset = strategy_config["kd_offset"]
 
+    def search_init(self):
+        kd_offset_cfg = self.config["search"]["kd_offset"]
+
+        kd_offset = random.uniform(kd_offset_cfg["min"], kd_offset_cfg["max"])
+        self.kd_offset = round(kd_offset, kd_offset_cfg["digits"])
+
+        return self.kd_offset
 
     def check(self, symbol, klines):
         """ kdj指标，金叉全买入，下降趋势部分卖出，死叉全卖出 """
@@ -33,12 +41,11 @@ class KDStrategy(Strategy):
             )
         )
 
-        offset = self.offset[0]
-        if cur_k > cur_d + offset:
+        if cur_k > cur_d + self.kd_offset:
             # 金叉
             return bl.open_long_bill(1, "买：", signal_info)
 
-        elif cur_k < cur_d - offset:
+        elif cur_k < cur_d - self.kd_offset:
             # 死叉
             return bl.close_long_bill(0, "卖：", signal_info)
 

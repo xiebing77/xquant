@@ -15,11 +15,10 @@
     },
     "sec": 60,
     "kline": {"interval": "1d", "size": 180},
-    "kdj_offset": [1.5, 3.6],
+    "kd_offset": 1.5,
     "mode": 1,
     "limit_price_rate": {"open": 0.01, "close": 0.1},
     "search": {
-        "macd_rate": {"max": 0.05, "min": -0.05, "digits": 5},
-        "kdj": {"max": 5, "min": 0, "digits": 2}
+        "kd_offset": {"max": 5, "min": 0, "digits": 2}
     }
 }
