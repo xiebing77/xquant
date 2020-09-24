@@ -664,7 +664,7 @@ class Engine:
     def calc(self, symbol, orders):
         if len(orders) <= 0:
             return 0, 0, 0, 0
-        orders_df = pd.DataFrame(self.calc_order(symbol, orders))
+        orders_df = pd.DataFrame(self.stat_orders(symbol, orders))
         close_df = orders_df[(orders_df["action"]==bl.CLOSE_POSITION)]
 
         win_df = close_df[(close_df["floating_profit_rate"] > 0)]

@@ -1,5 +1,5 @@
 import common.bill as bl
-#import utils.indicator as ic
+import utils.indicator as ic
 import utils.ti as ti
 from strategy.strategy import Strategy
 

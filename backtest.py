@@ -1,8 +1,12 @@
 #!/usr/bin/python3
 import sys
+import os
 #sys.path.append('../')
 import argparse
-from datetime import datetime, timedelta, time
+import time
+from datetime import datetime, timedelta
+from multiprocessing import Queue, Pool, Manager
+from multiprocessing import cpu_count
 import uuid
 import pprint
 import utils.tools as ts
@@ -24,6 +28,20 @@ def create_instance_id():
     instance_id = datetime.now().strftime("%Y%m%d-%H%M%S_") + str(uuid.uuid1())  # 每次回测都是一个独立的实例
     print('new id of instance: %s' % instance_id)
     return instance_id
+
+def get_time_range(md, symbol, time_range):
+    if time_range:
+        start_time, end_time = ts.parse_date_range(time_range)
+    else:
+        start_time = end_time = None
+    oldest_time = md.get_oldest_time(symbol, kl.KLINE_INTERVAL_1MINUTE)
+    if not start_time or start_time < oldest_time:
+        start_time = oldest_time
+    latest_time = md.get_latest_time(symbol, kl.KLINE_INTERVAL_1MINUTE)
+    if not end_time or end_time > latest_time:
+        end_time = latest_time
+    print("  time range: %s ~ %s" % (start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S")))
+    return start_time, end_time
 
 
 def run(engine, md, strategy, start_time, end_time):
@@ -63,7 +81,7 @@ def run(engine, md, strategy, start_time, end_time):
     return tick_count
 
 
-def run2(engine, md, strategy, start_time, end_time):
+def run2(engine, md, strategy, start_time, end_time, progress_disp=True):
     """ run advance"""
     secs = strategy.config["sec"]
     if secs < 60:
@@ -129,17 +147,18 @@ def run2(engine, md, strategy, start_time, end_time):
             pre_tick_cost_time = tick_cost_time
             tick_count += 1
 
-        progress = (i + 1 - interval_idx) / (len(interval_klines) - interval_idx)
-        sys.stdout.write(
-            "%s  progress: %d%%,  cost: %s, next open time: %s\r"
-            % (
-                " "*36,
-                progress * 100,
-                tick_cost_time - total_tick_cost_start,
-                (interval_open_time+interval_td).strftime("%Y-%m-%d %H:%M:%S"),
+        if progress_disp:
+            progress = (i + 1 - interval_idx) / (len(interval_klines) - interval_idx)
+            sys.stdout.write(
+                "%s  progress: %d%%,  cost: %s, next open time: %s\r"
+                % (
+                    " "*36,
+                    progress * 100,
+                    tick_cost_time - total_tick_cost_start,
+                    (interval_open_time+interval_td).strftime("%Y-%m-%d %H:%M:%S"),
+                )
             )
-        )
-        sys.stdout.flush()
+            sys.stdout.flush()
 
     return tick_count
 
@@ -193,10 +212,6 @@ def sub_cmd_signal(args):
 
     symbol = config['symbol']
     interval = config["kline"]["interval"]
-    if args.r:
-        start_time, end_time = ts.parse_date_range(args.r)
-    else:
-        start_time = end_time = None
 
     if args.log:
         logfilename = class_name + "_"+ symbol + "_" + instance_id + ".log"
@@ -208,14 +223,7 @@ def sub_cmd_signal(args):
     md = DBMD(exchange_name, kl.KLINE_DATA_TYPE_JSON)
     engine = TestSignal(md, instance_id, config, args.log)
     strategy = ts.createInstance(module_name, class_name, config, engine)
-
-    oldest_time = md.get_oldest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
-    if not start_time or start_time < oldest_time:
-        start_time = oldest_time
-    latest_time = md.get_latest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
-    if not end_time or end_time > latest_time:
-        end_time = latest_time
-    print("  run time range: %s ~ %s" % (start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S")))
+    start_time, end_time = get_time_range(md, symbol, args.r)
 
     print("run2  kline_data_type: %s "% (md.kline_data_type))
     tick_count = run2(engine, md, strategy, start_time, end_time)
@@ -248,39 +256,25 @@ def sub_cmd_run(args):
         exit(1)
 
     instance_id = create_instance_id()
-
     config = xq.get_strategy_config(args.sc)
     pprint.pprint(config)
 
     module_name = config["module_name"].replace("/", ".")
     class_name = config["class_name"]
-
     symbol = config['symbol']
-    if args.r:
-        start_time, end_time = ts.parse_date_range(args.r)
-    else:
-        start_time = end_time = None
-
     if args.log:
         logfilename = class_name + "_"+ symbol + "_" + instance_id + ".log"
         print(logfilename)
         log.init("backtest", logfilename)
         log.info("strategy name: %s;  config: %s" % (class_name, config))
 
-
     engine = BackTest(instance_id, args.m, config, args.log)
     strategy = ts.createInstance(module_name, class_name, config, engine)
+    md = engine.md
+    start_time, end_time = get_time_range(md, symbol, args.r)
 
-    oldest_time = engine.md.get_oldest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
-    if not start_time or start_time < oldest_time:
-        start_time = oldest_time
-    latest_time = engine.md.get_latest_time(strategy.config['symbol'], kl.KLINE_INTERVAL_1MINUTE)
-    if not end_time or end_time > latest_time:
-        end_time = latest_time
-    print("  run time range: %s ~ %s" % (start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time.strftime("%Y-%m-%d %H:%M:%S")))
-
-    print("run2  kline_data_type: %s "% (engine.md.kline_data_type))
-    tick_count = run2(engine, engine.md, strategy, start_time, end_time)
+    print("run2  kline_data_type: %s "% (md.kline_data_type))
+    tick_count = run2(engine, md, strategy, start_time, end_time)
     print("\n  total tick count: %d" % (tick_count))
 
     engine.analyze(symbol, engine.orders, True, args.rmk)
@@ -299,7 +293,123 @@ def sub_cmd_run(args):
     if args.chart:
         ordersets = []
         ordersets.append(engine.orders)
-        chart(engine.md, engine.config, start_time, end_time, ordersets, args)
+        chart(md, engine.config, start_time, end_time, ordersets, args)
+
+
+def sub_cmd_search(args):
+    if not (args.m and args.sc):
+        exit(1)
+
+    instance_id = create_instance_id()
+    config = xq.get_strategy_config(args.sc)
+    pprint.pprint(config)
+
+    module_name = config["module_name"].replace("/", ".")
+    class_name = config["class_name"]
+    symbol = config['symbol']
+    engine = BackTest(instance_id, args.m, config, args.log)
+    strategy = ts.createInstance(module_name, class_name, config, engine)
+    md = engine.md
+    start_time, end_time = get_time_range(md, symbol, args.r)
+
+    count = args.count
+    result = []
+    for i in range(count):
+        rs = strategy.search_init()
+        print("%d/%d    %s" % (i, count, rs))
+        tick_count = run2(engine, md, strategy, start_time, end_time)
+        result.append((i, rs, engine.calc(symbol, engine.orders)))
+        engine.orders = []
+
+    sorted_rs = sorted(result, key=lambda x: x[2][0], reverse=True)
+    for r in sorted_rs:
+        info = "%6s    %30s    %s " % r
+        print(info)
+        engine.log_debug(info)
+
+
+def child_process(name, task_q, result_q, md_name, config, module_name, class_name, start_time, end_time):
+    #print("child process name %s, id %s start" % (name, os.getpid()))
+
+    engine = BackTest(create_instance_id(), md_name, config)
+    strategy = ts.createInstance(module_name, class_name, config, engine)
+    while not task_q.empty():
+        value = task_q.get(True, 1)
+        rs = strategy.search_init()
+        #print("child_process(%s)  %s, rs: %s" % (name, value, rs))
+        tick_count = run2(engine, engine.md, strategy, start_time, end_time, False)
+        #print("tick_count: %s" % (tick_count) )
+        symbol = config['symbol']
+        result_q.put((value, engine.calc(symbol, engine.orders), rs))
+        engine.orders = []
+
+    #print("child process name %s, id %s finish" % (name, os.getpid()))
+    return
+
+
+def sub_cmd_multisearch(args):
+    if not (args.m and args.sc):
+        exit(1)
+
+    config = xq.get_strategy_config(args.sc)
+    pprint.pprint(config)
+
+    module_name = config["module_name"].replace("/", ".")
+    class_name = config["class_name"]
+    symbol = config['symbol']
+    md = DBMD(args.m, kl.KLINE_DATA_TYPE_JSON)
+    start_time, end_time = get_time_range(md, symbol, args.r)
+
+    count = args.count
+    cpus = cpu_count()
+    print("count: %s,  cpus: %s" % (count, cpus) )
+
+    result_q = Manager().Queue()#Manager中的Queue才能配合Pool
+    task_q = Manager().Queue()#Manager中的Queue才能配合Pool
+    for index in range(count):
+        task_q.put(index)
+
+    print('Parent process %s.' % os.getpid())
+    p = Pool(cpus)
+    for i in range(cpus):
+        #p.apply_async(child_process_test, args=(i, task_q, result_q))
+        p.apply_async(child_process, args=(i, task_q, result_q, args.m, config, module_name, class_name, start_time, end_time))
+    print('Waiting for all subprocesses done...')
+    p.close()
+
+    start_time = datetime.now()
+    result = []
+    while len(result) < count:
+        if result_q.empty():
+            time.sleep(1)
+        else:
+            value = result_q.get()
+            print("result value: ", value)
+            result.append(value)
+
+        sys.stdout.write(
+            "  %d/%d,  cost: %s,  progress: %g%% \r"
+            % (
+                len(result),
+                count,
+                datetime.now() - start_time,
+                round((len(result) / count) * 100, 2)
+            )
+        )
+        sys.stdout.flush()
+
+    print("")
+    #print("result queue(len: %s)" % (result_q.qsize()))
+
+    p.join()
+    print('All subprocesses done.')
+
+    sorted_rs = sorted(result, key=lambda x: x[1][0], reverse=True)
+    for r in sorted_rs:
+        #print("r: ", r)
+        info = "%6s    %30s    %s " % r
+        print(info)
+        #engine.log_debug(info)
 
 
 def get_instance(instance_id):
@@ -586,6 +696,20 @@ if __name__ == "__main__":
     parser_merge = subparsers.add_parser('merge', help='merge')
     parser_merge.add_argument('-siis', nargs='*', help='strategy instance ids')
     parser_merge.set_defaults(func=sub_cmd_merge)
+
+    parser_search = subparsers.add_parser('search', help='search')
+    parser_search.add_argument('-m', default=BINANCE_SPOT_EXCHANGE_NAME, help='market data source')
+    parser_search.add_argument('-sc', help='strategy config')
+    parser_search.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
+    parser_search.add_argument('-count', type=int, default=10, help=' search count')
+    parser_search.set_defaults(func=sub_cmd_search)
+
+    parser_multisearch = subparsers.add_parser('multisearch', help='multisearch')
+    parser_multisearch.add_argument('-m', default=BINANCE_SPOT_EXCHANGE_NAME, help='market data source')
+    parser_multisearch.add_argument('-sc', help='strategy config')
+    parser_multisearch.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
+    parser_multisearch.add_argument('-count', type=int, default=10, help=' multisearch count')
+    parser_multisearch.set_defaults(func=sub_cmd_multisearch)
 
     args = parser.parse_args()
     # print(args)
