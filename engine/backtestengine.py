@@ -81,3 +81,9 @@ class BackTest(Engine):
         """ 撤掉本策略的所有挂单委托 """
         pass
 
+    def view(self, symbol, orders):
+        if len(orders) == 0:
+            return
+
+        self.view_history(symbol, orders)
+

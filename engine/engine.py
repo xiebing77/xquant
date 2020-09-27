@@ -9,7 +9,7 @@ import utils.indicator as ic
 import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
-from .order import get_pst_by_orders, get_cost_price, get_floating_profit, POSITON_AMOUNT_KEY, POSITON_HIGH_KEY, POSITON_HIGH_TIME_KEY, POSITON_LOW_KEY, POSITON_LOW_TIME_KEY, ORDER_ACTION_KEY
+from .order import get_pst_by_orders, get_cost_price, get_floating_profit, POSITON_AMOUNT_KEY, POSITON_HIGH_KEY, POSITON_HIGH_TIME_KEY, POSITON_LOW_KEY, POSITON_LOW_TIME_KEY, ORDER_ACTION_KEY, HISTORY_PROFIT_KEY, HISTORY_COMMISSION_KEY
 from pprint import pprint
 
 
@@ -641,7 +641,7 @@ class Engine:
 
             self.stat(signal_id, orders_df[(orders_df["cycle_id"].isin(cycle_ids))] )
 
-
+    '''
     def view(self, symbol, orders):
         if len(orders) == 0:
             return
@@ -659,6 +659,23 @@ class Engine:
             datetime.fromtimestamp(orders[0]["create_time"]).strftime('%Y-%m-%d'), datetime.fromtimestamp(orders[-1]["create_time"]).strftime('%Y-%m-%d'),
             self.value, total_profit, total_profit_rate*100, total_commission)
         )
+    '''
+
+    def view_history(self, symbol, orders):
+        commission_rate = self.config["commission_rate"]
+        pst_info = get_pst_by_orders(orders, commission_rate)
+
+        print("%s ~ %s    init value: %s" % (
+            datetime.fromtimestamp(orders[0]["create_time"]).strftime('%Y-%m-%d'),
+            datetime.fromtimestamp(orders[-1]["create_time"]).strftime('%Y-%m-%d'),
+            self.value)
+        )
+
+        history_profit         = pst_info[HISTORY_PROFIT_KEY]
+        history_profit_rate    = history_profit / self.value
+        history_commission     = pst_info[HISTORY_COMMISSION_KEY]
+        print("history:  profit = %.2f(%.2f%%)    commission = %.2f" % (history_profit, history_profit_rate*100, history_commission))
+
 
 
     def calc(self, symbol, orders):

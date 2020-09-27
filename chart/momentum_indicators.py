@@ -44,7 +44,7 @@ def add_argument_momentum_indicators(parser):
     group.add_argument('--STOCH', action="store_true", help='Stochastic')
     group.add_argument('--STOCHF', action="store_true", help='Stochastic Fast')
     group.add_argument('--STOCHRSI', action="store_true", help='Stochastic Relative Strength Index')
-    group.add_argument('--TRIX', action="store_true", help='1-day Rate-Of-Change (ROC) of a Triple Smooth EMA')
+    group.add_argument('--TRIX', type=int, nargs='*', help='1-day Rate-Of-Change (ROC) of a Triple Smooth EMA')
     group.add_argument('--ULTOSC', action="store_true", help='Ultimate Oscillator')
     group.add_argument('--WILLR', action="store_true", help="Williams' %%R")
 
@@ -105,7 +105,7 @@ def get_momentum_indicators_count(args):
         count += 1
     if args.ROCR100: # 
         count += 1
-    if args.RSI is not None: # RSI
+    if args.RSI is not None: #
         count += 1
     if args.STOCH: # 
         count += 1
@@ -113,7 +113,7 @@ def get_momentum_indicators_count(args):
         count += 1
     if args.STOCHRSI: # 
         count += 1
-    if args.TRIX: # 
+    if args.TRIX is not None: #
         count += 1
     if args.ULTOSC: # 
         count += 1
@@ -234,9 +234,12 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
 
     if args.MACD: # MACD
         name = 'MACD'
-        macd, macdsignal, macdhist = talib.MACD(klines_df["close"], fastperiod=12, slowperiod=26, signalperiod=9)
+        fastperiod = 12
+        slowperiod = 26
+        signalperiod = 9
+        macd, macdsignal, macdhist = talib.MACD(klines_df["close"], fastperiod=fastperiod, slowperiod=slowperiod, signalperiod=signalperiod)
         i += 1
-        axes[i].set_ylabel(name)
+        axes[i].set_ylabel("%s(%s,%s,%s)"%(name, fastperiod, slowperiod, signalperiod))
         axes[i].grid(True)
         axes[i].plot(close_times, macd[-display_count:], "y", label="dif")
         axes[i].plot(close_times, macdsignal[-display_count:], "b", label="dea")
@@ -244,10 +247,13 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
 
     if args.MACDEXT: # MACDEXT
         name = 'MACDEXT'
+        fastperiod = 12
+        slowperiod = 26
+        signalperiod = 9
         macd, macdsignal, macdhist = talib.MACDEXT(klines_df["close"],
-            fastperiod=12, fastmatype=0, slowperiod=26, slowmatype=0, signalperiod=9, signalmatype=0)
+            fastperiod=fastperiod, fastmatype=0, slowperiod=slowperiod, slowmatype=0, signalperiod=signalperiod, signalmatype=0)
         i += 1
-        axes[i].set_ylabel(name)
+        axes[i].set_ylabel("%s(%s,%s,%s)"%(name, fastperiod, slowperiod, signalperiod))
         axes[i].grid(True)
         axes[i].plot(close_times, macd[-display_count:], "y", label="dif")
         axes[i].plot(close_times, macdsignal[-display_count:], "b", label="dea")
@@ -255,9 +261,10 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
 
     if args.MACDFIX: # MACDFIX
         name = 'MACDFIX'
-        macd, macdsignal, macdhist = talib.MACDFIX(klines_df["close"], signalperiod=9)
+        signalperiod = 9
+        macd, macdsignal, macdhist = talib.MACDFIX(klines_df["close"], signalperiod=signalperiod)
         i += 1
-        axes[i].set_ylabel(name)
+        axes[i].set_ylabel("%s(%s)"%(name, signalperiod))
         axes[i].grid(True)
         axes[i].plot(close_times, macd[-display_count:], "y", label="dif")
         axes[i].plot(close_times, macdsignal[-display_count:], "b", label="dea")
@@ -361,7 +368,7 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
         else:
             tps = args.RSI
         cs = ["r", "y", "b"]
-        axes[i].set_ylabel("%s%s"%(name, tps))
+        axes[i].set_ylabel("%s %s"%(name, tps))
         for idx, tp in enumerate(tps):
             rsis = talib.RSI(klines_df["close"], timeperiod=tp)
             rsis = [round(a, 3) for a in rsis][-display_count:]
@@ -409,13 +416,20 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
         axes[i].plot(close_times, fastk[-display_count:], "b", label="fastk")
         axes[i].plot(close_times, fastd[-display_count:], "y", label="fastd")
 
-    if args.TRIX: # 
+    if args.TRIX is not None: #
         name = 'TRIX'
-        real = talib.TRIX(klines_df["close"], timeperiod=30)
         i += 1
-        axes[i].set_ylabel(name)
         axes[i].grid(True)
-        axes[i].plot(close_times, real[-display_count:], "y:", label=name)
+        if len(args.TRIX) == 0:
+            tps = [30]
+        else:
+            tps = args.TRIX
+        axes[i].set_ylabel("%s %s"%(name, tps))
+
+        cs = ["r", "y", "b"]
+        for idx, tp in enumerate(tps):
+            real = talib.TRIX(klines_df["close"], timeperiod=tp)
+            axes[i].plot(close_times, real[-display_count:], cs[idx], label=name)
 
     if args.ULTOSC: # 
         name = 'ULTOSC'
