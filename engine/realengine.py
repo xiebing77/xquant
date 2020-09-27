@@ -7,7 +7,7 @@ import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
 from .engine import Engine
-from .order import get_floating_profit, POSITON_COMMISSION_KEY
+from .order import get_floating_profit, POSITON_COMMISSION_KEY, HISTORY_PROFIT_KEY
 from exchange.exchange import create_exchange
 from md.exmd import ExchangeMD
 from db.mongodb import get_mongodb
@@ -269,7 +269,7 @@ class RealEngine(Engine):
         floating_profit = get_floating_profit(pst_info, cur_price)
         open_value = self.value
         if self.config["mode"] == 1:
-            open_value += history_profit
+            open_value += pst_info[HISTORY_PROFIT_KEY]
         floating_profit_rate = floating_profit / open_value
         floating_commission  = pst_info[POSITON_COMMISSION_KEY]
         print("floating:  profit = %.2f(%.2f%%)    commission = %.2f" % (floating_profit, floating_profit_rate*100, floating_commission))
