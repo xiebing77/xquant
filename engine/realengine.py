@@ -262,7 +262,7 @@ class RealEngine(Engine):
         if len(orders) == 0:
             return
 
-        self.view_history(symbol, orders)
+        pst_info = self.view_history(symbol, orders)
 
         kls = self.md.get_klines_1day(symbol, 1)
         cur_price = float(kls[-1][self.md.get_kline_seat_close()])

@@ -675,7 +675,7 @@ class Engine:
         history_profit_rate    = history_profit / self.value
         history_commission     = pst_info[HISTORY_COMMISSION_KEY]
         print("history:  profit = %.2f(%.2f%%)    commission = %.2f" % (history_profit, history_profit_rate*100, history_commission))
-
+        return pst_info
 
 
     def calc(self, symbol, orders):
