@@ -7,7 +7,7 @@ import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
 from .engine import Engine
-from .order import get_floating_profit, POSITON_COMMISSION_KEY, HISTORY_PROFIT_KEY
+from .order import get_floating_profit, POSITON_AMOUNT_KEY, POSITON_COMMISSION_KEY, HISTORY_PROFIT_KEY
 from exchange.exchange import create_exchange
 from md.exmd import ExchangeMD
 from db.mongodb import get_mongodb
@@ -263,6 +263,8 @@ class RealEngine(Engine):
             return
 
         pst_info = self.view_history(symbol, orders)
+        if pst_info[POSITON_AMOUNT_KEY] == 0:
+            return
 
         kls = self.md.get_klines_1day(symbol, 1)
         cur_price = float(kls[-1][self.md.get_kline_seat_close()])
