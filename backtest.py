@@ -229,7 +229,6 @@ def sub_cmd_signal(args):
     tick_count = run2(engine, md, strategy, start_time, end_time)
     print("\n  total tick count: %d" % (tick_count))
 
-    #engine.analyze(symbol, engine.signals, True, args.rmk)
     #pprint.pprint(engine.signals)
     print("signal count: ", len(engine.signals))
     '''
@@ -277,7 +276,7 @@ def sub_cmd_run(args):
     tick_count = run2(engine, md, strategy, start_time, end_time)
     print("\n  total tick count: %d" % (tick_count))
 
-    engine.analyze(symbol, engine.orders, True, args.rmk)
+    engine.analyze_orders(engine.orders)
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
         {
@@ -289,6 +288,8 @@ def sub_cmd_run(args):
             "sc": args.sc,
         },
     )
+
+    engine.display(symbol, engine.orders, True, args.rmk)
 
     if args.chart:
         ordersets = []
@@ -318,7 +319,7 @@ def sub_cmd_search(args):
         rs = strategy.search_init()
         print("%d/%d    %s" % (i, count, rs))
         tick_count = run2(engine, md, strategy, start_time, end_time)
-        result.append((i, rs, engine.calc(symbol, engine.orders)))
+        result.append((i, rs, engine.search_calc(symbol, engine.orders)))
         engine.orders = []
 
     sorted_rs = sorted(result, key=lambda x: x[2][0], reverse=True)
@@ -340,7 +341,7 @@ def child_process(name, task_q, result_q, md_name, config, module_name, class_na
         tick_count = run2(engine, engine.md, strategy, start_time, end_time, False)
         #print("tick_count: %s" % (tick_count) )
         symbol = config['symbol']
-        result_q.put((value, engine.calc(symbol, engine.orders), rs))
+        result_q.put((value, engine.search_calc(symbol, engine.orders), rs))
         engine.orders = []
 
     #print("child process name %s, id %s finish" % (name, os.getpid()))
@@ -489,7 +490,7 @@ def sub_cmd_continue(args):
     print("run2  kline_data_type: %s "% (engine.md.kline_data_type))
     tick_count = run2(engine, engine.md, strategy, continue_time, end_time)
     print("\n  total tick count: %d" % (tick_count))
-    engine.analyze(symbol, engine.orders, True, args.rmk)
+    engine.analyze_orders(engine.orders)
     _id = bt_db.insert_one(
         BACKTEST_INSTANCES_COLLECTION_NAME,
         {
@@ -501,6 +502,7 @@ def sub_cmd_continue(args):
             "sc": sc,
         },
     )
+    engine.display(symbol, engine.orders, True, args.rmk)
 
 
 def sub_cmd_refresh(args):

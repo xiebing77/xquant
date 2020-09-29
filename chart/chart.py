@@ -181,7 +181,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
         #axes[i].set_label(["position rate", "profit rate"])
         #axes[i].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
         trade_times = [order["trade_time"] for order in orders]
-        axes[i].plot(trade_times,[round(100*order["floating_profit_rate"], 2) for order in orders], "g", drawstyle="steps", label="single profit")
+        axes[i].plot(trade_times,[round(100*order["pst_profit_rate"], 2) for order in orders], "g", drawstyle="steps", label="single profit")
         if args.tp:
             axes[i].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "go--")
 

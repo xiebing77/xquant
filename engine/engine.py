@@ -9,7 +9,7 @@ import utils.indicator as ic
 import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
-from .order import get_pst_by_orders, get_cost_price, get_floating_profit, POSITON_AMOUNT_KEY, POSITON_HIGH_KEY, POSITON_HIGH_TIME_KEY, POSITON_LOW_KEY, POSITON_LOW_TIME_KEY, ORDER_ACTION_KEY, HISTORY_PROFIT_KEY, HISTORY_COMMISSION_KEY
+from .order import *
 from pprint import pprint
 
 
@@ -473,64 +473,55 @@ class Engine:
         return pst_info
 
 
-    def stat_orders(self, symbol, orders):
-        cycle_id = 1
-
-        history_profit = 0
-        history_commission = 0
-        cycle_amount = 0
-        cycle_value = 0
-        cycle_commission = 0
-        target_coin, base_coin = xq.get_symbol_coins(symbol)
-        for order in orders:
-            if not self.check_order(order):
-                return None
-
-            order["cycle_id"] = cycle_id
-
-            if order["action"] == bl.OPEN_POSITION:
-                cycle_amount += order["deal_amount"]
-            else:
-                cycle_amount -= order["deal_amount"]
-            cycle_amount = ts.reserve_float(cycle_amount, self.config["digits"][target_coin])
-            cycle_value += self.get_order_value(order)
-            cycle_commission += self.get_order_commission(order)
-
-            deal_price = order["deal_value"] / order["deal_amount"]
-            cycle_profit = self.get_floating_profit(order["direction"], cycle_amount, cycle_value, cycle_commission, deal_price)
-            order["floating_profit"] = cycle_profit
-            order["history_profit"] = history_profit
-            order["total_profit"] = cycle_profit + history_profit
-
-            open_value = self.value
-            if self.config["mode"] == 1:
-                open_value += history_profit
-            order["floating_profit_rate"] = order["floating_profit"] / open_value
-            order["history_profit_rate"] = order["history_profit"] / self.value
-            order["total_profit_rate"] = order["total_profit"] / self.value
-
-            if cycle_amount == 0:
-                history_profit += cycle_profit
-                history_commission += cycle_commission
-                cycle_value = 0
-                cycle_commission = 0
-                cycle_id += 1
-
-        return orders
-
-
     def handle(self, symbol, strategy, price, create_time, info):
         position_info = self.get_position(symbol, price)
         check_bills = strategy.check_bill(symbol, position_info)
         self.handle_order(symbol, position_info, price, check_bills, info)
 
-
-    def analyze(self, symbol, orders, print_switch_hl=True, display_rmk=False):
+    def analyze_orders(self, orders):
         if len(orders) == 0:
             return
 
-        orders = self.stat_orders(symbol, orders)
+        commission_rate = self.config["commission_rate"]
+        pst_info = get_pst_by_orders(orders, commission_rate)
 
+        for index ,order in enumerate(orders):
+            deal_price = order["deal_value"]/order["deal_amount"]
+
+            pst = order[POSITON_KEY]
+            pst_amount = pst[POSITON_AMOUNT_KEY]
+            pst_commission = pst[POSITON_COMMISSION_KEY]
+            pst_value = pst[POSITON_VALUE_KEY]
+            history_profit = pst[HISTORY_PROFIT_KEY]
+
+            open_value = self.value
+            if self.config["mode"] == 1:
+                open_value += (history_profit)
+                if pst_amount == 0:
+                    open_value -= (pst[POSITON_VALUE_KEY] - pst_commission)
+
+            if pst_amount == 0: # position end
+                total_profit = history_profit
+                pst_gross_profit = pst_value
+            else:
+                total_profit = history_profit - pst_commission
+                if (order[ORDER_ACTION_KEY]==bl.OPEN_POSITION and order[ORDER_DEAL_AMOUNT_KEY]==pst_amount): # position start
+                    pst_gross_profit = 0
+                else:
+                    pst_gross_profit = calc_gross_profit(pst, deal_price)
+
+            pst_profit = pst_gross_profit - pst_commission
+            pst_profit_rate = pst_profit / open_value
+            total_profit_rate = total_profit / self.value
+
+            order["trade_time"] = datetime.fromtimestamp(order["create_time"])
+            order["pst_profit"] = pst_profit
+            order["total_profit"] = total_profit
+            order["pst_profit_rate"] = pst_profit_rate
+            order["total_profit_rate"] = total_profit_rate
+
+
+    def display(self, symbol, orders, print_switch_hl=True, display_rmk=False):
         print_switch_deal = False
         print_switch_commission = False
         print_switch_profit = False
@@ -552,17 +543,23 @@ class Engine:
         title += "  rmk"
         print(title)
 
-        total_commission = 0
+        cycle_id = 0
         for index ,order in enumerate(orders):
-            commission = order["deal_value"] * self.config["commission_rate"]
-            total_commission += commission
+            order["cycle_id"] = cycle_id
+            pst = order[POSITON_KEY]
 
-            order["trade_time"] = datetime.fromtimestamp(order["create_time"])
+            if pst[POSITON_AMOUNT_KEY] == 0: # position end
+                cycle_id += 1
+
+            pst_profit = order["pst_profit"]
+            total_profit = order["total_profit"]
+            pst_profit_rate = order["pst_profit_rate"]
+            total_profit_rate = order["total_profit_rate"]
+            total_commission = pst[HISTORY_COMMISSION_KEY] + pst[POSITON_COMMISSION_KEY]
+            deal_price = order["deal_value"]/order["deal_amount"]
 
             info = "%3d" % (index)
-            info += "  {:7.2%}({:8.2%})".format(
-                order["floating_profit_rate"], order["total_profit_rate"]
-            )
+            info += "  {:7.2%}({:8.2%})".format(pst_profit_rate, total_profit_rate)
             info += "  %s  %10g" % (
                     datetime.fromtimestamp(order["create_time"]),
                     order["deal_value"]/order["deal_amount"],
@@ -571,7 +568,6 @@ class Engine:
             if print_switch_hl:
                 total_commission_rate = 0 # 2 * self.config["commission_rate"]
                 if "high" in order:
-                    deal_price = order["deal_value"]/order["deal_amount"]
                     if order["direction"] == bl.DIRECTION_LONG:
                         tmp_profit_rate = order["high"] / deal_price - 1 - total_commission_rate
                     else:
@@ -605,8 +601,8 @@ class Engine:
                     )
             if print_switch_profit:
                 info += "  {:8.2f}({:9.2f})".format(
-                        order["floating_profit"],
-                        order["total_profit"],
+                        pst_profit,
+                        total_profit,
                     )
             if display_rmk:
                 rmk = order["rmk"]
@@ -641,25 +637,14 @@ class Engine:
 
             self.stat(signal_id, orders_df[(orders_df["cycle_id"].isin(cycle_ids))] )
 
-    '''
-    def view(self, symbol, orders):
+
+    def analyze(self, symbol, orders, print_switch_hl=True, display_rmk=False):
         if len(orders) == 0:
             return
 
-        orders = self.stat_orders(symbol, orders)
+        self.analyze_orders(orders)
+        self.display(symbol, orders, print_switch_hl, display_rmk)
 
-        total_profit = orders[-1]['total_profit']
-        total_profit_rate = orders[-1]['total_profit_rate']
-
-        orders_df = pd.DataFrame(orders)
-        orders_df["create_time"] = orders_df["create_time"].map(lambda x: datetime.fromtimestamp(x))
-        total_commission = orders_df["deal_value"].sum() * self.config["commission_rate"]
-
-        print("%s ~ %s    init value: %s,  total_profit: %.2f(%.2f%%), total_commission: %.2f" % (
-            datetime.fromtimestamp(orders[0]["create_time"]).strftime('%Y-%m-%d'), datetime.fromtimestamp(orders[-1]["create_time"]).strftime('%Y-%m-%d'),
-            self.value, total_profit, total_profit_rate*100, total_commission)
-        )
-    '''
 
     def view_history(self, symbol, orders):
         commission_rate = self.config["commission_rate"]
@@ -678,41 +663,57 @@ class Engine:
         return pst_info
 
 
-    def calc(self, symbol, orders):
+    def search_calc(self, symbol, orders):
         if len(orders) <= 0:
             return 0, 0, 0, 0
-        orders_df = pd.DataFrame(self.stat_orders(symbol, orders))
-        close_df = orders_df[(orders_df["action"]==bl.CLOSE_POSITION)]
 
-        win_df = close_df[(close_df["floating_profit_rate"] > 0)]
-        loss_df =close_df[(close_df["floating_profit_rate"] < 0)]
-        win_count = len(win_df)
-        loss_count = len(loss_df)
+        orders_df = pd.DataFrame(orders)
+        profit_df, profit_rate_df = self.calc_profit(orders_df)
 
-        total_profit_rate = close_df["floating_profit"].sum() / self.value
-        sum_profit_rate = close_df["floating_profit_rate"].sum()
+        win_count = len(profit_rate_df[profit_rate_df > 0])
+        loss_count = len(profit_rate_df[profit_rate_df < 0])
+
+        total_profit_rate = profit_df.sum() / self.value
+        sum_profit_rate = profit_rate_df.sum()
         return round(total_profit_rate, 4), round(sum_profit_rate, 4), win_count, loss_count
+
+
+    def calc_profit(self, orders_df):
+        pst_df = pd.DataFrame(orders_df[POSITON_KEY].tolist())
+        #pprint(pst_df)
+        pst_df = pst_df[(pst_df[POSITON_AMOUNT_KEY]==0)]
+        #print(pst_df)
+        profit_df = pst_df[POSITON_VALUE_KEY] - pst_df[POSITON_COMMISSION_KEY]
+        #print(profit_df)
+
+        if self.config["mode"] == 1:
+            profit_rate_df = profit_df / (self.value + pst_df[HISTORY_PROFIT_KEY] - profit_df)
+        else:
+            profit_rate_df = profit_df / (self.value)
+        return profit_df, profit_rate_df
 
 
     def stat(self, signal_id, orders_df):
         print("\n signal: " + signal_id)
-        win_df = orders_df[(orders_df["action"]==bl.CLOSE_POSITION) & (orders_df["floating_profit_rate"] > 0)]
-        loss_df =orders_df[(orders_df["action"]==bl.CLOSE_POSITION) & (orders_df["floating_profit_rate"] < 0)]
+        profit_df, profit_rate_df = self.calc_profit(orders_df)
 
-        win_count = len(win_df)
-        fail_count = len(loss_df)
+        w_profit_rates    = profit_rate_df[profit_rate_df > 0]
+        l_profit_rates   = profit_rate_df[profit_rate_df < 0]
+
+        win_count = len(w_profit_rates)
+        fail_count = len(l_profit_rates)
         if win_count > 0 or fail_count > 0:
             win_rate = win_count / (win_count + fail_count)
         else:
             win_rate = 0
         print("win count: %g, loss count: %g, win rate: %4.2f%%" % (win_count, fail_count, round(win_rate*100, 2)))
 
-        w_profit_rates = win_df["floating_profit_rate"]
-        l_profit_rates = loss_df["floating_profit_rate"]
         print("profit rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(w_profit_rates.sum()*100, 2), round(w_profit_rates.max()*100, 2), round(w_profit_rates.min()*100, 2), round(w_profit_rates.mean()*100, 2)))
         print("loss   rate(total: %6.2f%%, max: %6.2f%%, min: %6.2f%%, average: %6.2f%%)" % (round(l_profit_rates.sum()*100, 2), round(l_profit_rates.min()*100, 2), round(l_profit_rates.max()*100, 2), round(l_profit_rates.mean()*100, 2)))
 
-        if fail_count > 0:
+        if win_count == 0:
+            kelly = 0
+        elif fail_count > 0:
             kelly = win_rate - (1-win_rate)/(w_profit_rates.mean()/abs(l_profit_rates.mean()))
         else:
             kelly = win_rate
