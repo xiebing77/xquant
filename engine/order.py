@@ -114,18 +114,17 @@ def get_pst_by_orders(orders, commission_rate):
 def calc_gross_profit(pst, cur_price):
     cur_value = cur_price * pst[POSITON_AMOUNT_KEY]
     if pst[POSITON_DIRECTION_KEY] == bl.DIRECTION_LONG:
-        pst_gross_profit = cur_value + pst_value
+        pst_gross_profit = cur_value + pst[POSITON_VALUE_KEY]
     else:
-        pst_gross_profit = pst_value - cur_value
+        pst_gross_profit = pst[POSITON_VALUE_KEY] - cur_value
     return pst_gross_profit
 
 def get_floating_profit(pst, cur_price):
     if pst[POSITON_AMOUNT_KEY] == 0:
         return 0
 
-    pst_value = pst[POSITON_VALUE_KEY]
     if pst[POSITON_AMOUNT_KEY] == 0:
-        pst_gross_profit = pst_value
+        pst_gross_profit = pst[POSITON_VALUE_KEY]
     else:
         pst_gross_profit = calc_gross_profit(pst, cur_price)
 
