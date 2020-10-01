@@ -12,7 +12,7 @@ from exchange.exchange import create_exchange
 from md.exmd import ExchangeMD
 from db.mongodb import get_mongodb
 import setup
-
+from pprint import pprint
 
 DB_ORDERS_NAME = "orders"
 
@@ -274,5 +274,6 @@ class RealEngine(Engine):
             open_value += pst_info[HISTORY_PROFIT_KEY]
         floating_profit_rate = floating_profit / open_value
         floating_commission  = pst_info[POSITON_COMMISSION_KEY]
-        print("floating:  profit = %.2f(%.2f%%)    commission = %.2f" % (floating_profit, floating_profit_rate*100, floating_commission))
-
+        print("floating:  profit = %.2f(%.2f%%)    commission = %.2f  cur_price = %s" % (floating_profit, floating_profit_rate*100, floating_commission, cur_price))
+        print("\nposition infomation:")
+        pprint(pst_info)
