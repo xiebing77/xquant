@@ -13,7 +13,7 @@ python3 strategy.py -m show -sii gwEma2BtcUsdt
 """
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Strategy Operation')
-    parser.add_argument('-m', help='Mode: add, delete, update')
+    parser.add_argument('-m', help='Mode: add, delete, update, show')
     parser.add_argument('-sii', help='Instance ID')
     parser.add_argument('-p', help='Parameters')
     args = parser.parse_args()
