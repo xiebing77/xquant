@@ -100,7 +100,7 @@ class TestIndicator(unittest.TestCase):
         for i in range(-self.display_count, 0):
             self.assertTrue(abs(kls[i][ema_l_key] - ta_lemas.values[i]) < 0.01)
 
-        bias_sl_key = ti.BIAS(kls, self.closekey, period_s, period_l)
+        bias_sl_key = ti.BIAS_EMA(kls, self.closekey, period_s, period_l)
         ta_biases = ic.pd_biases(ta_semas, ta_lemas)
         print("    ti  biases(%d, %d):  %s" % (period_s, period_l, [round(kl[bias_sl_key], self.digits) for kl in kls[-self.display_count:]]))
         print("TA-Lib  biases(%d, %d):  %s" % (period_s, period_l, [round(a, self.digits) for a in ta_biases][-self.display_count:]))

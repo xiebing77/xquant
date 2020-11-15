@@ -4,6 +4,7 @@ class Strategy:
     """Strategy"""
 
     def __init__(self, strategy_config, engine):
+        self.name = ""
         self.config = strategy_config
         self.engine = engine
 

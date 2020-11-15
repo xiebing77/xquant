@@ -79,10 +79,31 @@ def EMA(kls, vkey, period, start_idx=0):
 def get_bias_key(period_s, period_l):
     return "bias_%s_%s" % (period_s, period_l)
 
-def calc_bias(kl, eskey, elkey, key):
-    kl[key] = (kl[eskey] - kl[elkey]) / kl[elkey]
+def calc_bias(kl, vskey, vlkey, key):
+    kl[key] = (kl[vskey] - kl[vlkey]) / kl[vlkey]
 
-def BIAS(kls, vkey, period_s, period_l):
+
+def BIAS(kls, vskey, vlkey):
+    key = "bias_%s_%s" % (vskey, vlkey)
+
+    kl = kls[-1]
+    if key in kls[-2] and vskey in kl and vlkey in kl:
+        calc_bias(kls[-1], vskey, vlkey, key)
+        return key
+
+    kl = kls[-2]
+    if key in kls[-3] and vskey in kl and vlkey in kl:
+        calc_bias(kls[-2], vskey, vlkey, key)
+        calc_bias(kls[-1], vskey, vlkey, key)
+        return key
+
+    for kl in kls:
+        if vlkey not in kl:
+            continue
+        calc_bias(kl, vskey, vlkey, key)
+
+
+def BIAS_EMA(kls, vkey, period_s, period_l):
     key = get_bias_key(period_s, period_l)
     eskey = get_ema_key(vkey, period_s)
     elkey = get_ema_key(vkey, period_l)

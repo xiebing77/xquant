@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import talib
 
+plot_colors = ['y', 'c', 'b', 'm', 'k']
 
 def add_argument_overlap_studies(parser):
     # Overlap Studies
@@ -29,6 +30,7 @@ def add_argument_overlap_studies(parser):
     group.add_argument('--WMA', type=int, nargs='?', const=30, help='Weighted Moving Average')
 
 def handle_overlap_studies(args, kax, klines_df, close_times, display_count):
+    all_name = ""
     if args.ABANDS: # ATR BANDS
         name = 'ABANDS'
         real = talib.ATR(klines_df["high"], klines_df["low"], klines_df["close"], timeperiod=14)
@@ -69,15 +71,15 @@ def handle_overlap_studies(args, kax, klines_df, close_times, display_count):
         real = talib.DEMA(klines_df["close"], timeperiod=args.DEMA)
         kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
-    cs = ['y', 'c', 'b', 'm', 'k']
-    os_key = 'EMA'
     if args.EMA:
+        name = 'EMA'
+        all_name += "  %s%s" % (name, args.EMA)
         for idx, e_p in enumerate(args.EMA):
-            if idx >= len(cs):
+            if idx >= len(plot_colors):
                 break
             e_p = int(e_p)
             emas = talib.EMA(klines_df["close"], timeperiod=e_p)
-            kax.plot(close_times, emas[-display_count:], cs[idx]+'--', label="%sEMA" % (e_p))
+            kax.plot(close_times, emas[-display_count:], plot_colors[idx]+'--', label="%sEMA" % (e_p))
 
     os_key = 'HT_TRENDLINE'
     if args.HT_TRENDLINE:
@@ -89,14 +91,15 @@ def handle_overlap_studies(args, kax, klines_df, close_times, display_count):
         real = talib.KAMA(klines_df["close"], timeperiod=args.KAMA)
         kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
-    os_key = 'MA'
     if args.MA:
+        name = 'MA'
+        all_name += "  %s%s" % (name, args.MA)
         for idx, e_p in enumerate(args.MA):
-            if idx >= len(cs):
+            if idx >= len(plot_colors):
                 break
             e_p = int(e_p)
             emas = talib.MA(klines_df["close"], timeperiod=e_p)
-            kax.plot(close_times, emas[-display_count:], cs[idx]+'--', label="%sMA" % (e_p))
+            kax.plot(close_times, emas[-display_count:], plot_colors[idx], label="%sMA" % (e_p))
 
     os_key = 'MAMA'
     if args.MAMA:
@@ -151,4 +154,6 @@ def handle_overlap_studies(args, kax, klines_df, close_times, display_count):
     if args.WMA:
         real = talib.WMA(klines_df["close"], timeperiod=args.WMA)
         kax.plot(close_times, real[-display_count:], "y", label=os_key)
+
+    return all_name
 

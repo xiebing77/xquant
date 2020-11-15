@@ -20,7 +20,7 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
     open_time_key = exchange.kline_key_open_time
     db.ensure_index(collection, [(open_time_key,1)], unique=True)
 
-    interval = timedelta(seconds=kl.get_interval_seconds(kline_type))
+    interval = kl.get_interval_timedelta(kline_type)
     if time_range:
         start_time, end_time = split_time_range(time_range)
     else:

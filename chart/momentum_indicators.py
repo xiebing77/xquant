@@ -6,6 +6,7 @@ import talib
 import utils.tools as ts
 import utils.indicator as ic
 
+from .overlap_studies import plot_colors
 
 def add_argument_momentum_indicators(parser):
     # Momentum Indicators
@@ -426,10 +427,9 @@ def handle_momentum_indicators(args, axes, i, klines_df, close_times, display_co
             tps = args.TRIX
         axes[i].set_ylabel("%s %s"%(name, tps))
 
-        cs = ["r", "y", "b"]
         for idx, tp in enumerate(tps):
             real = talib.TRIX(klines_df["close"], timeperiod=tp)
-            axes[i].plot(close_times, real[-display_count:], cs[idx], label=name)
+            axes[i].plot(close_times, real[-display_count:], plot_colors[idx], label=name)
 
     if args.ULTOSC: # 
         name = 'ULTOSC'

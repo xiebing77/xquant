@@ -42,15 +42,29 @@ def chart_mpf2(title, args, symbol, ordersets, klines, md, display_count):
 
 def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signalsets=[]):
     klines_df = pd.DataFrame(klines, columns=md.kline_column_names)
-
     opens = klines_df[md.kline_key_open][-display_count:]
     closes = klines_df[md.kline_key_close][-display_count:]
     opens = pd.to_numeric(opens)
     closes = pd.to_numeric(closes)
     base_close = closes.values[0]
-
     open_times = [datetime.fromtimestamp((float(open_time)/1000)) for open_time in klines_df[md.kline_key_open_time][-display_count:]]
     close_times = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_df[md.kline_key_close_time][-display_count:]]
+
+    cols = (1 + get_momentum_indicators_count(args)
+        + get_volume_indicators_count(args)
+        + get_volatility_indicators_count(args)
+        + get_cycle_indicators_count(args)
+        + get_other_indicators_count(args)
+        + len(ordersets))
+
+    if args.mik:
+        cols += 1
+    if cols == 1:
+        args.volume = True
+    if args.volume:
+        cols += 1
+    print("cols: ", cols)
+
     """
     gs = gridspec.GridSpec(8, 1)
     gs.update(left=0.04, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
@@ -61,43 +75,62 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
         plt.subplot(gs[-1, :])
     ]
     """
-    cols = (1 + get_momentum_indicators_count(args)
-        + get_volume_indicators_count(args)
-        + get_volatility_indicators_count(args)
-        + get_cycle_indicators_count(args)
-        + get_other_indicators_count(args)
-        + len(ordersets))
-
-    if cols == 1:
-        cols += 1
-        args.volume = True
-    print("cols: ", cols)
-
     fig, axes = plt.subplots(cols, 1, sharex=True)
     fig.subplots_adjust(left=0.05, bottom=0.04, right=1, top=1, wspace=0, hspace=0)
     fig.suptitle(title)
 
+    i = 0
+    ax_kl = axes[0]
     quotes = []
     for k in klines[-display_count:]:
         d = datetime.fromtimestamp(k[md.get_kline_seat_open_time()]/1000)
         quote = (dts.date2num(d), float(k[md.get_kline_seat_open()]), float(k[md.get_kline_seat_close()]), float(k[md.get_kline_seat_high()]), float(k[md.get_kline_seat_low()]))
         quotes.append(quote)
-
-    i = 0
-    mpf.candlestick_ochl(axes[i], quotes, width=0.02, colorup='g', colordown='r')
-    axes[i].set_ylabel('price')
-    axes[i].grid(True)
-    axes[i].autoscale_view()
-    axes[i].xaxis_date()
+    mpf.candlestick_ochl(ax_kl, quotes, width=0.02, colorup='g', colordown='r')
+    ax_kl.grid(True)
+    ax_kl.autoscale_view()
+    ax_kl.xaxis_date()
+    ax_kl.set_yscale('log')
     for orders in ordersets:
-        axes[i].plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
+        ax_kl.plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
     #pprint(signalsets)
     for key in signalsets:
         signals = signalsets[key]
         #pprint(signals)
-        axes[i].plot([signal["create_time"] for signal in signals], [signal["price"] for signal in signals], "o")
-    handle_overlap_studies(args, axes[i], klines_df, close_times, display_count)
-    handle_price_transform(args, axes[i], klines_df, close_times, display_count)
+        ax_kl.plot([signal["create_time"] for signal in signals], [signal["price"] for signal in signals], "o")
+    name_add = handle_overlap_studies(args, ax_kl, klines_df, close_times, display_count)
+    handle_price_transform(args, ax_kl, klines_df, close_times, display_count)
+    ax_kl.set_ylabel('price'+name_add)
+
+    if args.mik:
+        i += 1
+        ax_kl = axes[i]
+        interval_mi = args.mik
+        print(interval_mi)
+        count_mi = display_count*12
+        klines_mi = md.get_klines(symbol, interval_mi, count_mi)
+        klines_mi_df = pd.DataFrame(klines_mi, columns=md.kline_column_names)
+        close_times_mi = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_mi_df[md.kline_key_close_time][-count_mi:]]
+        quotes = []
+        for k in klines_mi[-count_mi:]:
+            d = datetime.fromtimestamp(k[md.get_kline_seat_open_time()]/1000)
+            quote = (dts.date2num(d), float(k[md.get_kline_seat_open()]), float(k[md.get_kline_seat_close()]), float(k[md.get_kline_seat_high()]), float(k[md.get_kline_seat_low()]))
+            quotes.append(quote)
+        mpf.candlestick_ochl(ax_kl, quotes, width=0.02, colorup='g', colordown='r')
+        ax_kl.grid(True)
+        ax_kl.autoscale_view()
+        ax_kl.xaxis_date()
+        ax_kl.set_yscale('log')
+        for orders in ordersets:
+            ax_kl.plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
+        #pprint(signalsets)
+        for key in signalsets:
+            signals = signalsets[key]
+            #pprint(signals)
+            ax_kl.plot([signal["create_time"] for signal in signals], [signal["price"] for signal in signals], "o")
+        name_add = handle_overlap_studies(args, ax_kl, klines_mi_df, close_times_mi, count_mi)
+        ax_kl.set_ylabel(interval_mi+name_add)
+
 
     if args.volume:
         i += 1
@@ -181,9 +214,9 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
         #axes[i].set_label(["position rate", "profit rate"])
         #axes[i].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
         trade_times = [order["trade_time"] for order in orders]
-        axes[i].plot(trade_times,[round(100*order["pst_profit_rate"], 2) for order in orders], "g", drawstyle="steps", label="single profit")
+        axes[i].plot(trade_times,[round(100*order["pst_profit_rate"], 2) for order in orders], "b", drawstyle="steps", label="single profit")
         if args.tp:
-            axes[i].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "go--")
+            axes[i].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "r--")
 
     """
     i += 1

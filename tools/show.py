@@ -449,6 +449,7 @@ if __name__ == "__main__":
     #parser.add_argument('-di', nargs='*', help='display indicators,egg: MACD KDJ RSI')
 
     parser.add_argument('--volume', action="store_true", help='volume')
+    parser.add_argument('--mik', help='micro kline')
     chart_add_all_argument(parser)
 
     args = parser.parse_args()
