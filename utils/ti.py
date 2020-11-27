@@ -101,7 +101,7 @@ def BIAS(kls, vskey, vlkey):
         if vlkey not in kl:
             continue
         calc_bias(kl, vskey, vlkey, key)
-
+    return key
 
 def BIAS_EMA(kls, vkey, period_s, period_l):
     key = get_bias_key(period_s, period_l)
