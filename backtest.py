@@ -662,7 +662,7 @@ if __name__ == "__main__":
     parser_signal.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
     parser_signal.add_argument('--chart', help='chart', default=True, action="store_true")
     parser_signal.add_argument('--volume', action="store_true", help='volume')
-    parser_signal.add_argument('--mik', help='micro kline')
+    parser_signal.add_argument('--okls', nargs='*', help='other klines')
     chart_add_all_argument(parser_signal)
     parser_signal.set_defaults(func=sub_cmd_signal)
 
@@ -690,7 +690,7 @@ if __name__ == "__main__":
     parser_chart.add_argument('-sii', help='strategy instance id')
     parser_chart.add_argument('--volume', action="store_true", help='volume')
     parser_chart.add_argument('--tp', action="store_true", help=' total profit ratio')
-    parser_chart.add_argument('--mik', help='micro kline')
+    parser_chart.add_argument('--okls', nargs='*', help='other klines')
     chart_add_all_argument(parser_chart)
     parser_chart.set_defaults(func=sub_cmd_chart)
 
@@ -698,7 +698,7 @@ if __name__ == "__main__":
     parser_chart_diff.add_argument('-siis', nargs='*', help='strategy instance ids')
     parser_chart_diff.add_argument('--volume', action="store_true", help='volume')
     parser_chart_diff.add_argument('--tp', action="store_true", help=' total profit ratio')
-    parser_chart_diff.add_argument('--mik', help='micro kline')
+    parser_chart_diff.add_argument('--okls', nargs='*', help='other klines')
     chart_add_all_argument(parser_chart_diff)
     parser_chart_diff.set_defaults(func=sub_cmd_chart_diff)
 

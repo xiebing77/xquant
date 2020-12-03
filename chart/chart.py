@@ -57,8 +57,8 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
         + get_other_indicators_count(args)
         + len(ordersets))
 
-    if args.mik:
-        cols += 1
+    if args.okls:
+        cols += len(args.okls)
     if cols == 1:
         args.volume = True
     if args.volume:
@@ -102,34 +102,34 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
     handle_price_transform(args, ax_kl, klines_df, close_times, display_count)
     ax_kl.set_ylabel('price'+name_add)
 
-    if args.mik:
-        i += 1
-        ax_kl = axes[i]
-        interval_mi = args.mik
-        print(interval_mi)
-        count_mi = display_count*12
-        klines_mi = md.get_klines(symbol, interval_mi, count_mi)
-        klines_mi_df = pd.DataFrame(klines_mi, columns=md.kline_column_names)
-        close_times_mi = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_mi_df[md.kline_key_close_time][-count_mi:]]
-        quotes = []
-        for k in klines_mi[-count_mi:]:
-            d = datetime.fromtimestamp(k[md.get_kline_seat_open_time()]/1000)
-            quote = (dts.date2num(d), float(k[md.get_kline_seat_open()]), float(k[md.get_kline_seat_close()]), float(k[md.get_kline_seat_high()]), float(k[md.get_kline_seat_low()]))
-            quotes.append(quote)
-        mpf.candlestick_ochl(ax_kl, quotes, width=0.02, colorup='g', colordown='r')
-        ax_kl.grid(True)
-        ax_kl.autoscale_view()
-        ax_kl.xaxis_date()
-        ax_kl.set_yscale('log')
-        for orders in ordersets:
-            ax_kl.plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
-        #pprint(signalsets)
-        for key in signalsets:
-            signals = signalsets[key]
-            #pprint(signals)
-            ax_kl.plot([signal["create_time"] for signal in signals], [signal["price"] for signal in signals], "o")
-        name_add = handle_overlap_studies(args, ax_kl, klines_mi_df, close_times_mi, count_mi)
-        ax_kl.set_ylabel(interval_mi+name_add)
+    if args.okls:
+        for interval_mi in args.okls:
+            i += 1
+            ax_kl = axes[i]
+            print(interval_mi)
+            count_mi = display_count*12
+            klines_mi = md.get_klines(symbol, interval_mi, count_mi)
+            klines_mi_df = pd.DataFrame(klines_mi, columns=md.kline_column_names)
+            close_times_mi = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_mi_df[md.kline_key_close_time][-count_mi:]]
+            quotes = []
+            for k in klines_mi[-count_mi:]:
+                d = datetime.fromtimestamp(k[md.get_kline_seat_open_time()]/1000)
+                quote = (dts.date2num(d), float(k[md.get_kline_seat_open()]), float(k[md.get_kline_seat_close()]), float(k[md.get_kline_seat_high()]), float(k[md.get_kline_seat_low()]))
+                quotes.append(quote)
+            mpf.candlestick_ochl(ax_kl, quotes, width=0.02, colorup='g', colordown='r')
+            ax_kl.grid(True)
+            ax_kl.autoscale_view()
+            ax_kl.xaxis_date()
+            ax_kl.set_yscale('log')
+            for orders in ordersets:
+                ax_kl.plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
+            #pprint(signalsets)
+            for key in signalsets:
+                signals = signalsets[key]
+                #pprint(signals)
+                ax_kl.plot([signal["create_time"] for signal in signals], [signal["price"] for signal in signals], "o")
+            name_add = handle_overlap_studies(args, ax_kl, klines_mi_df, close_times_mi, count_mi)
+            ax_kl.set_ylabel(interval_mi+name_add)
 
 
     if args.volume:
