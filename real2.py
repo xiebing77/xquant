@@ -3,7 +3,7 @@ import sys
 sys.path.append('../')
 import argparse
 import common.xquant as xq
-from common.instance import get_strategy_instance
+from common.instance import get_strategy_instance, STRATEGY_INSTANCE_COLLECTION_NAME, update_strategy_instance
 from real import real_run
 from real import real_view
 from real import real_analyze
@@ -34,10 +34,10 @@ def real2_analyze(args):
 
 def real2_list(args):
     td_db = get_mongodb(setup.trade_db_name)
-    ss = td_db.find("strategies", {"user": args.user})
+    ss = td_db.find(STRATEGY_INSTANCE_COLLECTION_NAME, {"user": args.user})
     #pprint(ss)
     s_fmt = "%-30s  %10s    %-60s  %-20s"
-    print((s_fmt+"    %s") % ("instance_id", "value", "config_path", "exchange", "  history_profit    floating_profit"))
+    print((s_fmt+"    %s") % ("instance_id", "value", "config_path", "exchange", "     history_profit       floating_profit"))
     for s in ss:
         instance_id = s["instance_id"]
         exchange_name = s["exchange"]
@@ -52,14 +52,25 @@ def real2_list(args):
             pst_info = realEngine.get_pst_by_orders(orders)
             history_profit, history_profit_rate, history_commission = realEngine.get_history(pst_info)
             floating_profit, floating_profit_rate, floating_commission, cur_price = realEngine.get_floating(symbol, pst_info)
-            ex_info = "%8.2f(%5.2f%%)   %8.2f(%5.2f%%)" % (history_profit, history_profit_rate*100, floating_profit, floating_profit_rate*100)
+            ex_info = "%10.2f(%6.2f%%)   %10.2f(%6.2f%%)" % (history_profit, history_profit_rate*100, floating_profit, floating_profit_rate*100)
 
         except Exception as ept:
-            #print(ept)
-            pass
+            ex_info = "error:  %s" % (ept)
 
         print((s_fmt+"    %s") % (instance_id, value, config_path, exchange_name, ex_info))
 
+
+def real2_update(args):
+    record = {}
+    if args.instance_id:
+        record["instance_id"] = args.instance_id
+    if args.config_path:
+        record["config_path"] = args.config_path
+    if args.exchange:
+        record["exchange"] = args.exchange
+    if args.value:
+        record["value"] = args.value
+    update_strategy_instance({"instance_id": args.sii}, record)
 
 
 if __name__ == "__main__":
@@ -70,19 +81,27 @@ if __name__ == "__main__":
 
     subparsers = parser.add_subparsers(help='sub-command help')
 
-    parser_view = subparsers.add_parser('view', help='view help')
+    parser_view = subparsers.add_parser('view', help='view strategy instance')
     parser_view.add_argument('-sii', help='strategy instance id')
     parser_view.set_defaults(func=real2_view)
 
-    parser_analyze = subparsers.add_parser('analyze', help='analyze help')
+    parser_analyze = subparsers.add_parser('analyze', help='analyze strategy instance')
     parser_analyze.add_argument('-sii', help='strategy instance id')
     parser_analyze.add_argument('--hl', help='high low', action="store_true")
     parser_analyze.add_argument('--rmk', help='remark', action="store_true")
     parser_analyze.set_defaults(func=real2_analyze)
 
-    parser_list = subparsers.add_parser('list', help='list of strateay')
+    parser_list = subparsers.add_parser('list', help='list of strategy instance')
     parser_list.add_argument('-user', help='user name')
     parser_list.set_defaults(func=real2_list)
+
+    parser_update = subparsers.add_parser('update', help='update strategy instance')
+    parser_update.add_argument('-sii', help='strategy instance id')
+    parser_update.add_argument('--instance_id', help='new strategy instance id')
+    parser_update.add_argument('--config_path', help='strategy config path')
+    parser_update.add_argument('--exchange', help='strategy instance exchange')
+    parser_update.add_argument('--value', help='strategy instance value')
+    parser_update.set_defaults(func=real2_update)
 
     args = parser.parse_args()
     #print(args)
