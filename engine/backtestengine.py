@@ -85,5 +85,6 @@ class BackTest(Engine):
         if len(orders) == 0:
             return
 
-        self.view_history(symbol, orders)
+        pst_info = self.get_pst_by_orders(orders)
+        self.view_history(symbol, orders, pst_info)
 

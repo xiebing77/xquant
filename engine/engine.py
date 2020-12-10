@@ -646,19 +646,26 @@ class Engine:
         self.display(symbol, orders, print_switch_hl, display_rmk)
 
 
-    def view_history(self, symbol, orders):
+    def get_pst_by_orders(self, orders):
         commission_rate = self.config["commission_rate"]
-        pst_info = get_pst_by_orders(orders, commission_rate)
+        return get_pst_by_orders(orders, commission_rate)
 
+
+    def get_history(self, pst_info):
+        history_profit         = pst_info[HISTORY_PROFIT_KEY]
+        history_profit_rate    = history_profit / self.value
+        history_commission     = pst_info[HISTORY_COMMISSION_KEY]
+        return history_profit, history_profit_rate, history_commission
+
+
+    def view_history(self, symbol, orders, pst_info):
         print("%s ~ %s    init value: %s" % (
             datetime.fromtimestamp(orders[0]["create_time"]).strftime('%Y-%m-%d'),
             datetime.fromtimestamp(orders[-1]["create_time"]).strftime('%Y-%m-%d'),
             self.value)
         )
 
-        history_profit         = pst_info[HISTORY_PROFIT_KEY]
-        history_profit_rate    = history_profit / self.value
-        history_commission     = pst_info[HISTORY_COMMISSION_KEY]
+        history_profit, history_profit_rate, history_commission = self.get_history(pst_info)
         print("history:  profit = %.2f(%.2f%%)    commission = %.2f" % (history_profit, history_profit_rate*100, history_commission))
         return pst_info
 

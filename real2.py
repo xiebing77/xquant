@@ -7,6 +7,7 @@ from common.instance import get_strategy_instance
 from real import real_run
 from real import real_view
 from real import real_analyze
+from engine.realengine import RealEngine
 from db.mongodb import get_mongodb
 import setup
 from pprint import pprint
@@ -36,9 +37,29 @@ def real2_list(args):
     ss = td_db.find("strategies", {"user": args.user})
     #pprint(ss)
     s_fmt = "%-30s  %10s    %-60s  %-20s"
-    print(s_fmt % ("instance_id", "value", "config_path", "exchange"))
+    print((s_fmt+"    %s") % ("instance_id", "value", "config_path", "exchange", "  history_profit    floating_profit"))
     for s in ss:
-        print(s_fmt % (s["instance_id"], s["value"], s["config_path"], s["exchange"]))
+        instance_id = s["instance_id"]
+        exchange_name = s["exchange"]
+        value = s["value"]
+        config_path = s["config_path"]
+        ex_info = ""
+        try:
+            config = xq.get_strategy_config(config_path)
+            symbol = config['symbol']
+            realEngine = RealEngine(instance_id, exchange_name, config, value)
+            orders = realEngine.get_orders(symbol)
+            pst_info = realEngine.get_pst_by_orders(orders)
+            history_profit, history_profit_rate, history_commission = realEngine.get_history(pst_info)
+            floating_profit, floating_profit_rate, floating_commission, cur_price = realEngine.get_floating(symbol, pst_info)
+            ex_info = "%8.2f(%5.2f%%)   %8.2f(%5.2f%%)" % (history_profit, history_profit_rate*100, floating_profit, floating_profit_rate*100)
+
+        except Exception as ept:
+            #print(ept)
+            pass
+
+        print((s_fmt+"    %s") % (instance_id, value, config_path, exchange_name, ex_info))
+
 
 
 if __name__ == "__main__":

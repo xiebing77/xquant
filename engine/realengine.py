@@ -258,14 +258,9 @@ class RealEngine(Engine):
             )
             time.sleep(strategy.config["sec"])
 
-    def view(self, symbol, orders):
-        if len(orders) == 0:
-            return
-
-        pst_info = self.view_history(symbol, orders)
+    def get_floating(self, symbol, pst_info):
         if pst_info[POSITON_AMOUNT_KEY] == 0:
-            return
-
+            return 0, 0, 0, None
         kls = self.md.get_klines_1day(symbol, 1)
         cur_price = float(kls[-1][self.md.get_kline_seat_close()])
         floating_profit = get_floating_profit(pst_info, cur_price)
@@ -274,6 +269,17 @@ class RealEngine(Engine):
             open_value += pst_info[HISTORY_PROFIT_KEY]
         floating_profit_rate = floating_profit / open_value
         floating_commission  = pst_info[POSITON_COMMISSION_KEY]
+        return floating_profit, floating_profit_rate, floating_commission, cur_price
+
+
+    def view(self, symbol, orders):
+        if len(orders) == 0:
+            return
+
+        pst_info = self.get_pst_by_orders(orders)
+        self.view_history(symbol, orders, pst_info)
+
+        floating_profit, floating_profit_rate, floating_commission, cur_price = self.get_floating(symbol, pst_info)
         print("floating:  profit = %.2f(%.2f%%)    commission = %.2f  cur_price = %s" % (floating_profit, floating_profit_rate*100, floating_commission, cur_price))
         print("\nposition infomation:")
         pprint(pst_info)
