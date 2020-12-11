@@ -41,13 +41,17 @@ def init_history(pst):
     pst[HISTORY_PROFIT_KEY] = 0
 
 def get_first_pst(order, commission_rate):
+    if ORDER_SLP_KEY in order:
+        slp = order[ORDER_SLP_KEY]
+    else:
+        slp = None
     return {
         POSITON_DIRECTION_KEY  : order[ORDER_DIRECTION_KEY],
         POSITON_AMOUNT_KEY     : order[ORDER_DEAL_AMOUNT_KEY],
         POSITON_COMMISSION_KEY : order[ORDER_DEAL_VALUE_KEY] * commission_rate,
         POSITON_VALUE_KEY      : get_order_value(order),
         POSITON_PRICE_KEY      : order[ORDER_DEAL_VALUE_KEY] / order[ORDER_DEAL_AMOUNT_KEY],
-        POSITON_SLP_KEY        : order[ORDER_SLP_KEY],
+        POSITON_SLP_KEY        : slp,
     }
 
 def calc_pst_by_order(pre_order, cur_order, commission_rate):
