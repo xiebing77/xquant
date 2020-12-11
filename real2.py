@@ -76,7 +76,17 @@ def real2_update(args):
     if args.exchange:
         record["exchange"] = args.exchange
     if args.value:
-        record["value"] = args.value
+        instance = si.get_strategy_instance(args.sii)
+        instance_id = instance["instance_id"]
+        exchange_name = instance["exchange"]
+        config_path = instance["config_path"]
+        value = instance["value"]
+        config = xq.get_strategy_config(config_path)
+        symbol = config['symbol']
+        realEngine = RealEngine(instance_id, exchange_name, config, value)
+        orders = realEngine.get_orders(symbol)
+        if not orders:
+            record["value"] = args.value
     if args.status:
         record["status"] = args.status
 
@@ -112,7 +122,7 @@ if __name__ == "__main__":
     parser_update.add_argument('--instance_id', help='new strategy instance id')
     parser_update.add_argument('--config_path', help='strategy config path')
     parser_update.add_argument('--exchange', help='strategy instance exchange')
-    parser_update.add_argument('--value', help='strategy instance value')
+    parser_update.add_argument('--value', type=int, help='strategy instance value')
     parser_update.add_argument('--status', choices=si.strategy_instance_statuses, help='strategy instance status')
     parser_update.set_defaults(func=real2_update)
 
