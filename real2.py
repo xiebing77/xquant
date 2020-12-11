@@ -3,7 +3,7 @@ import sys
 sys.path.append('../')
 import argparse
 import common.xquant as xq
-from common.instance import get_strategy_instance, STRATEGY_INSTANCE_COLLECTION_NAME, update_strategy_instance
+import common.instance as si
 from real import real_run
 from real import real_view
 from real import real_analyze
@@ -14,19 +14,19 @@ from pprint import pprint
 
 
 def real2_run(args):
-    instance = get_strategy_instance(args.sii)
+    instance = si.get_strategy_instance(args.sii)
     config = xq.get_strategy_config(instance['config_path'])
 
     real_run(config, args.sii, instance['exchange'], instance['value'], args)
 
 def real2_view(args):
-    instance = get_strategy_instance(args.sii)
+    instance = si.get_strategy_instance(args.sii)
     config = xq.get_strategy_config(instance['config_path'])
 
     real_view(config, args.sii, instance['exchange'], instance['value'])
 
 def real2_analyze(args):
-    instance = get_strategy_instance(args.sii)
+    instance = si.get_strategy_instance(args.sii)
     config = xq.get_strategy_config(instance['config_path'])
 
     real_analyze(config, args.sii, instance['exchange'], instance['value'], args.hl, args.rmk)
@@ -34,15 +34,22 @@ def real2_analyze(args):
 
 def real2_list(args):
     td_db = get_mongodb(setup.trade_db_name)
-    ss = td_db.find(STRATEGY_INSTANCE_COLLECTION_NAME, {"user": args.user})
+    ss = td_db.find(si.STRATEGY_INSTANCE_COLLECTION_NAME, {"user": args.user})
     #pprint(ss)
-    s_fmt = "%-30s  %10s    %-60s  %-20s"
-    print((s_fmt+"    %s") % ("instance_id", "value", "config_path", "exchange", "     history_profit       floating_profit"))
+    s_fmt = "%-30s  %10s    %-60s  %-20s  %10s"
+    print((s_fmt+"    %s") % ("instance_id", "value", "config_path", "exchange", "status", "     history_profit       floating_profit"))
     for s in ss:
         instance_id = s["instance_id"]
         exchange_name = s["exchange"]
         value = s["value"]
         config_path = s["config_path"]
+        if "status" in s:
+            status = s["status"]
+        else:
+            status = ""
+        if status != args.status and status != "":
+            continue
+
         ex_info = ""
         try:
             config = xq.get_strategy_config(config_path)
@@ -57,7 +64,7 @@ def real2_list(args):
         except Exception as ept:
             ex_info = "error:  %s" % (ept)
 
-        print((s_fmt+"    %s") % (instance_id, value, config_path, exchange_name, ex_info))
+        print((s_fmt+"    %s") % (instance_id, value, config_path, exchange_name, status, ex_info))
 
 
 def real2_update(args):
@@ -70,7 +77,11 @@ def real2_update(args):
         record["exchange"] = args.exchange
     if args.value:
         record["value"] = args.value
-    update_strategy_instance({"instance_id": args.sii}, record)
+    if args.status:
+        record["status"] = args.status
+
+    if record:
+        si.update_strategy_instance({"instance_id": args.sii}, record)
 
 
 if __name__ == "__main__":
@@ -93,6 +104,7 @@ if __name__ == "__main__":
 
     parser_list = subparsers.add_parser('list', help='list of strategy instance')
     parser_list.add_argument('-user', help='user name')
+    parser_list.add_argument('--status', default=si.STRATEGY_INSTANCE_STATUS_START, choices=si.strategy_instance_statuses, help='strategy instance status')
     parser_list.set_defaults(func=real2_list)
 
     parser_update = subparsers.add_parser('update', help='update strategy instance')
@@ -101,6 +113,7 @@ if __name__ == "__main__":
     parser_update.add_argument('--config_path', help='strategy config path')
     parser_update.add_argument('--exchange', help='strategy instance exchange')
     parser_update.add_argument('--value', help='strategy instance value')
+    parser_update.add_argument('--status', choices=si.strategy_instance_statuses, help='strategy instance status')
     parser_update.set_defaults(func=real2_update)
 
     args = parser.parse_args()

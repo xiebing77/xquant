@@ -4,6 +4,10 @@ import setup
 
 STRATEGY_INSTANCE_COLLECTION_NAME = 'strategies'
 
+STRATEGY_INSTANCE_STATUS_START = "start"
+STRATEGY_INSTANCE_STATUS_STOP  = "stop"
+strategy_instance_statuses = [STRATEGY_INSTANCE_STATUS_START, STRATEGY_INSTANCE_STATUS_STOP]
+
 def get_strategy_instance(sii):
     db = get_mongodb(setup.trade_db_name)
     db.ensure_index(STRATEGY_INSTANCE_COLLECTION_NAME, [("instance_id",1)])
