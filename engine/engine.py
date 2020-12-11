@@ -613,6 +613,8 @@ class Engine:
             pre_order = order
             print(info)
 
+        if not orders:
+            return
         orders_df = pd.DataFrame(orders)
 
         orders_df["create_time"] = orders_df["create_time"].map(lambda x: datetime.fromtimestamp(x))
