@@ -69,6 +69,8 @@ def real2_list(args):
 
 def real2_update(args):
     record = {}
+    if args.user:
+        record["user"] = args.user
     if args.instance_id:
         record["instance_id"] = args.instance_id
     if args.config_path:
@@ -79,19 +81,41 @@ def real2_update(args):
         instance = si.get_strategy_instance(args.sii)
         instance_id = instance["instance_id"]
         exchange_name = instance["exchange"]
+        if not exchange_name:
+            exchange_name = record["exchange_name"]
         config_path = instance["config_path"]
+        if not config_path:
+            config_path = record["config_path"]
         value = instance["value"]
         config = xq.get_strategy_config(config_path)
         symbol = config['symbol']
         realEngine = RealEngine(instance_id, exchange_name, config, value)
         orders = realEngine.get_orders(symbol)
-        if not orders:
-            record["value"] = args.value
+        if orders:
+            return
+
+        record["value"] = args.value
     if args.status:
         record["status"] = args.status
 
     if record:
         si.update_strategy_instance({"instance_id": args.sii}, record)
+
+
+def real2_add(args):
+    record = {
+        "user": args.user,
+        "instance_id": args.sii,
+        "config_path": args.config_path,
+        "exchange": args.exchange,
+        "value": args.value,
+        "status": args.status,
+    }
+    si.add_strategy_instance(record)
+
+
+def real2_delete(args):
+    si.delete_strategy_instance({"instance_id": args.sii})
 
 
 if __name__ == "__main__":
@@ -103,11 +127,11 @@ if __name__ == "__main__":
     subparsers = parser.add_subparsers(help='sub-command help')
 
     parser_view = subparsers.add_parser('view', help='view strategy instance')
-    parser_view.add_argument('-sii', help='strategy instance id')
+    parser_view.add_argument('-sii', required=True, help='strategy instance id')
     parser_view.set_defaults(func=real2_view)
 
     parser_analyze = subparsers.add_parser('analyze', help='analyze strategy instance')
-    parser_analyze.add_argument('-sii', help='strategy instance id')
+    parser_analyze.add_argument('-sii', required=True, help='strategy instance id')
     parser_analyze.add_argument('--hl', help='high low', action="store_true")
     parser_analyze.add_argument('--rmk', help='remark', action="store_true")
     parser_analyze.set_defaults(func=real2_analyze)
@@ -118,13 +142,27 @@ if __name__ == "__main__":
     parser_list.set_defaults(func=real2_list)
 
     parser_update = subparsers.add_parser('update', help='update strategy instance')
-    parser_update.add_argument('-sii', help='strategy instance id')
+    parser_update.add_argument('-sii', required=True, help='strategy instance id')
+    parser_update.add_argument('--user', help='user name')
     parser_update.add_argument('--instance_id', help='new strategy instance id')
     parser_update.add_argument('--config_path', help='strategy config path')
     parser_update.add_argument('--exchange', help='strategy instance exchange')
     parser_update.add_argument('--value', type=int, help='strategy instance value')
     parser_update.add_argument('--status', choices=si.strategy_instance_statuses, help='strategy instance status')
     parser_update.set_defaults(func=real2_update)
+
+    parser_add = subparsers.add_parser('add', help='add new strategy instance')
+    parser_add.add_argument('-user', required=True, help='user name')
+    parser_add.add_argument('-sii', required=True, help='strategy instance id')
+    parser_add.add_argument('-config_path', required=True, help='strategy config path')
+    parser_add.add_argument('-exchange', required=True, help='strategy instance exchange')
+    parser_add.add_argument('-value', required=True, type=int, help='strategy instance value')
+    parser_add.add_argument('-status', choices=si.strategy_instance_statuses, default=si.STRATEGY_INSTANCE_STATUS_START, help='strategy instance status')
+    parser_add.set_defaults(func=real2_add)
+
+    parser_delete = subparsers.add_parser('delete', help='add new strategy instance')
+    parser_delete.add_argument('-sii', required=True, help='strategy instance id')
+    parser_delete.set_defaults(func=real2_delete)
 
     args = parser.parse_args()
     #print(args)
