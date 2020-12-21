@@ -1,28 +1,26 @@
 #!/usr/bin/python3
+import sys
+sys.path.append('../')
 import argparse
-
 from exchange.binanceExchange import BinanceExchange
+
+directions = ["buy", "sell"]
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Slippage Calculation')
-    parser.add_argument('-b', help='base coin')
-    parser.add_argument('-t', help='target coin')
-    parser.add_argument('-d', help='direction')
-    parser.add_argument('-a', help='amount')
+    parser.add_argument('-symbol', required=True, help='symbol, eg: btc_usdt')
+    parser.add_argument('-direction', required=True, choices=directions, help='direction')
+    parser.add_argument('-amount', type=float, required=True, help='amount')
 
     args = parser.parse_args()
     # print(args)
-    if not (args.b and args.t and args.d and args.a):
-        parser.print_help()
-        exit(1)
 
-    base_coin = args.b
-    target_coin = args.t
-    direction = args.d
-    amount = float(args.a)
+    symbol = args.symbol
+    direction = args.direction
+    amount = args.amount
 
     exchange = BinanceExchange()
-    symbol = "%s_%s" % (target_coin, base_coin)
     klines = exchange.get_klines_1day(symbol, 1)
     cur_price = float(klines[-1][4])
 
