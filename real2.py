@@ -36,8 +36,9 @@ def real2_list(args):
     td_db = get_mongodb(setup.trade_db_name)
     ss = td_db.find(si.STRATEGY_INSTANCE_COLLECTION_NAME, {"user": args.user})
     #pprint(ss)
-    s_fmt = "%-30s  %10s    %-60s  %-20s  %10s"
-    print((s_fmt+"    %s") % ("instance_id", "value", "config_path", "exchange", "status", "     history_profit       floating_profit"))
+    title1_fmt = "%-30s  %10s"
+    title2_fmt = "%-60s  %-20s  %10s"
+    print((title1_fmt + "    %s    " + title2_fmt) % ("instance_id", "value", "     history_profit       floating_profit", "config_path", "exchange", "status"))
     for s in ss:
         instance_id = s["instance_id"]
         exchange_name = s["exchange"]
@@ -50,7 +51,7 @@ def real2_list(args):
         if status != args.status and status != "":
             continue
 
-        ex_info = ""
+        profit_info = ""
         try:
             config = xq.get_strategy_config(config_path)
             symbol = config['symbol']
@@ -59,12 +60,12 @@ def real2_list(args):
             pst_info = realEngine.get_pst_by_orders(orders)
             history_profit, history_profit_rate, history_commission = realEngine.get_history(pst_info)
             floating_profit, floating_profit_rate, floating_commission, cur_price = realEngine.get_floating(symbol, pst_info)
-            ex_info = "%10.2f(%6.2f%%)   %10.2f(%6.2f%%)" % (history_profit, history_profit_rate*100, floating_profit, floating_profit_rate*100)
+            profit_info = "%10.2f(%6.2f%%)   %10.2f(%6.2f%%)" % (history_profit, history_profit_rate*100, floating_profit, floating_profit_rate*100)
 
         except Exception as ept:
-            ex_info = "error:  %s" % (ept)
+            profit_info = "error:  %s" % (ept)
 
-        print((s_fmt+"    %s") % (instance_id, value, config_path, exchange_name, status, ex_info))
+        print((title1_fmt + "    %s    " + title2_fmt) % (instance_id, value, profit_info, config_path, exchange_name, status))
 
 
 def real2_update(args):
