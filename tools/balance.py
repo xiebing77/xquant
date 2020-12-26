@@ -26,7 +26,7 @@ if __name__ == "__main__":
         exit(1)
 
     balances = exchange.get_all_balances()
-    print("balances info:" )
+    print(" %s balances info:" % (args.exchange) )
     #print(tb(balances))
 
     if exchange.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
