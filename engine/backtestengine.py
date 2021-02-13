@@ -8,6 +8,7 @@ import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
 from .engine import Engine
+from .order import *
 from md.dbmd import DBMD
 
 
@@ -40,13 +41,13 @@ class BackTest(Engine):
     def get_position(self, symbol, cur_price):
         """ 获取持仓信息 """
         if len(self.orders) > 0:
-            if self.orders[-1]["action"] == bl.OPEN_POSITION:
-                if "high" not in self.orders[-1] or self.orders[-1]["high"] < cur_price:
-                    self.orders[-1]["high"] = cur_price
-                    self.orders[-1]["high_time"] = self.now().timestamp()
-                if "low" not in self.orders[-1] or self.orders[-1]["low"] > cur_price:
-                    self.orders[-1]["low"] = cur_price
-                    self.orders[-1]["low_time"] = self.now().timestamp()
+            pst_first_order = get_pst_first_order(self.orders)
+            if "high" not in pst_first_order or pst_first_order["high"] < cur_price:
+                pst_first_order["high"] = cur_price
+                pst_first_order["high_time"] = self.now().timestamp()
+            if "low" not in pst_first_order or pst_first_order["low"] > cur_price:
+                pst_first_order["low"] = cur_price
+                pst_first_order["low_time"] = self.now().timestamp()
         return self._get_position(symbol, self.orders, cur_price)
 
     def send_order_limit(
@@ -87,4 +88,8 @@ class BackTest(Engine):
 
         pst_info = self.get_pst_by_orders(orders)
         self.view_history(symbol, orders, pst_info)
+
+
+    def set_pst_lock_to_close(self, symbol):
+        trans_lock_to_close(self.orders[-1])
 

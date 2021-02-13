@@ -92,12 +92,16 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
     ax_kl.xaxis_date()
     ax_kl.set_yscale('log')
     for orders in ordersets:
-        ax_kl.plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
+        ax_kl.plot([datetime.fromtimestamp(order["create_time"]) for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
     #pprint(signalsets)
     for key in signalsets:
         signals = signalsets[key]
         #pprint(signals)
-        ax_kl.plot([signal["create_time"] for signal in signals], [signal["price"] for signal in signals], "o")
+        if "color" in signals[0]:
+            c = signals[0]["color"]
+        else:
+            c = None
+        ax_kl.plot([signal["create_time"] for signal in signals], [signal["price"] for signal in signals], "o", color=c)
     name_add = handle_overlap_studies(args, ax_kl, klines_df, close_times, display_count)
     handle_price_transform(args, ax_kl, klines_df, close_times, display_count)
     ax_kl.set_ylabel('price'+name_add)
@@ -122,12 +126,16 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
             ax_kl.xaxis_date()
             ax_kl.set_yscale('log')
             for orders in ordersets:
-                ax_kl.plot([order["trade_time"] for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
+                ax_kl.plot([datetime.fromtimestamp(order["create_time"]) for order in orders], [(order["deal_value"] / order["deal_amount"]) for order in orders], "o--")
             #pprint(signalsets)
             for key in signalsets:
                 signals = signalsets[key]
                 #pprint(signals)
-                ax_kl.plot([signal["create_time"] for signal in signals], [signal["price"] for signal in signals], "o")
+                if "color" in signals[0]:
+                    c = signals[0]["color"]
+                else:
+                    c = None
+                ax_kl.plot([signal["create_time"] for signal in signals], [signal["price"] for signal in signals], "o", color=c)
             name_add = handle_overlap_studies(args, ax_kl, klines_mi_df, close_times_mi, count_mi)
             ax_kl.set_ylabel(interval_mi+name_add)
 
@@ -213,7 +221,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
         axes[i].grid(True)
         #axes[i].set_label(["position rate", "profit rate"])
         #axes[i].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
-        trade_times = [order["trade_time"] for order in orders]
+        trade_times = [datetime.fromtimestamp(order["create_time"]) for order in orders]
         axes[i].plot(trade_times,[round(100*order["pst_profit_rate"], 2) for order in orders], "b", drawstyle="steps", label="single profit")
         if args.tp:
             axes[i].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "r--")

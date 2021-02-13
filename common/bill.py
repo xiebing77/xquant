@@ -6,6 +6,8 @@ DIRECTION_SHORT = "SHORT"  # 做空
 
 OPEN_POSITION = "OPEN"    # 开仓
 CLOSE_POSITION = "CLOSE"   # 平仓
+LOCK_POSITION = "LOCK"       # 锁仓
+UNLOCK_POSITION = "UNLOCK"   # 解锁仓位
 
 
 def create_bill(direction, action, pst_rate, describe, rmk, can_open_time=None, stop_loss_price=None):
@@ -41,6 +43,18 @@ def is_long_bill(bill):
 
 def is_short_bill(bill):
     return bill["direction"] == DIRECTION_SHORT
+
+def lock_long_bill(pst_rate, describe, rmk):
+    return create_bill(DIRECTION_LONG, LOCK_POSITION, pst_rate, describe, rmk, None, None)
+
+def unlock_long_bill(pst_rate, describe, rmk):
+    return create_bill(DIRECTION_LONG, UNLOCK_POSITION, pst_rate, describe, rmk, None, None)
+
+def lock_short_bill(pst_rate, describe, rmk):
+    return create_bill(DIRECTION_SHORT, LOCK_POSITION, pst_rate, describe, rmk, None, None)
+
+def unlock_short_bill(pst_rate, describe, rmk):
+    return create_bill(DIRECTION_SHORT, UNLOCK_POSITION, pst_rate, describe, rmk, None, None)
 
 def decision_bills(bills):
     """决策交易信号"""

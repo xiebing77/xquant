@@ -7,7 +7,7 @@ import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
 from .engine import Engine
-from .order import get_floating_profit, POSITON_AMOUNT_KEY, POSITON_COMMISSION_KEY, HISTORY_PROFIT_KEY
+from .order import *
 from exchange.exchange import create_exchange
 from md.exmd import ExchangeMD
 from db.mongodb import get_mongodb
@@ -52,34 +52,42 @@ class RealEngine(Engine):
         orders = self.get_orders(symbol)
 
         if len(orders) > 0:
+            pst_first_order = get_pst_first_order(orders)
             now_ts = self.now().timestamp()
 
-            if orders[-1]["action"] == bl.OPEN_POSITION:
-                if "high" not in orders[-1] or orders[-1]["high"] < cur_price:
-                    orders[-1]["high"] = cur_price
-                    orders[-1]["high_time"] = now_ts
-                    self.td_db.update_one(
-                        self.db_orders_name,
-                        orders[-1]["_id"],
-                        {
-                            "high": cur_price,
-                            "high_time": now_ts,
-                        },
-                    )
-
-                if "low" not in orders[-1] or orders[-1]["low"] > cur_price:
-                    orders[-1]["low"] = cur_price
-                    orders[-1]["low_time"] = now_ts
-                    self.td_db.update_one(
-                        self.db_orders_name,
-                        orders[-1]["_id"],
-                        {
-                            "low": cur_price,
-                            "low_time": now_ts,
-                        },
-                    )
+            if "high" not in pst_first_order or pst_first_order["high"] < cur_price:
+                pst_first_order["high"] = cur_price
+                pst_first_order["high_time"] = now_ts
+                self.td_db.update_one(
+                    self.db_orders_name,
+                    pst_first_order["_id"],
+                    {
+                        "high": cur_price,
+                        "high_time": now_ts,
+                    },
+                )
+            if "low" not in pst_first_order or pst_first_order["low"] > cur_price:
+                pst_first_order["low"] = cur_price
+                pst_first_order["low_time"] = now_ts
+                self.td_db.update_one(
+                    self.db_orders_name,
+                    pst_first_order["_id"],
+                    {
+                        "low": cur_price,
+                        "low_time": now_ts,
+                    },
+                )
 
         return self._get_position(symbol, orders, cur_price)
+
+    def set_pst_lock_to_close(self, symbol):
+        orders = self.get_orders(symbol)
+        if len(orders) == 0:
+            return
+        lastly_order = orders[-1]
+        trans_lock_to_close(lastly_order)
+        self.td_db.update_one(self.db_orders_name, lastly_order["_id"], lastly_order)
+        return
 
 
     def get_orders(self, symbol):
