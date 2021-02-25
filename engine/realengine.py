@@ -51,7 +51,7 @@ class RealEngine(Engine):
 
         orders = self.get_orders(symbol)
 
-        if len(orders) > 0:
+        if len(orders) > 0 and orders[-1][ORDER_ACTION_KEY] not in [bl.CLOSE_POSITION]:
             pst_first_order = get_pst_first_order(orders)
             now_ts = self.now().timestamp()
 
@@ -271,11 +271,7 @@ class RealEngine(Engine):
             return 0, 0, 0, None
         kls = self.md.get_klines_1day(symbol, 1)
         cur_price = float(kls[-1][self.md.get_kline_seat_close()])
-        floating_profit = get_floating_profit(pst_info, cur_price)
-        open_value = self.value
-        if self.config["mode"] == 1:
-            open_value += pst_info[HISTORY_PROFIT_KEY]
-        floating_profit_rate = floating_profit / open_value
+        floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(pst_info, self.value, self.config["mode"], cur_price)
         floating_commission  = pst_info[POSITON_COMMISSION_KEY]
         return floating_profit, floating_profit_rate, floating_commission, cur_price
 

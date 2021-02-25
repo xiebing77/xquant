@@ -52,16 +52,6 @@ class Engine:
             log.debug(info)
 
 
-    def get_floating_profit(self, direction, amount, value, commission, cur_price):
-        if direction == bl.DIRECTION_LONG:
-            cycle_profit = cur_price * amount + value
-        else:
-            cycle_profit = value - cur_price * amount
-
-        cycle_profit -= commission
-
-        return cycle_profit
-
     def _get_position(self, symbol, orders, cur_price):
         target_coin, base_coin = xq.get_symbol_coins(symbol)
 
@@ -77,12 +67,7 @@ class Engine:
             info[POSITON_LOW_TIME_KEY]  = pst_first_order[POSITON_LOW_TIME_KEY]
 
         if self.log_switch:
-            open_value = self.value
-            if self.config["mode"] == 1:
-                open_value += info["history_profit"]
-            floating_profit = get_floating_profit(info, cur_price)
-            floating_profit_rate = floating_profit / open_value
-            total_profit = floating_profit + info["history_profit"]
+            floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(info, self.value, self.config["mode"], cur_price)
 
             sub_info1 = "amount: %f,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g," % (
                 info["amount"], info["price"], get_cost_price(info), info["value"], info["commission"], self.value, floating_profit) if info["amount"] else ""
@@ -527,7 +512,7 @@ class Engine:
         analyze_profit_by_orders(orders, self.config["commission_rate"], self.value, self.config["mode"])
 
 
-    def display(self, symbol, orders, print_switch_hl=True, display_rmk=False):
+    def display(self, symbol, orders, cur_price, print_switch_hl=True, display_rmk=False):
         #print("oders len:  %s" % len(orders))
         #pprint(orders)
         print_switch_deal = False
@@ -626,13 +611,16 @@ class Engine:
 
         if not orders:
             return
-        orders_df = pd.DataFrame(orders)
 
+        if order[ORDER_ACTION_KEY] in [bl.OPEN_POSITION, bl.UNLOCK_POSITION]:
+            pst = get_pst_by_orders(orders, self.config["commission_rate"])
+            floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(pst, self.value, self.config["mode"], cur_price)
+            print("  {} {:8.2%}({:8.2%})  {}      {}".format("*", floating_profit_rate, total_profit_rate, self.now(), cur_price))
+
+        orders_df = pd.DataFrame(orders)
         orders_df["create_time"] = orders_df["create_time"].map(lambda x: datetime.fromtimestamp(x))
         orders_df["deal_price"] = orders_df["deal_value"] / orders_df["deal_amount"]
         orders_df["commission"] = orders_df["deal_value"] * self.config["commission_rate"]
-
-
         orders_df["signal_id"] = orders_df["rmk"].map(lambda x: x.split(":  ")[0])
         orders_df["signal_rmk"] = orders_df["rmk"].map(lambda x: x.split(":  ")[1])
         del orders_df["order_id"]

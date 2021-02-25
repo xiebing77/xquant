@@ -12,7 +12,12 @@ SIGNAL_COLOR_MAGENTA = "m"
 SIGNAL_COLOR_GREY    = "grey"
 SIGNAL_COLOR_SILVER  = "silver"
 
-SIGNAL_COLOR_ORANGE  = "orange"
+SIGNAL_COLOR_BROWN    = "brown"
+
+SIGNAL_COLOR_ORANGE    = "orange"
+SIGNAL_COLOR_ORANGERED = "orangered"
+
+SIGNAL_COLOR_FUCHSIA    = "fuchsia"
 
 
 

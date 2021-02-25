@@ -100,6 +100,9 @@ def run2(engine, md, strategy, start_time, end_time, progress_disp=True):
     size = strategy.config["kline"]["size"]
     interval_klines = md.get_original_klines(interval_collection, start_time - interval_td * size, end_time)
 
+    if hasattr(strategy, "init_bt"):
+        strategy.init_bt(interval_klines)
+
     kl_key_open_time = md.kline_key_open_time
     for i in range(size+1):
         if datetime.fromtimestamp(interval_klines[i][kl_key_open_time]/1000) >= start_time:
@@ -293,7 +296,7 @@ def sub_cmd_run(args):
         },
     )
 
-    engine.display(symbol, engine.orders, True, args.rmk)
+    engine.display(symbol, engine.orders, strategy.cur_price, True, args.rmk)
 
     if args.chart:
         ordersets = []

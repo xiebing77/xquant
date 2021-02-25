@@ -40,7 +40,7 @@ class BackTest(Engine):
 
     def get_position(self, symbol, cur_price):
         """ 获取持仓信息 """
-        if len(self.orders) > 0:
+        if len(self.orders) > 0 and self.orders[-1][ORDER_ACTION_KEY] not in [bl.CLOSE_POSITION]:
             pst_first_order = get_pst_first_order(self.orders)
             if "high" not in pst_first_order or pst_first_order["high"] < cur_price:
                 pst_first_order["high"] = cur_price

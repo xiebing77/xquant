@@ -175,6 +175,7 @@ def get_pst_by_orders(orders, commission_rate):
         calc_pst_by_order(orders[idx-1], orders[idx], commission_rate)
     return orders[idx][POSITON_KEY]
 
+
 def calc_pst_profit(pst, cur_price):
     total_profit = pst[HISTORY_PROFIT_KEY]
     total_commission = pst[HISTORY_COMMISSION_KEY]
@@ -195,9 +196,17 @@ def calc_pst_profit(pst, cur_price):
         if LOCK_POSITON_COMMISSION_KEY in pst:
             total_commission += pst[LOCK_POSITON_COMMISSION_KEY]
 
-    pst[POSITON_PROFIT_KEY] = pst_profit
-    pst[POSITON_TOTAL_PROFIX_KEY] = total_profit
     pst[POSITON_TOTAL_COMMISSION_KEY] = total_commission
+    return pst_profit, total_profit
+
+
+def get_open_value(pst, init_value, mode):
+    open_value = init_value
+    if mode == 1:
+        open_value += (pst[HISTORY_PROFIT_KEY])
+        if pst[POSITON_AMOUNT_KEY] == 0:
+            open_value -= pst[POSITON_PROFIT_KEY]
+    return open_value
 
 
 def analyze_profit_by_orders(orders, commission_rate, init_value, mode):
@@ -205,23 +214,23 @@ def analyze_profit_by_orders(orders, commission_rate, init_value, mode):
 
     for index ,order in enumerate(orders):
         pst = order[POSITON_KEY]
-        calc_pst_profit(pst, order["deal_value"] / order["deal_amount"])
-        open_value = init_value
-        if mode == 1:
-            open_value += (pst[HISTORY_PROFIT_KEY])
-            if pst[POSITON_AMOUNT_KEY] == 0:
-                open_value -= pst[POSITON_PROFIT_KEY]
-        pst_profit_rate = pst[POSITON_PROFIT_KEY] / open_value
-        total_profit_rate = pst[POSITON_TOTAL_PROFIX_KEY] / init_value
-        pst["pst_profit_rate"] = pst_profit_rate
-        pst["total_profit_rate"] = total_profit_rate
+        deal_price = order["deal_value"] / order["deal_amount"]
+        pst_profit, total_profit = calc_pst_profit(pst, deal_price)
+        pst[POSITON_PROFIT_KEY] = pst_profit
+        pst[POSITON_TOTAL_PROFIX_KEY] = total_profit
+
+        open_value = get_open_value(pst, init_value, mode)
+        pst["pst_profit_rate"] = pst_profit / open_value
+        pst["total_profit_rate"] = total_profit / init_value
 
 
-def get_floating_profit(pst, cur_price):
+def get_floating_profit(pst, init_value, mode, cur_price):
     if pst[POSITON_AMOUNT_KEY] == 0:
         return 0
-    calc_pst_profit(pst, cur_price)
-    return pst[POSITON_PROFIT_KEY]
+    pst_profit, total_profit = calc_pst_profit(pst, cur_price)
+    pst_profit_rate = pst_profit / get_open_value(pst, init_value, mode)
+    total_profit_rate = total_profit / init_value
+    return pst_profit, total_profit, pst_profit_rate, total_profit_rate
 
 
 def get_cost_price(pst):
