@@ -7,6 +7,7 @@ import pandas as pd
 import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
+from .binanceExchange import BinanceCommon
 from .binance.future import Client
 from .binance.enums import *
 from decimal import Decimal
@@ -16,7 +17,7 @@ api_key = os.environ.get('BINANCE_API_KEY')
 secret_key = os.environ.get('BINANCE_SECRET_KEY')
 
 
-class BinanceFuture:
+class BinanceFuture(BinanceCommon):
     """binanceMargin"""
     name = 'binance_future'
     start_time = datetime(2019, 8, 17, 8)
@@ -57,20 +58,6 @@ class BinanceFuture:
         """转换为binance格式的symbol"""
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         return '%s%s' % (self.__get_coinkey(target_coin), self.__get_coinkey(base_coin))
-
-    def __trans_side(self, direction, action):
-        """转换为binance格式的side"""
-        if direction == bl.DIRECTION_LONG:
-            if action == bl.OPEN_POSITION:
-                return SIDE_BUY
-            elif action == bl.CLOSE_POSITION:
-                return SIDE_SELL
-        elif direction == bl.DIRECTION_SHORT:
-            if action == bl.OPEN_POSITION:
-                return SIDE_SELL
-            elif action == bl.CLOSE_POSITION:
-                return SIDE_BUY
-        return None
 
     def __trans_type(self, type):
         """转换为binance格式的type"""
@@ -227,7 +214,7 @@ class BinanceFuture:
         """提交委托"""
         exchange_symbol = self.__trans_symbol(symbol)
 
-        binance_side = self.__trans_side(direction, action)
+        binance_side = self._trans_side(direction, action)
         if binance_side is None:
             return
         binance_type = self.__trans_type(type)

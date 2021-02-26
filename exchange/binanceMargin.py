@@ -7,6 +7,7 @@ import pandas as pd
 import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
+from .binanceExchange import BinanceCommon
 from .binance.margin import Client
 from .binance.client import Client as spotClient
 from .binance.enums import *
@@ -59,20 +60,6 @@ class BinanceMargin:
         """转换为binance格式的symbol"""
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         return '%s%s' % (self.__get_coinkey(target_coin), self.__get_coinkey(base_coin))
-
-    def __trans_side(self, direction, action):
-        """转换为binance格式的side"""
-        if direction == bl.DIRECTION_LONG:
-            if action == bl.OPEN_POSITION:
-                return SIDE_BUY
-            elif action == bl.CLOSE_POSITION:
-                return SIDE_SELL
-        elif direction == bl.DIRECTION_SHORT:
-            if action == bl.OPEN_POSITION:
-                return SIDE_SELL
-            elif action == bl.CLOSE_POSITION:
-                return SIDE_BUY
-        return None
 
     def __trans_type(self, type):
         """转换为binance格式的type"""
@@ -237,7 +224,7 @@ class BinanceMargin:
 
     def send_order(self, direction, action, type, symbol, price, amount, client_order_id=None):
         target_coin, base_coin = xq.get_symbol_coins(symbol)
-        binance_side = self.__trans_side(direction, action)
+        binance_side = self._trans_side(direction, action)
         decimal = ts.get_decimal(amount)
 
         if binance_side is SIDE_BUY:
@@ -271,7 +258,7 @@ class BinanceMargin:
         """提交委托"""
         exchange_symbol = self.__trans_symbol(symbol)
 
-        binance_side = self.__trans_side(direction, action)
+        binance_side = self._trans_side(direction, action)
         if binance_side is None:
             return
         binance_type = self.__trans_type(type)

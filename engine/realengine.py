@@ -51,7 +51,7 @@ class RealEngine(Engine):
 
         orders = self.get_orders(symbol)
 
-        if len(orders) > 0 and orders[-1][ORDER_ACTION_KEY] not in [bl.CLOSE_POSITION]:
+        if len(orders) > 0 and orders[-1][ORDER_ACTION_KEY] in [bl.OPEN_POSITION, bl.UNLOCK_POSITION]:
             pst_first_order = get_pst_first_order(orders)
             now_ts = self.now().timestamp()
 

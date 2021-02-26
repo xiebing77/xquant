@@ -9,6 +9,8 @@ CLOSE_POSITION = "CLOSE"   # 平仓
 LOCK_POSITION = "LOCK"       # 锁仓
 UNLOCK_POSITION = "UNLOCK"   # 解锁仓位
 
+directions = [DIRECTION_LONG, DIRECTION_SHORT]
+actions = [OPEN_POSITION, CLOSE_POSITION, LOCK_POSITION, UNLOCK_POSITION]
 
 def create_bill(direction, action, pst_rate, describe, rmk, can_open_time=None, stop_loss_price=None):
     """创建单据"""

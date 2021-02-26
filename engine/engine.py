@@ -425,10 +425,10 @@ class Engine:
         )
 
     def check_order(symbol, order):
-        if order["direction"] != bl.DIRECTION_LONG and order["direction"] != bl.DIRECTION_SHORT:
+        if order["direction"] not in bl.directions:
             self.log_error("错误的委托方向")
             return False
-        if order["action"] != bl.OPEN_POSITION and order["action"] != bl.CLOSE_POSITION:
+        if order["action"] not in bl.actions:
             self.log_error("错误的委托动作")
             return False
         return True
