@@ -18,6 +18,7 @@ SIGNAL_COLOR_ORANGE    = "orange"
 SIGNAL_COLOR_ORANGERED = "orangered"
 
 SIGNAL_COLOR_FUCHSIA    = "fuchsia"
+SIGNAL_COLOR_ORCHID    = "orchid"
 
 
 
