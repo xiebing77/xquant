@@ -433,6 +433,7 @@ class Engine:
             return False
         return True
 
+    '''
     def get_order_value(self, order):
         if (order["action"] == bl.OPEN_POSITION and order["direction"] == bl.DIRECTION_LONG) or (order["action"] == bl.CLOSE_POSITION and order["direction"] == bl.DIRECTION_SHORT):
             return - order["deal_value"]
@@ -499,6 +500,7 @@ class Engine:
                 pst_info["low_time"] = datetime.fromtimestamp(cycle_first_order["low_time"])
 
         return pst_info
+    '''
 
 
     def handle(self, symbol, strategy, price, create_time, info):
