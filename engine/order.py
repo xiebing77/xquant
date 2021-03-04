@@ -41,8 +41,8 @@ POSITON_TOTAL_PROFIX_KEY = POSITON_TOTAL_PREFIX + "profit"
 
 
 def get_order_value(order):
-    if (((order[ORDER_ACTION_KEY] == bl.OPEN_POSITION or order[ORDER_ACTION_KEY] == bl.UNLOCK_POSITION) and order[ORDER_DIRECTION_KEY] == bl.DIRECTION_LONG) or
-        ((order[ORDER_ACTION_KEY] == bl.CLOSE_POSITION or order[ORDER_ACTION_KEY] == bl.LOCK_POSITION) and order[ORDER_DIRECTION_KEY] == bl.DIRECTION_SHORT)):
+    if ((order[ORDER_ACTION_KEY] in [bl.OPEN_POSITION, bl.UNLOCK_POSITION] and order[ORDER_DIRECTION_KEY] == bl.DIRECTION_LONG) or
+        (order[ORDER_ACTION_KEY] in [bl.CLOSE_POSITION, bl.LOCK_POSITION] and order[ORDER_DIRECTION_KEY] == bl.DIRECTION_SHORT)):
         return - order[ORDER_DEAL_VALUE_KEY]
     else:
         return order[ORDER_DEAL_VALUE_KEY]

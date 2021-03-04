@@ -161,7 +161,7 @@ if __name__ == "__main__":
     parser_add.add_argument('-status', choices=si.strategy_instance_statuses, default=si.STRATEGY_INSTANCE_STATUS_START, help='strategy instance status')
     parser_add.set_defaults(func=real2_add)
 
-    parser_delete = subparsers.add_parser('delete', help='add new strategy instance')
+    parser_delete = subparsers.add_parser('delete', help='delete strategy instance')
     parser_delete.add_argument('-sii', required=True, help='strategy instance id')
     parser_delete.set_defaults(func=real2_delete)
 
