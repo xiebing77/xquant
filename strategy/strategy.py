@@ -58,12 +58,16 @@ class SignalStrategy(Strategy):
             info += aligning + info_tmp
         return info
 
-    def on_tick(self, klines):
+    def on_tick(self, klines=None):
         """ tick处理接口 """
         symbol = self.config["symbol"]
+        if not klines:
+            kl_cfg = self.config["kline"]
+            klines = self.md.get_klines(symbol, kl_cfg["interval"], kl_cfg["size"])
+            if len(klines) <= 0:
+                return
         self.kls = klines
         self.cur_price = float(klines[-1][self.closeseat])
-
         cur_close_time = datetime.fromtimestamp(klines[-1][self.closetimeseat]/1000)
         self.engine.handle(symbol, self, self.cur_price, cur_close_time, "")
 

@@ -226,7 +226,7 @@ def analyze_profit_by_orders(orders, commission_rate, init_value, mode):
 
 def get_floating_profit(pst, init_value, mode, cur_price):
     if pst[POSITON_AMOUNT_KEY] == 0:
-        return 0
+        return 0, 0, 0, 0
     pst_profit, total_profit = calc_pst_profit(pst, cur_price)
     pst_profit_rate = pst_profit / get_open_value(pst, init_value, mode)
     total_profit_rate = total_profit / init_value
