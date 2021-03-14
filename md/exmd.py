@@ -1,7 +1,6 @@
 #!/usr/bin/python
 """实盘"""
-import time
-import datetime
+from datetime import datetime
 import utils.tools as ts
 import common.xquant as xq
 import common.kline as kl
@@ -19,7 +18,7 @@ class ExchangeMD(MarketingData):
 
 
     def get_latest_pirce(self, symbol):
-        kls = self.__exchange.get_klines(symbol, kl.KLINE_INTERVAL_1MINUTE, 1)
+        kls = self.get_klines(symbol, kl.KLINE_INTERVAL_1MINUTE, 1)
         if len(kls) <= 0:
             return None, None
         latest_kl = kls[0]
