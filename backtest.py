@@ -296,7 +296,7 @@ def sub_cmd_run(args):
         },
     )
 
-    engine.display(symbol, engine.orders, strategy.cur_price, True, args.rmk)
+    engine.display(symbol, engine.orders, strategy.cur_price, end_time, True, args.rmk)
 
     if args.chart:
         ordersets = []
@@ -509,7 +509,7 @@ def sub_cmd_continue(args):
             "sc": sc,
         },
     )
-    engine.display(symbol, engine.orders, True, args.rmk)
+    engine.display(symbol, engine.orders, strategy.cur_price, end_time, True, args.rmk)
 
 
 def sub_cmd_refresh(args):

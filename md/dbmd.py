@@ -32,6 +32,17 @@ class DBMD(MarketingData):
 
         self.klines_cache = {}
 
+    def get_latest_pirce(self, symbol):
+        collection = kl.get_kline_collection(symbol, kl.KLINE_INTERVAL_1MINUTE)
+        klines = self.md_db.find_sort(collection, {}, self.kline_key_open_time, -1, 1)
+        if len(klines) <= 0:
+            return None, None
+        latest_kl = klines[0]
+        latest_price = float(latest_kl[self.kline_key_close])
+        latest_time  = datetime.fromtimestamp(latest_kl[self.kline_key_close_time]/1000)
+        return latest_price, latest_time
+
+
     def get_oldest_time(self, symbol, kline_type):
         collection = kl.get_kline_collection(symbol, kline_type)
         klines = self.md_db.find_sort(collection, {}, self.kline_key_open_time, 1, 1)

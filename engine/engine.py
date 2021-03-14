@@ -370,7 +370,7 @@ class Engine:
                 # 需要解锁和平仓2个动作
                 if True: # 同一账户
                     # 实际持仓已经为空，不需发起委托，但本次持仓结束
-                    self.set_pst_lock_to_close(symbol)
+                    self.set_pst_lock_to_close(symbol, rmk)
                     return
                 else:    # 不同账户
                     # 需要发起2笔委托，暂不实现
@@ -514,7 +514,7 @@ class Engine:
         analyze_profit_by_orders(orders, self.config["commission_rate"], self.value, self.config["mode"])
 
 
-    def display(self, symbol, orders, cur_price, print_switch_hl=True, display_rmk=False):
+    def display(self, symbol, orders, end_price, end_time, print_switch_hl=True, display_rmk=False):
         #print("oders len:  %s" % len(orders))
         #pprint(orders)
         print_switch_deal = False
@@ -522,7 +522,7 @@ class Engine:
         print_switch_profit = False
 
         title = " id"
-        title += "        profit_rate"
+        title += "         profit_rate"
         title += "          create_time       price"
         title += "               pst_rate"
 
@@ -544,13 +544,13 @@ class Engine:
                 cycle_id += 1
 
             pst_profit = pst[POSITON_PROFIT_KEY]
-            total_profit = pst[POSITON_TOTAL_PROFIX_KEY]
-            pst_profit_rate = pst["pst_profit_rate"]
-            total_profit_rate = pst["total_profit_rate"]
+            total_profit = pst[TOTAL_PROFIX_KEY]
+            pst_profit_rate = pst[POSITON_PROFIT_RATE_KEY]
+            total_profit_rate = pst[TOTAL_PROFIX_RATE_KEY]
             deal_price = order["deal_value"]/order["deal_amount"]
 
             info = "%3d" % (index)
-            info += "  {:7.2%}({:8.2%})".format(pst_profit_rate, total_profit_rate)
+            info += "  {:8.2%}({:8.2%})".format(pst_profit_rate, total_profit_rate)
             info += "  %s  %10g" % (
                     datetime.fromtimestamp(order["create_time"]),
                     order["deal_value"]/order["deal_amount"],
@@ -573,7 +573,7 @@ class Engine:
                     )
             if print_switch_commission:
                 info += "  %16g" % (
-                        pst[POSITON_TOTAL_COMMISSION_KEY],
+                        pst[TOTAL_COMMISSION_KEY],
                     )
             if print_switch_profit:
                 info += "  {:8.2f}({:9.2f})".format(
@@ -616,8 +616,8 @@ class Engine:
 
         if order[ORDER_ACTION_KEY] in [bl.OPEN_POSITION, bl.UNLOCK_POSITION]:
             pst = get_pst_by_orders(orders, self.config["commission_rate"])
-            floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(pst, self.value, self.config["mode"], cur_price)
-            print("  {} {:8.2%}({:8.2%})  {}      {}".format("*", floating_profit_rate, total_profit_rate, self.now(), cur_price))
+            floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(pst, self.value, self.config["mode"], end_price)
+            print("  {}  {:8.2%}({:8.2%})  {}      {}".format("*", floating_profit_rate, total_profit_rate, end_time, end_price))
 
         orders_df = pd.DataFrame(orders)
         orders_df["create_time"] = orders_df["create_time"].map(lambda x: datetime.fromtimestamp(x))
@@ -646,7 +646,8 @@ class Engine:
             return
 
         self.analyze_orders(orders)
-        self.display(symbol, orders, print_switch_hl, display_rmk)
+        latest_price, latest_time = self.md.get_latest_pirce(symbol)
+        self.display(symbol, orders, latest_price, latest_time, print_switch_hl, display_rmk)
 
 
     def get_pst_by_orders(self, orders):

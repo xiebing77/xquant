@@ -117,6 +117,36 @@ class SignalStrategy(Strategy):
         return signals
 
 
+    def check_signal_single(self):
+        symbol = self.config["symbol"]
+        if not self.calc_ti():
+            return []
+
+        s, infos = self.signal_long_close()
+        if s:
+            return [s]
+        if "long_lock" in self.config:
+            s, infos = self.signal_long_lock(symbol)
+            if s:
+                return [s]
+        s, infos = self.signal_long_open()
+        if s:
+            return [s]
+
+        s, infos = self.signal_short_close()
+        if s:
+            return [s]
+        if "short_lock" in self.config:
+            s, infos = self.signal_short_lock(symbol)
+            if s:
+                return [s]
+        s, infos = self.signal_short_open()
+        if s:
+            return [s]
+
+        return []
+
+
     def check(self, symbol, position_info):
         info = ""
         if not self.calc_ti():

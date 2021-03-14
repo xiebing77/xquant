@@ -16,6 +16,7 @@ import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
 from db.mongodb import get_mongodb
+from engine.order import *
 from setup import *
 from chart.overlap_studies import *
 from chart.price_transform import *
@@ -222,9 +223,9 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
         #axes[i].set_label(["position rate", "profit rate"])
         #axes[i].plot(trade_times ,[round(100*order["pst_rate"], 2) for order in orders], "k-", drawstyle="steps-post", label="position")
         trade_times = [datetime.fromtimestamp(order["create_time"]) for order in orders]
-        axes[i].plot(trade_times,[round(100*order["pst_profit_rate"], 2) for order in orders], "b", drawstyle="steps", label="single profit")
+        axes[i].plot(trade_times,[round(100*order[POSITON_KEY][POSITON_PROFIT_RATE_KEY], 2) for order in orders], "b", drawstyle="steps", label="single profit")
         if args.tp:
-            axes[i].plot(trade_times, [round(100*order["total_profit_rate"], 2) for order in orders], "r--")
+            axes[i].plot(trade_times, [round(100*order[POSITON_KEY][TOTAL_PROFIX_RATE_KEY], 2) for order in orders], "r--")
 
     """
     i += 1

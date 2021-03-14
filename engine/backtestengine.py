@@ -90,6 +90,6 @@ class BackTest(Engine):
         self.view_history(symbol, orders, pst_info)
 
 
-    def set_pst_lock_to_close(self, symbol):
-        trans_lock_to_close(self.orders[-1])
+    def set_pst_lock_to_close(self, symbol, rmk):
+        trans_lock_to_close(self.orders[-1], rmk, self.now())
 

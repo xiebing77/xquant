@@ -9,6 +9,9 @@ ORDER_DEAL_AMOUNT_KEY  = "deal_amount"
 ORDER_DEAL_VALUE_KEY   = "deal_value"
 ORDER_COMMISSION_KEY   = "commission"
 ORDER_SLP_KEY          = "stop_loss_price"
+ORDER_REMARK_KEY       = "rmk"
+
+RATE_SUFFIX = "_rate"
 
 POSITON_KEY = "pst"
 
@@ -25,6 +28,7 @@ POSITON_LOW_KEY        = "low"
 POSITON_LOW_TIME_KEY   = "low_time"
 
 POSITON_PROFIT_KEY = POSITON_PREFIX + "profit"
+POSITON_PROFIT_RATE_KEY = POSITON_PROFIT_KEY + RATE_SUFFIX
 
 HISTORY_PREFIX = "history"
 HISTORY_COMMISSION_KEY = HISTORY_PREFIX + "_" + ORDER_COMMISSION_KEY
@@ -35,10 +39,10 @@ LOCK_POSITON_AMOUNT_KEY = LOCK_POSITON_PREFIX + POSITON_AMOUNT_KEY
 LOCK_POSITON_VALUE_KEY = LOCK_POSITON_PREFIX + POSITON_VALUE_KEY
 LOCK_POSITON_COMMISSION_KEY = LOCK_POSITON_PREFIX + POSITON_COMMISSION_KEY
 
-POSITON_TOTAL_PREFIX = "total_"
-POSITON_TOTAL_COMMISSION_KEY = POSITON_TOTAL_PREFIX + POSITON_COMMISSION_KEY
-POSITON_TOTAL_PROFIX_KEY = POSITON_TOTAL_PREFIX + "profit"
-
+TOTAL_PREFIX = "total_"
+TOTAL_COMMISSION_KEY = TOTAL_PREFIX + POSITON_COMMISSION_KEY
+TOTAL_PROFIX_KEY = TOTAL_PREFIX + "profit"
+TOTAL_PROFIX_RATE_KEY = TOTAL_PROFIX_KEY + RATE_SUFFIX
 
 def get_order_value(order):
     if ((order[ORDER_ACTION_KEY] in [bl.OPEN_POSITION, bl.UNLOCK_POSITION] and order[ORDER_DIRECTION_KEY] == bl.DIRECTION_LONG) or
@@ -52,10 +56,11 @@ def pst_is_lock(pst):
         return True
     return False
 
-def trans_lock_to_close(lastly_order):
+def trans_lock_to_close(lastly_order, rmk, cur_time):
     if lastly_order[ORDER_ACTION_KEY] == bl.LOCK_POSITION:
         lastly_order[ORDER_ACTION_KEY] = bl.CLOSE_POSITION
         lastly_order["pst_rate"] = 0
+        lastly_order[ORDER_REMARK_KEY] += "  close positon time: %s  " % cur_time + rmk
         del lastly_order[POSITON_KEY]
 
 def get_pst_first_order(orders):
@@ -196,7 +201,7 @@ def calc_pst_profit(pst, cur_price):
         if LOCK_POSITON_COMMISSION_KEY in pst:
             total_commission += pst[LOCK_POSITON_COMMISSION_KEY]
 
-    pst[POSITON_TOTAL_COMMISSION_KEY] = total_commission
+    pst[TOTAL_COMMISSION_KEY] = total_commission
     return pst_profit, total_profit
 
 
@@ -217,11 +222,11 @@ def analyze_profit_by_orders(orders, commission_rate, init_value, mode):
         deal_price = order["deal_value"] / order["deal_amount"]
         pst_profit, total_profit = calc_pst_profit(pst, deal_price)
         pst[POSITON_PROFIT_KEY] = pst_profit
-        pst[POSITON_TOTAL_PROFIX_KEY] = total_profit
+        pst[TOTAL_PROFIX_KEY] = total_profit
 
         open_value = get_open_value(pst, init_value, mode)
-        pst["pst_profit_rate"] = pst_profit / open_value
-        pst["total_profit_rate"] = total_profit / init_value
+        pst[POSITON_PROFIT_RATE_KEY] = pst_profit / open_value
+        pst[TOTAL_PROFIX_RATE_KEY] = total_profit / init_value
 
 
 def get_floating_profit(pst, init_value, mode, cur_price):

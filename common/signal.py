@@ -19,7 +19,11 @@ SIGNAL_COLOR_ORANGERED = "orangered"
 
 SIGNAL_COLOR_FUCHSIA    = "fuchsia"
 SIGNAL_COLOR_ORCHID    = "orchid"
+SIGNAL_COLOR_PURPLE    = "purple"
 
+SIGNAL_COLOR_SALMON    = "salmon"
+
+SIGNAL_COLOR_SIENNA    = "sienna"
 
 
 def create_signal(name, describe="", color=None, result=None):

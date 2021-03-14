@@ -18,6 +18,16 @@ class ExchangeMD(MarketingData):
         self.kline_data_type = kline_data_type
 
 
+    def get_latest_pirce(self, symbol):
+        kls = self.__exchange.get_klines(symbol, kl.KLINE_INTERVAL_1MINUTE, 1)
+        if len(kls) <= 0:
+            return None, None
+        latest_kl = kls[0]
+        latest_price = float(latest_kl[self.kline_key_close])
+        latest_time  = datetime.fromtimestamp(latest_kl[self.kline_key_close_time]/1000)
+        return latest_price, latest_time
+
+
     def get_klines(self, symbol, interval, size):
         """ 获取日k线 """
         kls = self.__exchange.get_klines(symbol, interval, size)

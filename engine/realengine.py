@@ -80,12 +80,12 @@ class RealEngine(Engine):
 
         return self._get_position(symbol, orders, cur_price)
 
-    def set_pst_lock_to_close(self, symbol):
+    def set_pst_lock_to_close(self, symbol, rmk):
         orders = self.get_orders(symbol)
         if len(orders) == 0:
             return
         lastly_order = orders[-1]
-        trans_lock_to_close(lastly_order)
+        trans_lock_to_close(lastly_order, rmk, self.now())
         self.td_db.update_one(self.db_orders_name, lastly_order["_id"], lastly_order)
         return
 
