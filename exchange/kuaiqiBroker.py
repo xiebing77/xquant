@@ -10,9 +10,9 @@ import common.bill as bl
 from .binance.client import Client
 from .binance.enums import *
 
-api_key = os.environ.get('BINANCE_API_KEY')
-secret_key = os.environ.get('BINANCE_SECRET_KEY')
-data_dir = "/Users/fly/data"
+#api_key = os.environ.get('BINANCE_API_KEY')
+#secret_key = os.environ.get('BINANCE_SECRET_KEY')
+data_dir = "/Users/xxx/data"
 
 class KuaiqiBroker:
     """KuaiqiBroker"""

@@ -57,6 +57,9 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
             batch = size
          # print(batch)
 
+        if batch == 0:
+            break
+
         klines = exchange.get_klines(symbol, kline_type, size=batch, since=1000*int(tmp_time.timestamp()))
         klines_df = pd.DataFrame(klines, columns=exchange.kline_column_names)
         klen = len(klines)
@@ -68,9 +71,11 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
             klines_df = klines_df.drop([i])
             # last_kline = klines[i]
             # print("%s  %s" % (datetime.fromtimestamp(last_kline[0]/1000),last_kline))
-
-        if not db.insert_many(collection, klines_df.to_dict('records')):
-            for item in klines_df.to_dict('records'):
+        db_datalines = klines_df.to_dict('records')
+        if len(db_datalines) == 0:
+            break
+        if not db.insert_many(collection, db_datalines):
+            for item in db_datalines:
                 db.insert_one(collection, item)
 
         last_time = datetime.fromtimestamp(klines_df[open_time_key].values[-1]/1000) + interval
