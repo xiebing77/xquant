@@ -24,6 +24,7 @@ SIGNAL_COLOR_PURPLE    = "purple"
 SIGNAL_COLOR_SALMON    = "salmon"
 
 SIGNAL_COLOR_SIENNA    = "sienna"
+SIGNAL_COLOR_MAROON    = "maroon"
 
 
 def create_signal(name, describe="", color=None, result=None):

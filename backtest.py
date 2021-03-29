@@ -100,8 +100,8 @@ def run2(engine, md, strategy, start_time, end_time, progress_disp=True):
     size = strategy.config["kline"]["size"]
     interval_klines = md.get_original_klines(interval_collection, start_time - interval_td * size, end_time)
 
-    if hasattr(strategy, "init_bt"):
-        strategy.init_bt(interval_klines)
+    if hasattr(strategy, "init_kls"):
+        strategy.init_kls(interval_klines)
 
     kl_key_open_time = md.kline_key_open_time
     for i in range(size+1):
