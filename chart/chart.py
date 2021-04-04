@@ -261,9 +261,12 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
 def chart(title, md, symbol, interval, start_time, end_time, ordersets, args, signalsets=[]):
     display_count = int((end_time - start_time).total_seconds()/kl.get_interval_seconds(interval))
     print("display_count: %s" % display_count)
-
-    klines = md.get_klines(symbol, interval, 150+display_count)
-    chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signalsets)
+    
+    #klines = md.get_klines(symbol, interval, 150+display_count)
+    klines = md.get_original_klines(kl.get_kline_collection(symbol, interval), start_time, end_time)
+    #print("klines: %s"%klines)
+    if len(klines) > 0:
+        chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signalsets)
 
 def chart_add_all_argument(parser):
     add_argument_overlap_studies(parser)
