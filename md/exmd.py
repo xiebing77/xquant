@@ -26,14 +26,14 @@ class ExchangeMD(MarketingData):
 
     def get_klines(self, symbol, interval, size):
         """ 获取日k线 """
-        kls = self.__exchange.get_klines(symbol, interval, size)
+        kls = self._exchange.get_klines(symbol, interval, size)
 
-        if self.__exchange.kline_data_type == self.kline_data_type:
+        if self._exchange.kline_data_type == self.kline_data_type:
             return kls
-        elif self.__exchange.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
-            return kl.trans_from_list_to_json(kls, self.__exchange.kline_column_names)
+        elif self._exchange.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
+            return kl.trans_from_list_to_json(kls, self._exchange.kline_column_names)
         else:
-            return kl.trans_from_json_to_list(kls, self.__exchange.kline_column_names)
+            return kl.trans_from_json_to_list(kls, self._exchange.kline_column_names)
 
     def get_klines_1day(self, symbol, size):
         """ 获取日k线 """

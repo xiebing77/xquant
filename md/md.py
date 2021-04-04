@@ -18,54 +18,54 @@ class MarketingData:
         self.kline_key_low        = exchange.kline_key_low
         self.kline_key_volume     = exchange.kline_key_volume
 
-        self.__exchange = exchange
+        self._exchange = exchange
         self.kline_data_type = kline_data_type
 
 
     def get_kline_column_names(self):
-        return self.__exchange.kline_column_names
+        return self._exchange.kline_column_names
 
     def get_kline_seat_open_time(self):
         if self.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
-            return self.__exchange.kline_idx_open_time
+            return self._exchange.kline_idx_open_time
         else:
-            return self.__exchange.kline_key_open_time
+            return self._exchange.kline_key_open_time
 
     def get_kline_seat_close_time(self):
         if self.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
-            return self.__exchange.kline_idx_close_time
+            return self._exchange.kline_idx_close_time
         else:
-            return self.__exchange.kline_key_close_time
+            return self._exchange.kline_key_close_time
 
     def get_kline_seat_open(self):
         if self.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
-            return self.__exchange.kline_idx_open
+            return self._exchange.kline_idx_open
         else:
-            return self.__exchange.kline_key_open
+            return self._exchange.kline_key_open
 
     def get_kline_seat_close(self):
         if self.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
-            return self.__exchange.kline_idx_close
+            return self._exchange.kline_idx_close
         else:
-            return self.__exchange.kline_key_close
+            return self._exchange.kline_key_close
 
     def get_kline_seat_high(self):
         if self.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
-            return self.__exchange.kline_idx_high
+            return self._exchange.kline_idx_high
         else:
-            return self.__exchange.kline_key_high
+            return self._exchange.kline_key_high
 
     def get_kline_seat_low(self):
         if self.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
-            return self.__exchange.kline_idx_low
+            return self._exchange.kline_idx_low
         else:
-            return self.__exchange.kline_key_low
+            return self._exchange.kline_key_low
 
     def get_kline_seat_volume(self):
         if self.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
-            return self.__exchange.kline_idx_volume
+            return self._exchange.kline_idx_volume
         else:
-            return self.__exchange.kline_key_volume
+            return self._exchange.kline_key_volume
 
 
     def get_kline_open_time(self, kl):
