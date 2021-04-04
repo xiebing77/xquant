@@ -65,8 +65,8 @@ class DBMD(MarketingData):
             collection,
             {
                 self.kline_key_open_time: {
-                    "$gte": s_time.timestamp() * 1000,
-                    "$lt": e_time.timestamp() * 1000,
+                    "$gte": self.get_data_ts_from_time(s_time),
+                    "$lt": self.get_data_ts_from_time(e_time),
                 }
             },
             {"_id":0},
@@ -156,10 +156,8 @@ class DBMD(MarketingData):
     def __get_klines_1min_cache(self, symbol, interval, s_time, e_time):
         """ 获取分钟k线 """
         if interval in self.k1ms_cache:
-            if self.k1ms_cache[interval][0][self.kline_key_open_time] == s_time.timestamp() * 1000:
-                s_time = datetime.fromtimestamp(
-                    self.k1ms_cache[interval][-1][self.kline_key_open_time] / 1000
-                ) + timedelta(minutes=1)
+            if self.k1ms_cache[interval][0][self.kline_key_open_time] == self.get_data_ts_from_time(s_time):
+                s_time = self.get_time_from_data_ts(self.k1ms_cache[interval][-1][self.kline_key_open_time]) + timedelta(minutes=1)
             else:
                 del self.k1ms_cache[interval]
 
@@ -188,7 +186,7 @@ class DBMD(MarketingData):
         if tmp_len >= len(self.k1ms_cache[interval]):
             return self.k1ms_cache[interval]
 
-        e_timestamp = e_time.timestamp() * 1000
+        e_timestamp = self.get_data_ts_from_time(e_time)
         while tmp_len > 0:
             if self.k1ms_cache[interval][tmp_len][self.kline_key_open_time] <= e_timestamp:
                 break

@@ -48,8 +48,8 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
     opens = pd.to_numeric(opens)
     closes = pd.to_numeric(closes)
     base_close = closes.values[0]
-    open_times = [datetime.fromtimestamp((float(open_time)/1000)) for open_time in klines_df[md.kline_key_open_time][-display_count:]]
-    close_times = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_df[md.kline_key_close_time][-display_count:]]
+    open_times = [md.get_time_from_data_ts(float(open_time)) for open_time in klines_df[md.kline_key_open_time][-display_count:]]
+    close_times = [md.get_time_from_data_ts(float(close_time)) for close_time in klines_df[md.kline_key_close_time][-display_count:]]
 
     cols = (1 + get_momentum_indicators_count(args)
         + get_volume_indicators_count(args)
@@ -84,7 +84,7 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
     ax_kl = axes[0]
     quotes = []
     for k in klines[-display_count:]:
-        d = datetime.fromtimestamp(k[md.get_kline_seat_open_time()]/1000)
+        d = md.get_time_from_data_ts(k[md.get_kline_seat_open_time()])
         quote = (dts.date2num(d), float(k[md.get_kline_seat_open()]), float(k[md.get_kline_seat_close()]), float(k[md.get_kline_seat_high()]), float(k[md.get_kline_seat_low()]))
         quotes.append(quote)
     mpf.candlestick_ochl(ax_kl, quotes, width=0.02, colorup='g', colordown='r')
@@ -115,10 +115,10 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
             count_mi = display_count*12
             klines_mi = md.get_klines(symbol, interval_mi, count_mi)
             klines_mi_df = pd.DataFrame(klines_mi, columns=md.kline_column_names)
-            close_times_mi = [datetime.fromtimestamp((float(close_time)/1000)) for close_time in klines_mi_df[md.kline_key_close_time][-count_mi:]]
+            close_times_mi = [md.get_time_from_data_ts(float(close_time)) for close_time in klines_mi_df[md.kline_key_close_time][-count_mi:]]
             quotes = []
             for k in klines_mi[-count_mi:]:
-                d = datetime.fromtimestamp(k[md.get_kline_seat_open_time()]/1000)
+                d = md.get_time_from_data_ts(k[md.get_kline_seat_open_time()])
                 quote = (dts.date2num(d), float(k[md.get_kline_seat_open()]), float(k[md.get_kline_seat_close()]), float(k[md.get_kline_seat_high()]), float(k[md.get_kline_seat_low()]))
                 quotes.append(quote)
             mpf.candlestick_ochl(ax_kl, quotes, width=0.02, colorup='g', colordown='r')

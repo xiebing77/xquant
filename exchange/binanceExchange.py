@@ -29,6 +29,12 @@ class BinanceCommon:
                 return SIDE_BUY
         return None
 
+    def get_time_from_data_ts(self, ts):
+        return datetime.fromtimestamp(ts / 1000)
+
+    def get_data_ts_from_time(self, t):
+        return int(t.timestamp()) * 1000
+
 
 class BinanceExchange(BinanceCommon):
     """BinanceExchange"""

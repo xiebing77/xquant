@@ -27,7 +27,7 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
         # 续接db中最后一条记录，至今天之前
         klines = db.find_sort(collection, {}, open_time_key, -1, 1)
         if len(klines) > 0:
-            start_time = (datetime.fromtimestamp(klines[0][open_time_key]/1000) + interval)
+            start_time = (exchange.get_time_from_data_ts(klines[0][open_time_key]) + interval)
         else:
             start_time = exchange.start_time
         end_time = datetime.now()
@@ -60,17 +60,16 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
         if batch == 0:
             break
 
-        klines = exchange.get_klines(symbol, kline_type, size=batch, since=1000*int(tmp_time.timestamp()))
+        klines = exchange.get_klines(symbol, kline_type, size=batch, since=exchange.get_data_ts_from_time(tmp_time))
         klines_df = pd.DataFrame(klines, columns=exchange.kline_column_names)
         klen = len(klines)
         print(" %20s start time:  %s   %s" % (' ', tmp_time, klen))
         for i in range(klen-1, -1, -1):
-            last_open_time = datetime.fromtimestamp(klines_df[open_time_key].values[i]/1000)
+            last_open_time = exchange.get_time_from_data_ts(klines_df[open_time_key].values[i])
             if last_open_time + interval <= end_time:
                 break
             klines_df = klines_df.drop([i])
-            # last_kline = klines[i]
-            # print("%s  %s" % (datetime.fromtimestamp(last_kline[0]/1000),last_kline))
+
         db_datalines = klines_df.to_dict('records')
         if len(db_datalines) == 0:
             break
@@ -78,7 +77,7 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
             for item in db_datalines:
                 db.insert_one(collection, item)
 
-        last_time = datetime.fromtimestamp(klines_df[open_time_key].values[-1]/1000) + interval
+        last_time = exchange.get_time_from_data_ts(klines_df[open_time_key].values[-1]) + interval
         if last_time > tmp_time + batch * interval:
             batch = int((last_time - tmp_time)/interval)
         tmp_time += batch * interval

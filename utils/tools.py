@@ -94,14 +94,13 @@ def cacl_today_fall_rate(klines, cur_price):
     return today_fall_rate
 
 
-def cacl_period_fall_rate(klines, start_time, cur_price):
+def cacl_period_fall_rate(md, klines, start_time, cur_price):
     """ 计算开仓日期到现在最高价的回落比例 """
     if start_time is None:
         return
 
-    start_timestamp = start_time.timestamp()
     period_df = klines[
-        klines["open_time"].map(lambda x: int(x)) > start_timestamp * 1000
+        klines["open_time"].map(lambda x: int(x)) > md.get_data_ts_from_time(start_time)
     ]
     period_high_price = period_df["high"].apply(pd.to_numeric).max()
 

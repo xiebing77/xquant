@@ -68,7 +68,7 @@ class SignalStrategy(Strategy):
                 return
         self.kls = klines
         self.cur_price = float(klines[-1][self.closeseat])
-        cur_close_time = datetime.fromtimestamp(klines[-1][self.closetimeseat]/1000)
+        cur_close_time = self.md.get_time_from_data_ts(klines[-1][self.closetimeseat])
         self.engine.handle(symbol, self, self.cur_price, cur_close_time, "")
 
     def check_bill(self, symbol, position_info):

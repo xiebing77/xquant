@@ -67,10 +67,15 @@ class MarketingData:
         else:
             return self._exchange.kline_key_volume
 
+    def get_time_from_data_ts(self, ts):
+        return self._exchange.get_time_from_data_ts(ts)
+
+    def get_data_ts_from_time(self, t):
+        return self._exchange.get_data_ts_from_time(t)
 
     def get_kline_open_time(self, kl):
-        return datetime.fromtimestamp(kl[self.get_kline_seat_open_time()]/1000)
+        return self.get_time_from_data_ts(kl[self.get_kline_seat_open_time()])
 
     def get_kline_close_time(self, kl):
-        return datetime.fromtimestamp(kl[self.get_kline_seat_close_time()]/1000)
+        return self.get_time_from_data_ts(kl[self.get_kline_seat_close_time()])
 
