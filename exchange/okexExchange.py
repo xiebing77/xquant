@@ -10,6 +10,8 @@ rest_url = 'www.okex.com'
 
 class OkexExchange:
     """docstring for OkexExchange"""
+    name = "okex"
+
     def __init__(self, debug=False):
         self.client = OKCoinSpot(rest_url, api_key, secret_key)
 

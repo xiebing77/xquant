@@ -14,7 +14,8 @@ from .md import MarketingData
 class DBMD(MarketingData):
     """来源于本地数据库的市场数据"""
 
-    def __init__(self, exchange, kline_data_type=kl.KLINE_DATA_TYPE_JSON):
+    def __init__(self, exchange_name, kline_data_type=kl.KLINE_DATA_TYPE_JSON):
+        exchange = ex.create_exchange(exchange_name)
         super().__init__(exchange, kline_data_type)
 
         self.md_db = get_mongodb(exchange.name)

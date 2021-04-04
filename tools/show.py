@@ -6,7 +6,8 @@ import utils.tools as ts
 import common.xquant as xq
 import common.kline as kl
 from md.dbmd import DBMD
-from exchange.exchange import exchange_names, BINANCE_SPOT_EXCHANGE_NAME
+from exchange.exchange import get_exchange_names
+from exchange.binanceExchange import BinanceExchange
 
 from datetime import datetime,timedelta
 from chart.chart import chart, chart_add_all_argument
@@ -442,7 +443,7 @@ def show(args, klines, kline_column_names, display_count, disp_ic_keys):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='show')
-    parser.add_argument('-e', choices=exchange_names, default=BINANCE_SPOT_EXCHANGE_NAME, help='exchange')
+    parser.add_argument('-e', default=BinanceExchange.name, choices=get_exchange_names(), help='exchange')
     parser.add_argument('-s', help='symbol (btc_usdt)')
     parser.add_argument('-i', help='interval')
     parser.add_argument('-r', help='time range')

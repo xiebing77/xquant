@@ -13,7 +13,9 @@ import utils.tools as ts
 import common.xquant as xq
 import common.kline as kl
 import common.log as log
-from exchange.exchange import BINANCE_SPOT_EXCHANGE_NAME
+from exchange.exchange import get_exchange_names
+from exchange.binanceExchange import BinanceExchange
+import exchange.okex
 from engine.backtestengine import BackTest
 from engine.signalengine import TestSignal
 from chart.chart import chart, chart_add_all_argument
@@ -218,8 +220,7 @@ def sub_cmd_signal(args):
         log.init("testsignal", logfilename)
         log.info("strategy name: %s;  config: %s" % (class_name, config))
 
-    exchange_name = args.m
-    md = DBMD(exchange_name, kl.KLINE_DATA_TYPE_JSON)
+    md = DBMD(args.m, kl.KLINE_DATA_TYPE_JSON)
     engine = TestSignal(md, instance_id, config, args.log)
     strategy = ts.createInstance(module_name, class_name, config, engine)
     start_time, end_time = get_time_range(md, symbol, args.r)
@@ -648,7 +649,9 @@ if __name__ == "__main__":
     add_argument_overlap_studies(parser_run)
     parser_run.set_defaults(func=sub_cmd_run)
     """
-    parser.add_argument('-m', default=BINANCE_SPOT_EXCHANGE_NAME, help='market data source')
+    default_exchange_name = BinanceExchange.name
+    exchange_names = get_exchange_names()
+    parser.add_argument('-m', default=default_exchange_name, choices=exchange_names, help='market data source')
     parser.add_argument('-sc', help='strategy config')
     parser.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
     parser.add_argument('--chart', help='chart', action="store_true")
@@ -656,7 +659,7 @@ if __name__ == "__main__":
     parser.add_argument('--rmk', help='remark', action="store_true")
 
     parser_signal = subparsers.add_parser('signal', help='test signal')
-    parser_signal.add_argument('-m', default=BINANCE_SPOT_EXCHANGE_NAME, help='market data source')
+    parser_signal.add_argument('-m', default=default_exchange_name, choices=exchange_names, help='market data source')
     parser_signal.add_argument('-sc', help='strategy config')
     parser_signal.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
     parser_signal.add_argument('--chart', help='chart', default=True, action="store_true")
@@ -706,14 +709,14 @@ if __name__ == "__main__":
     parser_merge.set_defaults(func=sub_cmd_merge)
 
     parser_search = subparsers.add_parser('search', help='search')
-    parser_search.add_argument('-m', default=BINANCE_SPOT_EXCHANGE_NAME, help='market data source')
+    parser_search.add_argument('-m', default=default_exchange_name, help='market data source')
     parser_search.add_argument('-sc', help='strategy config')
     parser_search.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
     parser_search.add_argument('-count', type=int, default=10, help=' search count')
     parser_search.set_defaults(func=sub_cmd_search)
 
     parser_multisearch = subparsers.add_parser('multisearch', help='multisearch')
-    parser_multisearch.add_argument('-m', default=BINANCE_SPOT_EXCHANGE_NAME, help='market data source')
+    parser_multisearch.add_argument('-m', default=default_exchange_name, help='market data source')
     parser_multisearch.add_argument('-sc', help='strategy config')
     parser_multisearch.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
     parser_multisearch.add_argument('-count', type=int, default=10, help=' multisearch count')
