@@ -1,5 +1,6 @@
 #!/usr/bin/python
 """marketing data"""
+from datetime import datetime, timedelta
 import common.kline as kl
 import exchange.exchange  as ex
 
@@ -63,3 +64,11 @@ class MarketingData:
             return ex.get_kline_idx_volume(self.exchange_name)
         else:
             return ex.get_kline_key_volume(self.exchange_name)
+
+
+    def get_kline_open_time(self, kl):
+        return datetime.fromtimestamp(kl[self.get_kline_seat_open_time()]/1000)
+
+    def get_kline_close_time(self, kl):
+        return datetime.fromtimestamp(kl[self.get_kline_seat_close_time()]/1000)
+

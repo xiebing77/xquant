@@ -23,7 +23,7 @@ class ExchangeMD(MarketingData):
             return None, None
         latest_kl = kls[0]
         latest_price = float(latest_kl[self.kline_key_close])
-        latest_time  = datetime.fromtimestamp(latest_kl[self.kline_key_close_time]/1000)
+        latest_time  = self.get_kline_close_time(latest_kl)
         return latest_price, latest_time
 
 

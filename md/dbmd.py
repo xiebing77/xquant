@@ -39,7 +39,7 @@ class DBMD(MarketingData):
             return None, None
         latest_kl = klines[0]
         latest_price = float(latest_kl[self.kline_key_close])
-        latest_time  = datetime.fromtimestamp(latest_kl[self.kline_key_close_time]/1000)
+        latest_time = self.get_kline_close_time(latest_kl)
         return latest_price, latest_time
 
 
@@ -48,7 +48,7 @@ class DBMD(MarketingData):
         klines = self.md_db.find_sort(collection, {}, self.kline_key_open_time, 1, 1)
         if len(klines) <= 0:
             return None
-        return (datetime.fromtimestamp(klines[0][self.kline_key_open_time]/1000))
+        return self.get_kline_open_time(klines[0])
 
     def get_latest_time(self, symbol, kline_type):
         collection = kl.get_kline_collection(symbol, kline_type)
@@ -56,7 +56,7 @@ class DBMD(MarketingData):
         klines = self.md_db.find_sort(collection, {}, self.kline_key_open_time, -1, 1)
         if len(klines) <= 0:
             return None
-        return (datetime.fromtimestamp(klines[0][self.kline_key_open_time]/1000) + interval)
+        return (self.get_kline_open_time(klines[0]) + interval)
 
     def get_original_klines(self, collection, s_time, e_time):
         """ 获取k线 """

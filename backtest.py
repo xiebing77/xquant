@@ -103,30 +103,26 @@ def run2(engine, md, strategy, start_time, end_time, progress_disp=True):
     if hasattr(strategy, "init_kls"):
         strategy.init_kls(interval_klines)
 
-    kl_key_open_time = md.kline_key_open_time
     for i in range(size+1):
-        if datetime.fromtimestamp(interval_klines[i][kl_key_open_time]/1000) >= start_time:
+        if md.get_kline_open_time(interval_klines[i]) >= start_time:
             break
     interval_idx = i
 
     pre_tick_cost_time = total_tick_cost_start = datetime.now()
     tick_count = 0
     for i in range(interval_idx, len(interval_klines)):
-        interval_open_time = datetime.fromtimestamp(interval_klines[i][kl_key_open_time]/1000)
-
         start_i = i - size
         if start_i < 0:
             start_i = 0
         history_kls = interval_klines[start_i:i]
         #print(len(history_kls))
 
-        interval_open_ts = interval_klines[i][kl_key_open_time]
-        interval_open_time = datetime.fromtimestamp(interval_open_ts/1000)
+        interval_open_time = md.get_kline_open_time(interval_klines[i])
         #print(interval_open_time)
 
         tick_klines = md.get_original_klines(tick_collection, interval_open_time, interval_open_time + interval_td)
         for j, tick_kl in enumerate(tick_klines):
-            tick_open_time = datetime.fromtimestamp(tick_kl[kl_key_open_time]/1000)
+            tick_open_time = md.get_kline_open_time(tick_kl)
             engine.log_info("tick_time: %s" % tick_open_time.strftime("%Y-%m-%d %H:%M:%S"))
             #print(tick_open_time)
             if j == 0:
