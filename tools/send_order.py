@@ -4,11 +4,12 @@ sys.path.append('../')
 import argparse
 import common.bill as bl
 import common.xquant as xq
-from exchange.exchange import create_exchange, exchange_names
+from exchange.exchange import get_exchange_names, create_exchange
+from exchange.binanceExchange import BinanceExchange
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='account')
-    parser.add_argument('-exchange', choices=exchange_names, help='exchange')
+    parser.add_argument('-exchange', choicdefault=BinanceExchange.name, choices=get_exchange_names(), help='exchange')
     parser.add_argument('-symbol', help='symbol (btc_usdt)')
     parser.add_argument('-price', type=float, help='price')
     parser.add_argument('-amount', type=float, help='amount')
