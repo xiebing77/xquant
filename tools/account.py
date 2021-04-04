@@ -20,6 +20,7 @@ if __name__ == "__main__":
     if not exchange:
         print("exchange name error!")
         exit(1)
+    exchange.connect()
 
     account = exchange.get_account()
     print("account info:" )

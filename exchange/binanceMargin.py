@@ -49,6 +49,9 @@ class BinanceMargin:
 
 
     def __init__(self, debug=False):
+        return
+
+    def connect(self):
         self.__client = Client(api_key, secret_key)
         self.__spotClient = spotClient(api_key, secret_key)
 

@@ -31,6 +31,7 @@ class RealEngine(Engine):
         if not self.__exchange:
             print("Wrong exchange name: %s" % exchange_name)
             exit(1)
+        self.__exchange.connect()
 
         self.md = ExchangeMD(self.__exchange, kl.KLINE_DATA_TYPE_JSON)
 

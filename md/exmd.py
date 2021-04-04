@@ -11,10 +11,7 @@ class ExchangeMD(MarketingData):
     """交易所实盘数据"""
 
     def __init__(self, exchange, kline_data_type=kl.KLINE_DATA_TYPE_JSON):
-        super().__init__(exchange.name)
-
-        self.__exchange = exchange
-        self.kline_data_type = kline_data_type
+        super().__init__(exchange, kline_data_type)
 
 
     def get_latest_pirce(self, symbol):

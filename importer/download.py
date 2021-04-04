@@ -43,6 +43,11 @@ if __name__ == "__main__":
     if not exchange:
         print("market data source error!")
         exit(1)
+
+    print("%s connecting..." % (args.m), end='')
+    exchange.connect()
+    print('ok!')
+
     open_hour = exchange.start_time.hour
 
     if start_time.hour != open_hour:

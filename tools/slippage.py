@@ -26,6 +26,7 @@ if __name__ == "__main__":
         print("exchange name error!")
         exit(1)
     print("%s" % (args.exchange) )
+    exchange.connect()
 
     klines = exchange.get_klines_1day(symbol, 1)
     cur_price = float(klines[-1][4])

@@ -24,5 +24,6 @@ if __name__ == "__main__":
     if not exchange:
         print("exchange name error!")
         exit(1)
+    exchange.connect()
 
     exchange.send_order(args.direction, args.action, args.type, args.symbol, args.price, args.amout)

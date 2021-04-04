@@ -18,6 +18,7 @@ if __name__ == "__main__":
     if not exchange:
         print("exchange error!")
         exit(1)
+    exchange.connect()
 
     trades = exchange.get_trades(args.s)
     print("trades: %s" % trades)

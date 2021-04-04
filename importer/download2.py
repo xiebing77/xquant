@@ -96,11 +96,13 @@ if __name__ == "__main__":
         parser.print_help()
         exit(1)
 
-    print("%s connecting..." % (args.m), end='')
     exchange = create_exchange(args.m)
     if not exchange:
         print("market data source error!")
         exit(1)
+
+    print("%s connecting..." % (args.m), end='')
+    exchange.connect()
     print('ok!')
 
     db = get_mongodb(args.m)

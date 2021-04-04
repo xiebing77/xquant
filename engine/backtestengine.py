@@ -10,6 +10,7 @@ import common.bill as bl
 from .engine import Engine
 from .order import *
 from md.dbmd import DBMD
+from exchange.exchange import create_exchange
 
 
 class BackTest(Engine):
@@ -18,7 +19,12 @@ class BackTest(Engine):
     def __init__(self, instance_id, exchange_name, config, log_switch=False, *symbols):
         super().__init__(instance_id, config, 10000, log_switch)
 
-        self.md = DBMD(exchange_name, kl.KLINE_DATA_TYPE_JSON)
+        self.__exchange = create_exchange(exchange_name)
+        if not self.__exchange:
+            print("Wrong exchange name: %s" % exchange_name)
+            exit(1)
+
+        self.md = DBMD(self.__exchange, kl.KLINE_DATA_TYPE_JSON)
         self.orders = []
 
     def now(self):

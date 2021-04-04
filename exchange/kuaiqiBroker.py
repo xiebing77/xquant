@@ -44,7 +44,10 @@ class KuaiqiBroker:
 
 
     def __init__(self, debug=False):
-        # self.__client = Client(api_key, secret_key) 
+        return
+
+    def connect(self):
+        # self.__client = Client(api_key, secret_key)
         return
 
     # def __get_coinkey(self, coin):

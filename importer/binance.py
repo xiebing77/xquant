@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import db.mongodb as md
 import common.xquant as xq
 import common.kline as kl
-from exchange.binanceExchange import BinanceExchange
+import exchange as ex
 from setup import *
 import pandas as pd
 from importer import add_common_arguments, split_time_range
@@ -40,13 +40,13 @@ if __name__ == "__main__":
             start_time = None
         end_time = datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
 
-    if args.m == "binance":
-        exchange = BinanceExchange(debug=True)
-        if not start_time:
-            start_time = BinanceExchange.start_time
-    else:
+    exchange = ex.create_exchange(args.m)
+    if not exchange:
         print("market data source error!")
         exit(1)
+    exchange.connect()
+    if not start_time:
+        start_time = exchange.start_time
 
     size = 1000
     tmp_time = start_time
