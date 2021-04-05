@@ -67,8 +67,8 @@ class SignalStrategy(Strategy):
             if len(klines) <= 0:
                 return
         self.kls = klines
-        self.cur_price = float(klines[-1][self.closeseat])
-        cur_close_time = self.md.get_time_from_data_ts(klines[-1][self.closetimeseat])
+        self.cur_price = self.md.get_kline_close(klines[-1])
+        cur_close_time = self.md.get_kline_close_time(klines[-1])
         self.engine.handle(symbol, self, self.cur_price, cur_close_time, "")
 
     def check_bill(self, symbol, position_info):

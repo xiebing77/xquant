@@ -21,6 +21,14 @@ class MarketingData:
         self._exchange = exchange
         self.kline_data_type = kline_data_type
 
+        self.kline_seat_open_time  = self.get_kline_seat_open_time()
+        self.kline_seat_close_time = self.get_kline_seat_close_time()
+        self.kline_seat_open       = self.get_kline_seat_open()
+        self.kline_seat_close      = self.get_kline_seat_close()
+        self.kline_seat_high       = self.get_kline_seat_high()
+        self.kline_seat_low        = self.get_kline_seat_low()
+        self.kline_seat_volume     = self.get_kline_seat_volume()
+
 
     def get_kline_column_names(self):
         return self._exchange.kline_column_names
@@ -74,8 +82,22 @@ class MarketingData:
         return self._exchange.get_data_ts_from_time(t)
 
     def get_kline_open_time(self, kl):
-        return self.get_time_from_data_ts(kl[self.get_kline_seat_open_time()])
+        return self.get_time_from_data_ts(kl[self.kline_seat_open_time])
 
     def get_kline_close_time(self, kl):
-        return self.get_time_from_data_ts(kl[self.get_kline_seat_close_time()])
+        return self.get_time_from_data_ts(kl[self.kline_seat_close_time])
 
+    def get_kline_open(self, kl):
+        return float(kl[self.kline_seat_open])
+
+    def get_kline_close(self, kl):
+        return float(kl[self.kline_seat_close])
+
+    def get_kline_high(self, kl):
+        return float(kl[self.kline_seat_high])
+
+    def get_kline_low(self, kl):
+        return float(kl[self.kline_seat_low])
+
+    def get_kline_volume(self, kl):
+        return float(kl[self.kline_seat_volume])

@@ -20,6 +20,7 @@ class KuaiqiBroker:
     start_time = datetime(2016, 1, 1, 0)
     # min_value = 10
     # kl_bt_accuracy = kl.KLINE_INTERVAL_1MINUTE
+    max_count_of_single_download_kl = 10000
 
     kline_data_type = kl.KLINE_DATA_TYPE_LIST
 

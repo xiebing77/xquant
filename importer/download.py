@@ -59,7 +59,7 @@ if __name__ == "__main__":
     end_time = end_time.replace(hour=open_hour, minute=0, second=0, microsecond=0)
     print("time range:  %s ~ %s " % (start_time, end_time))
 
-    size = 1000
+    size = exchange.max_count_of_single_download_kl
     tmp_time = start_time
     while tmp_time < end_time:
         print(tmp_time, end="    ")

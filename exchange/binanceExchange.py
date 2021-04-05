@@ -15,6 +15,8 @@ secret_key = os.environ.get('BINANCE_SECRET_KEY')
 
 
 class BinanceCommon:
+    max_count_of_single_download_kl = 1000
+
     def _trans_side(self, direction, action):
         """转换为binance格式的side"""
         if action in [bl.OPEN_POSITION, bl.UNLOCK_POSITION]:

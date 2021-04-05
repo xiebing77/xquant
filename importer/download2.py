@@ -47,7 +47,7 @@ def download_from_exchange(exchange, db, symbol, kline_type, time_range):
     end_time = kl.get_open_time(kline_type, end_time)
     print("time range:  %s ~ %s " % (start_time, end_time))
 
-    size = 1000
+    size = exchange.max_count_of_single_download_kl
     tmp_time = start_time
     while tmp_time < end_time:
         size_interval = size * interval
