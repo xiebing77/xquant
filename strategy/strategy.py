@@ -58,17 +58,25 @@ class SignalStrategy(Strategy):
             info += aligning + info_tmp
         return info
 
-    def on_tick(self, klines=None):
+    def on_tick(self, master_kls=None, micro_kls=None):
         """ tick处理接口 """
         symbol = self.config["symbol"]
-        if not klines:
-            kl_cfg = self.config["kline"]
-            klines = self.md.get_klines(symbol, kl_cfg["interval"], kl_cfg["size"])
-            if len(klines) <= 0:
+        kl_cfg = self.config["kline"]
+        if not master_kls:
+            master_kls = self.md.get_klines(symbol, kl_cfg["interval"], kl_cfg["size"])
+            if len(master_kls) <= 0:
                 return
-        self.kls = klines
-        self.cur_price = self.md.get_kline_close(klines[-1])
-        cur_close_time = self.md.get_kline_close_time(klines[-1])
+        self.kls = master_kls
+
+        if "micro_interval" in kl_cfg:
+            if not micro_kls:
+                micro_kls = self.md.get_klines(symbol, kl_cfg["micro_interval"], kl_cfg["size"])
+                if len(micro_kls) <= 0:
+                    return
+            self.micro_kls = micro_kls
+
+        self.cur_price = self.md.get_kline_close(master_kls[-1])
+        cur_close_time = self.md.get_kline_close_time(master_kls[-1])
         self.engine.handle(symbol, self, self.cur_price, cur_close_time, "")
 
     def check_bill(self, symbol, position_info):

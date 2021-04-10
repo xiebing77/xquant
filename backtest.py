@@ -83,6 +83,15 @@ def run(engine, md, strategy, start_time, end_time):
     return tick_count
 
 
+def update_kl(md, kl, tick_kl):
+    kl[md.kline_key_close] = tick_kl[md.kline_key_close]
+    kl[md.kline_key_close_time] = tick_kl[md.kline_key_close_time]
+    if kl[md.kline_key_high] < tick_kl[md.kline_key_high]:
+        kl[md.kline_key_high] = tick_kl[md.kline_key_high]
+    if kl[md.kline_key_low] > tick_kl[md.kline_key_low]:
+        kl[md.kline_key_low] = tick_kl[md.kline_key_low]
+
+
 def run2(engine, md, strategy, start_time, end_time, progress_disp=True):
     """ run advance"""
     secs = strategy.config["sec"]
@@ -90,57 +99,60 @@ def run2(engine, md, strategy, start_time, end_time, progress_disp=True):
         secs = 60
     td_secs = timedelta(seconds=secs)
 
+    if "micro_interval" in strategy.config["kline"]:
+        return run_2kls(engine, md, strategy, start_time, end_time, progress_disp)
+    else:
+        return run_1kls(engine, md, strategy, start_time, end_time, progress_disp)
+
+
+def run_1kls(engine, md, strategy, start_time, end_time, progress_disp=True):
     symbol = strategy.config["symbol"]
 
     tick_interval = kl.KLINE_INTERVAL_1MINUTE
     tick_collection = kl.get_kline_collection(symbol, tick_interval)
     tick_td = kl.get_interval_timedelta(tick_interval)
 
-    interval = strategy.config["kline"]["interval"]
-    interval_collection = kl.get_kline_collection(symbol, interval)
-    interval_td = kl.get_interval_timedelta(interval)
-    size = strategy.config["kline"]["size"]
-    interval_klines = md.get_original_klines(interval_collection, start_time - interval_td * size, end_time)
+    kline_cfg = strategy.config["kline"]
+    size = kline_cfg["size"]
 
-    if hasattr(strategy, "init_kls"):
-        strategy.init_kls(interval_klines)
+    master_interval = kline_cfg["interval"]
+    master_td = kl.get_interval_timedelta(master_interval)
+    master_kls = md.get_original_klines(kl.get_kline_collection(symbol, master_interval),
+        start_time - master_td * size, end_time)
+
+    if hasattr(strategy, "before_backtest"):
+        strategy.before_backtest(master_kls)
 
     for i in range(size+1):
-        if md.get_kline_open_time(interval_klines[i]) >= start_time:
+        if md.get_kline_open_time(master_kls[i]) >= start_time:
             break
-    interval_idx = i
+    master_idx = i
 
     pre_tick_cost_time = total_tick_cost_start = datetime.now()
     tick_count = 0
-    for i in range(interval_idx, len(interval_klines)):
+    for i in range(master_idx, len(master_kls)):
         start_i = i - size
         if start_i < 0:
             start_i = 0
-        history_kls = interval_klines[start_i:i]
-        #print(len(history_kls))
+        history_master_kls = master_kls[start_i:i]
 
-        interval_open_time = md.get_kline_open_time(interval_klines[i])
-        #print(interval_open_time)
+        master_open_time = md.get_kline_open_time(master_kls[i])
 
-        tick_klines = md.get_original_klines(tick_collection, interval_open_time, interval_open_time + interval_td)
+        tick_klines = md.get_original_klines(tick_collection, master_open_time, master_open_time + master_td)
         for j, tick_kl in enumerate(tick_klines):
             tick_open_time = md.get_kline_open_time(tick_kl)
             engine.log_info("tick_time: %s" % tick_open_time.strftime("%Y-%m-%d %H:%M:%S"))
             #print(tick_open_time)
             if j == 0:
-                new_interval_kl = tick_kl
+                new_master_kl = tick_kl
             else:
-                new_interval_kl[md.kline_key_close] = tick_kl[md.kline_key_close]
-                new_interval_kl[md.kline_key_close_time] = tick_kl[md.kline_key_close_time]
-                if new_interval_kl[md.kline_key_high] < tick_kl[md.kline_key_high]:
-                    new_interval_kl[md.kline_key_high] = tick_kl[md.kline_key_high]
-                if new_interval_kl[md.kline_key_low] > tick_kl[md.kline_key_low]:
-                    new_interval_kl[md.kline_key_low] = tick_kl[md.kline_key_low]
+                update_kl(md, new_master_kl, tick_kl)
 
-            kls = history_kls + [new_interval_kl]
+            kls = history_master_kls + [new_master_kl]
             if md.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
                 kls = kl.trans_from_json_to_list(kls, md.kline_column_names)
             md.tick_time = tick_open_time + tick_td
+
             strategy.on_tick(kls)
 
             tick_cost_time = datetime.now()
@@ -149,20 +161,132 @@ def run2(engine, md, strategy, start_time, end_time, progress_disp=True):
             tick_count += 1
 
         if progress_disp:
-            progress = (i + 1 - interval_idx) / (len(interval_klines) - interval_idx)
+            progress = (i + 1 - master_idx) / (len(master_kls) - master_idx)
             sys.stdout.write(
                 "%s  progress: %d%%,  cost: %s, next open time: %s\r"
                 % (
                     " "*36,
                     progress * 100,
                     tick_cost_time - total_tick_cost_start,
-                    (interval_open_time+interval_td).strftime("%Y-%m-%d %H:%M:%S"),
+                    (master_open_time+master_td).strftime("%Y-%m-%d %H:%M:%S"),
                 )
             )
             sys.stdout.flush()
 
     return tick_count
 
+
+def run_2kls(engine, md, strategy, start_time, end_time, progress_disp=True):
+    symbol = strategy.config["symbol"]
+
+    tick_interval = kl.KLINE_INTERVAL_1MINUTE
+    tick_collection = kl.get_kline_collection(symbol, tick_interval)
+    tick_td = kl.get_interval_timedelta(tick_interval)
+
+    kline_cfg = strategy.config["kline"]
+    size = kline_cfg["size"]
+
+    master_interval = kline_cfg["interval"]
+    master_td = kl.get_interval_timedelta(master_interval)
+    master_original_kls = md.get_original_klines(kl.get_kline_collection(symbol, master_interval),
+        start_time - master_td * size, end_time)
+
+    micro_interval = kline_cfg["micro_interval"]
+    micro_td = kl.get_interval_timedelta(micro_interval)
+    micro_original_kls = md.get_original_klines(kl.get_kline_collection(symbol, micro_interval),
+        start_time - micro_td * size, end_time)
+
+    if hasattr(strategy, "before_backtest"):
+        strategy.before_backtest(master_original_kls, micro_original_kls)
+
+    for master_start_idx in range(size+1):
+        master_start_open_time = md.get_kline_open_time(master_original_kls[master_start_idx])
+        if master_start_open_time >= start_time:
+            break
+
+    for micro_idx in range(size+1+int(master_td/micro_td)):
+        if md.get_kline_open_time(micro_original_kls[micro_idx]) >= master_start_open_time:
+            break
+
+    pre_tick_cost_time = total_tick_cost_start = datetime.now()
+    tick_count = 0
+    tick_klines = []
+    tick_idx = 0
+    for master_idx in range(master_start_idx, len(master_original_kls)):
+        pre_start_i = master_idx - size
+        if pre_start_i < 0:
+            pre_start_i = 0
+        history_master_kls = master_original_kls[pre_start_i:master_idx]
+        master_open_time = md.get_kline_open_time(master_original_kls[master_idx])
+        next_master_open_time = master_open_time + master_td
+        new_master_kl = None
+        #print("master open time: %s" % (master_open_time))
+
+        if tick_idx >= len(tick_klines):
+            tick_klines = md.get_original_klines(tick_collection, master_open_time, master_open_time + 10*master_td)
+            tick_idx = 0
+
+        while (micro_idx < len(micro_original_kls)):
+            micro_open_time = md.get_kline_open_time(micro_original_kls[micro_idx])
+            if micro_open_time >= next_master_open_time:
+                break
+            if micro_idx > size:
+                history_micro_kls = micro_original_kls[(micro_idx - size):micro_idx]
+            else:
+                history_micro_kls = micro_original_kls[:micro_idx]
+            micro_idx += 1
+            next_micro_open_time = micro_open_time + micro_td
+            new_micro_kl = None
+            #print("micro open time: %s" % (micro_open_time))
+
+            while (tick_idx < len(tick_klines)):
+                tick_kl = tick_klines[tick_idx]
+                tick_open_time = md.get_kline_open_time(tick_kl)
+                if tick_open_time >= next_micro_open_time:
+                    break
+                tick_idx += 1
+                engine.log_info("tick_time: %s" % tick_open_time.strftime("%Y-%m-%d %H:%M:%S"))
+                #print(tick_open_time)
+
+                if not new_master_kl:
+                    new_master_kl = tick_kl
+                else:
+                    update_kl(md, new_master_kl, tick_kl)
+                master_kls = history_master_kls + [new_master_kl]
+
+                if not new_micro_kl:
+                    new_micro_kl = tick_kl
+                else:
+                    update_kl(md, new_micro_kl, tick_kl)
+                micro_kls = history_micro_kls + [new_micro_kl]
+
+                if md.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
+                    master_kls = kl.trans_from_json_to_list(master_kls, md.kline_column_names)
+                    micro_kls = kl.trans_from_json_to_list(micro_kls, md.kline_column_names)
+                md.tick_time = tick_open_time + tick_td
+
+                strategy.on_tick(master_kls, micro_kls)
+
+                tick_cost_time = datetime.now()
+                engine.log_info("tick  cost: %s \n\n" % (tick_cost_time - pre_tick_cost_time))
+                pre_tick_cost_time = tick_cost_time
+                tick_count += 1
+
+
+        if progress_disp:
+            progress = (master_idx + 1 - master_start_idx) / (len(master_original_kls) - master_start_idx)
+            sys.stdout.write(
+                "%s  progress: %d%%,  cost: %s, next open time: %s\r"
+                % (
+                    " "*36,
+                    progress * 100,
+                    tick_cost_time - total_tick_cost_start,
+                    (master_open_time+master_td).strftime("%Y-%m-%d %H:%M:%S"),
+                )
+            )
+            sys.stdout.flush()
+
+    return tick_count
 
 def refresh(engine, md, strategy, times):
     """ refresh """
