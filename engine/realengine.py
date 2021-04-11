@@ -7,7 +7,7 @@ import common.xquant as xq
 import common.kline as kl
 import common.bill as bl
 from .engine import Engine
-from .order import get_floating_profit, POSITON_AMOUNT_KEY, POSITON_COMMISSION_KEY, HISTORY_PROFIT_KEY
+from .order import *
 from exchange.exchange import create_exchange
 from md.exmd import ExchangeMD
 from db.mongodb import get_mongodb
@@ -31,6 +31,7 @@ class RealEngine(Engine):
         if not self.__exchange:
             print("Wrong exchange name: %s" % exchange_name)
             exit(1)
+        self.__exchange.connect()
 
         self.md = ExchangeMD(self.__exchange, kl.KLINE_DATA_TYPE_JSON)
 
@@ -51,35 +52,43 @@ class RealEngine(Engine):
 
         orders = self.get_orders(symbol)
 
-        if len(orders) > 0:
+        if len(orders) > 0 and orders[-1][ORDER_ACTION_KEY] in [bl.OPEN_POSITION, bl.UNLOCK_POSITION]:
+            pst_first_order = get_pst_first_order(orders)
             now_ts = self.now().timestamp()
 
-            if orders[-1]["action"] == bl.OPEN_POSITION:
-                if "high" not in orders[-1] or orders[-1]["high"] < cur_price:
-                    orders[-1]["high"] = cur_price
-                    orders[-1]["high_time"] = now_ts
-                    self.td_db.update_one(
-                        self.db_orders_name,
-                        orders[-1]["_id"],
-                        {
-                            "high": cur_price,
-                            "high_time": now_ts,
-                        },
-                    )
-
-                if "low" not in orders[-1] or orders[-1]["low"] > cur_price:
-                    orders[-1]["low"] = cur_price
-                    orders[-1]["low_time"] = now_ts
-                    self.td_db.update_one(
-                        self.db_orders_name,
-                        orders[-1]["_id"],
-                        {
-                            "low": cur_price,
-                            "low_time": now_ts,
-                        },
-                    )
+            if "high" not in pst_first_order or pst_first_order["high"] < cur_price:
+                pst_first_order["high"] = cur_price
+                pst_first_order["high_time"] = now_ts
+                self.td_db.update_one(
+                    self.db_orders_name,
+                    pst_first_order["_id"],
+                    {
+                        "high": cur_price,
+                        "high_time": now_ts,
+                    },
+                )
+            if "low" not in pst_first_order or pst_first_order["low"] > cur_price:
+                pst_first_order["low"] = cur_price
+                pst_first_order["low_time"] = now_ts
+                self.td_db.update_one(
+                    self.db_orders_name,
+                    pst_first_order["_id"],
+                    {
+                        "low": cur_price,
+                        "low_time": now_ts,
+                    },
+                )
 
         return self._get_position(symbol, orders, cur_price)
+
+    def set_pst_lock_to_close(self, symbol, rmk):
+        orders = self.get_orders(symbol)
+        if len(orders) == 0:
+            return
+        lastly_order = orders[-1]
+        trans_lock_to_close(lastly_order, rmk, self.now())
+        self.td_db.update_one(self.db_orders_name, lastly_order["_id"], lastly_order)
+        return
 
 
     def get_orders(self, symbol):
@@ -263,11 +272,7 @@ class RealEngine(Engine):
             return 0, 0, 0, None
         kls = self.md.get_klines_1day(symbol, 1)
         cur_price = float(kls[-1][self.md.get_kline_seat_close()])
-        floating_profit = get_floating_profit(pst_info, cur_price)
-        open_value = self.value
-        if self.config["mode"] == 1:
-            open_value += pst_info[HISTORY_PROFIT_KEY]
-        floating_profit_rate = floating_profit / open_value
+        floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(pst_info, self.value, self.config["mode"], cur_price)
         floating_commission  = pst_info[POSITON_COMMISSION_KEY]
         return floating_profit, floating_profit_rate, floating_commission, cur_price
 

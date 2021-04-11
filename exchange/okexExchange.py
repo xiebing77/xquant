@@ -10,6 +10,8 @@ rest_url = 'www.okex.com'
 
 class OkexExchange:
     """docstring for OkexExchange"""
+    name = "okex"
+
     def __init__(self, debug=False):
         self.client = OKCoinSpot(rest_url, api_key, secret_key)
 
@@ -20,7 +22,7 @@ class OkexExchange:
         target_coin, base_coin = xq.get_symbol_coins(symbol)
         return '%s_%s' % (self.__get_coinkey(target_coin), self.__get_coinkey(base_coin))
 
-    def __trans_side(self, side):
+    def _trans_side(self, side):
         if side == xq.SIDE_BUY:
             return 'buy'
         elif side == xq.SIDE_SELL:
@@ -63,7 +65,7 @@ class OkexExchange:
         exchange_symbol = __trans_symbol(symbol)
         self.debug('send order: pair(%s), side(%s), price(%s), amount(%s)' % (exchange_symbol, side, price, amount))
 
-        okex_side = __trans_side(side)
+        okex_side = _trans_side(side)
         if okex_side is None:
             return
       

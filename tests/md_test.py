@@ -57,8 +57,7 @@ class TestDBMD(unittest.TestCase):
         interval_collection = kl.get_kline_collection(self.symbol, self.interval)
         interval_klines = self.md.get_original_klines(interval_collection, self.start_time - self.interval_td * self.pre_count, self.end_time)
         kl = interval_klines[0]
-        kl_key_open_time = self.md.open_time_key
-        print("open_time: %s" % (datetime.fromtimestamp(kl[kl_key_open_time]/1000)))
+        print("open_time: %s" % (self.md.get_kline_open_time(kl)))
         #print("json:  %s" % (kl))
 
         ti.EMA(interval_klines, "close", 13)
@@ -73,12 +72,12 @@ class TestDBMD(unittest.TestCase):
         #pprint(interval_klines[-1])
 
         for i in range(self.pre_count+1):
-            if datetime.fromtimestamp(interval_klines[i][kl_key_open_time]/1000) >= self.start_time:
+            if self.md.get_kline_open_time(interval_klines[i]) >= self.start_time:
                 break
         interval_idx = i
         kl = interval_klines[interval_idx]
         print("interval_idx: %s" % (interval_idx))
-        print("open time: %s" % (datetime.fromtimestamp(kl[kl_key_open_time]/1000)))
+        print("open time: %s" % (self.md.get_kline_open_time(kl)))
         #print("json:  %s" % (kl))
 
         for i in range(interval_idx, len(interval_klines)):
@@ -88,14 +87,13 @@ class TestDBMD(unittest.TestCase):
             history_kls = interval_klines[start_i:i]
             #print(len(history_kls))
 
-            interval_open_ts = interval_klines[i][kl_key_open_time]
-            interval_open_time = datetime.fromtimestamp(interval_open_ts/1000)
+            interval_open_time = self.md.get_kline_open_time(interval_klines[i])
             #print(interval_open_time)
 
             tick_klines = self.md.get_original_klines(self.tick_collection, interval_open_time, interval_open_time+self.interval_td)
             new_interval_kl = tick_klines[0]
             for tick_kl in tick_klines[1:]:
-                tick_open_time = datetime.fromtimestamp(tick_kl[kl_key_open_time]/1000)
+                tick_open_time = self.md.get_kline_open_time(tick_kl)
                 #print(tick_open_time)
                 new_interval_kl["close"] = tick_kl["close"]
                 new_interval_kl["close_time"] = tick_kl["close_time"]

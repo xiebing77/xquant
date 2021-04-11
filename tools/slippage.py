@@ -2,14 +2,15 @@
 import sys
 sys.path.append('../')
 import argparse
-from exchange.exchange import create_exchange, exchange_names, BINANCE_SPOT_EXCHANGE_NAME
+from exchange.exchange import get_exchange_names, create_exchange
+from exchange.binanceExchange import BinanceExchange
 
 directions = ["buy", "sell"]
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Slippage Calculation')
-    parser.add_argument('-exchange', default=BINANCE_SPOT_EXCHANGE_NAME, choices=exchange_names, help='exchange name')
+    parser.add_argument('-exchange', default=BinanceExchange.name, choices=get_exchange_names(), help='exchange name')
     parser.add_argument('-symbol', required=True, help='symbol, eg: btc_usdt')
     parser.add_argument('-direction', required=True, choices=directions, help='direction')
     parser.add_argument('-amount', type=float, required=True, help='amount')
@@ -26,6 +27,7 @@ if __name__ == "__main__":
         print("exchange name error!")
         exit(1)
     print("%s" % (args.exchange) )
+    exchange.connect()
 
     klines = exchange.get_klines_1day(symbol, 1)
     cur_price = float(klines[-1][4])

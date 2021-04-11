@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import talib
 
-plot_colors = ['y', 'c', 'b', 'm', 'k']
+plot_colors = ['y', 'r', 'b', 'm', 'k']
 
 def add_argument_overlap_studies(parser):
     # Overlap Studies

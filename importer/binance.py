@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import db.mongodb as md
 import common.xquant as xq
 import common.kline as kl
-from exchange.binanceExchange import BinanceExchange
+import exchange as ex
 from setup import *
 import pandas as pd
 from importer import add_common_arguments, split_time_range
@@ -28,6 +28,12 @@ if __name__ == "__main__":
     db = md.MongoDB(mongo_user, mongo_pwd, args.m, db_url)
     db.ensure_index(collection, [("open_time",1)], unique=True)
 
+    exchange = ex.create_exchange(args.m)
+    if not exchange:
+        print("market data source error!")
+        exit(1)
+    exchange.connect()
+
     # 注意，下面代码有隐患，在上午8点前取1d、12h时，最后的一个是不完整的，后续再整改
     if args.r:
         start_time, end_time = split_time_range(args.r)
@@ -35,18 +41,13 @@ if __name__ == "__main__":
         # 续接db中最后一条记录，至今天之前
         klines = db.find_sort(collection, {}, 'open_time', -1, 1)
         if len(klines) > 0:
-            start_time = (datetime.fromtimestamp(klines[0]["open_time"]/1000) + interval).replace(hour=0,minute=0,second=0,microsecond=0)
+            start_time = (exchange.get_time_from_data_ts(klines[0]["open_time"]) + interval).replace(hour=0,minute=0,second=0,microsecond=0)
         else:
             start_time = None
         end_time = datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
 
-    if args.m == "binance":
-        exchange = BinanceExchange(debug=True)
-        if not start_time:
-            start_time = BinanceExchange.start_time
-    else:
-        print("market data source error!")
-        exit(1)
+    if not start_time:
+        start_time = exchange.start_time
 
     size = 1000
     tmp_time = start_time
@@ -59,7 +60,7 @@ if __name__ == "__main__":
             batch = size
          # print(batch)
 
-        klines = exchange.get_klines(symbol, args.k, size=batch, since=1000*int(tmp_time.timestamp()))
+        klines = exchange.get_klines(symbol, args.k, size=batch, since=exchange.get_data_ts_from_time(tmp_time))
 
         klines_df = pd.DataFrame(klines, columns=exchange.get_kline_column_names())
 

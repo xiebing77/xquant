@@ -17,6 +17,7 @@ ORDER_STATUS_CLOSE = "close"
 ORDER_STATUS_CANCELLING = "cancelling"
 ORDER_STATUS_CANCELLED = "cancelled"
 
+ordertypes = [ORDER_TYPE_LIMIT, ORDER_TYPE_MARKET]
 
 def creat_symbol(target_coin, base_coin):
     """create symbol"""

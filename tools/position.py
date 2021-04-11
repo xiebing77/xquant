@@ -10,8 +10,8 @@ from engine.realengine import RealEngine
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='close postion')
     parser.add_argument('-sii', help='strategy instance id')
-    parser.add_argument('-direction', choices=[bl.DIRECTION_LONG, bl.DIRECTION_SHORT], help='direction')
-    parser.add_argument('-action', choices=[bl.OPEN_POSITION, bl.CLOSE_POSITION], help='action')
+    parser.add_argument('-direction', choices=bl.directions, help='direction')
+    parser.add_argument('-action', choices=bl.actions, help='action')
     #parser.add_argument('-pr', type=float, default=0, help='postion rate')
     parser.add_argument('-rmk', help='remark')
     args = parser.parse_args()
@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     cur_price = float(klines[-1][re.md.get_kline_seat_close()])
     pst_info = re.get_position(symbol, cur_price)
-    if args.action == bl.OPEN_POSITION:
+    if args.action in [bl.OPEN_POSITION, bl.UNLOCK_POSITION]:
         pst_rate = 1
     else:
         pst_rate = 0
