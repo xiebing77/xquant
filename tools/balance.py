@@ -6,6 +6,7 @@ import common.kline as kl
 from exchange.exchange import get_exchange_names, create_exchange
 from exchange.binanceExchange import BinanceExchange
 from tabulate import tabulate as tb
+from datetime import datetime
 import pprint
 
 from common.xquant import creat_symbol, get_balance_coin, get_balance_free, get_balance_frozen
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     exchange.connect()
 
     balances = exchange.get_all_balances()
-    print(" %s balances info:" % (args.exchange) )
+    print(" %s      %s balances info:" % (datetime.now(), args.exchange) )
     #print(tb(balances))
 
     if exchange.kline_data_type == kl.KLINE_DATA_TYPE_LIST:
