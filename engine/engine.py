@@ -67,19 +67,18 @@ class Engine:
             info[POSITON_LOW_TIME_KEY]  = pst_first_order[POSITON_LOW_TIME_KEY]
 
         if self.log_switch:
-            floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(info, self.value, self.config["mode"], cur_price)
 
-            sub_info1 = "amount: %f,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g," % (
-                info["amount"], info["price"], get_cost_price(info), info["value"], info["commission"], self.value, floating_profit) if info["amount"] else ""
-            sub_info2 = "  profit rate: %g%%," % (floating_profit_rate * 100) if info["value"] else ""
-            sub_info3 = "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S") if "start_time" in info and info["start_time"] else ""
-            sub_info4 = "  history_profit: %g,  history_commission: %g,  history_profit_rate: %g%%," % (
+            com_info = "symbol( %s ); current price( %g )" % (symbol, cur_price)
+            his_info = "  history_profit: %g,  history_commission: %g,  history_profit_rate: %g%%" % (
                 info["history_profit"], info["history_commission"], (info["history_profit"] * 100 / self.value))
+            self.log_info(com_info + ";  " + his_info )
 
-            self.log_info(
-                "symbol( %s ); current price( %g ); position(%s%s%s%s  total_profit_rate: %g%%)" % (
-                symbol, cur_price, sub_info1, sub_info2, sub_info3, sub_info4, (total_profit / self.value) * 100)
-            )
+            if info["amount"]:
+                floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(info, self.value, self.config["mode"], cur_price)
+                pst_info = "position(amount: %f,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g,  profit_rate: %g, total_profit: %s,  total_profit_rate: %g%%)" % (
+                    info["amount"], info["price"], get_cost_price(info), info["value"], info["commission"], self.value, floating_profit, floating_profit_rate, total_profit, total_profit_rate * 100)
+                pst_info += "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S") if "start_time" in info and info["start_time"] else ""
+                self.log_info(pst_info)
         # print(info)
         return info
 
