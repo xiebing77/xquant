@@ -200,7 +200,7 @@ def run_2kls(engine, md, strategy, start_time, end_time, progress_disp=True):
         strategy.before_backtest(master_original_kls, micro_original_kls)
 
     for master_start_idx in range(size+1):
-        master_start_open_time = md.get_kline_open_time(master_original_kls[master_start_idx])
+        master_start_open_time = md.get_kline_open_time(master_original_kls[master_start_idx])+master_td
         if master_start_open_time >= start_time:
             break
 
@@ -216,33 +216,35 @@ def run_2kls(engine, md, strategy, start_time, end_time, progress_disp=True):
         pre_start_i = master_idx - size
         if pre_start_i < 0:
             pre_start_i = 0
-        history_master_kls = master_original_kls[pre_start_i:master_idx]
-        master_open_time = md.get_kline_open_time(master_original_kls[master_idx])
-        next_master_open_time = master_open_time + master_td
+        history_master_kls = master_original_kls[pre_start_i:master_idx+1]
+
+        new_master_open_time = md.get_kline_open_time(history_master_kls[-1]) + master_td
+        new_master_close_time = new_master_open_time + master_td
         new_master_kl = None
-        #print("master open time: %s" % (master_open_time))
+        #print("new master open time: %s" % (new_master_open_time))
 
         if tick_idx >= len(tick_klines):
-            tick_klines = md.get_original_klines(tick_collection, master_open_time, master_open_time + 10*master_td)
+            tick_klines = md.get_original_klines(tick_collection, new_master_open_time, new_master_open_time + 10*master_td)
             tick_idx = 0
 
         while (micro_idx < len(micro_original_kls)):
-            micro_open_time = md.get_kline_open_time(micro_original_kls[micro_idx])
-            if micro_open_time >= next_master_open_time:
+            if md.get_kline_open_time(micro_original_kls[micro_idx]) + micro_td >= new_master_close_time:
                 break
             if micro_idx > size:
-                history_micro_kls = micro_original_kls[(micro_idx - size):micro_idx]
+                history_micro_kls = micro_original_kls[(micro_idx - size):micro_idx+1]
             else:
-                history_micro_kls = micro_original_kls[:micro_idx]
+                history_micro_kls = micro_original_kls[:micro_idx+1]
             micro_idx += 1
-            next_micro_open_time = micro_open_time + micro_td
+
+            new_micro_open_time = md.get_kline_open_time(history_micro_kls[-1]) + micro_td
+            new_micro_close_time = new_micro_open_time + micro_td
             new_micro_kl = None
-            #print("micro open time: %s" % (micro_open_time))
+            #print("new micro open time: %s" % (new_micro_open_time))
 
             while (tick_idx < len(tick_klines)):
                 tick_kl = tick_klines[tick_idx]
                 tick_open_time = md.get_kline_open_time(tick_kl)
-                if tick_open_time >= next_micro_open_time:
+                if tick_open_time >= new_micro_close_time:
                     break
                 tick_idx += 1
                 engine.log_info("tick_time: %s" % tick_open_time.strftime("%Y-%m-%d %H:%M:%S"))
@@ -276,12 +278,12 @@ def run_2kls(engine, md, strategy, start_time, end_time, progress_disp=True):
         if progress_disp:
             progress = (master_idx + 1 - master_start_idx) / (len(master_original_kls) - master_start_idx)
             sys.stdout.write(
-                "%s  progress: %d%%,  cost: %s, next open time: %s\r"
+                "%s  progress: %d%%,  cost: %s, open time: %s\r"
                 % (
                     " "*36,
                     progress * 100,
                     tick_cost_time - total_tick_cost_start,
-                    (master_open_time+master_td).strftime("%Y-%m-%d %H:%M:%S"),
+                    new_master_open_time.strftime("%Y-%m-%d %H:%M:%S"),
                 )
             )
             sys.stdout.flush()
@@ -787,6 +789,7 @@ if __name__ == "__main__":
     parser_signal.add_argument('-sc', help='strategy config')
     parser_signal.add_argument('-r', help='time range (2018-7-1T8' + xq.time_range_split + '2018-8-1T8)')
     parser_signal.add_argument('--chart', help='chart', default=True, action="store_true")
+    parser_signal.add_argument('--log', help='log', action="store_true")
     parser_signal.add_argument('--volume', action="store_true", help='volume')
     parser_signal.add_argument('--okls', nargs='*', help='other klines')
     chart_add_all_argument(parser_signal)
