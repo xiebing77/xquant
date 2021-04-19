@@ -106,67 +106,81 @@ class SignalStrategy(Strategy):
     def check_signal(self):
         symbol = self.config["symbol"]
         signals = []
+        infos = []
 
         if not self.calc_ti():
-            return signals
+            return signals, infos
 
-        s, infos = self.signal_long_close()
+        s, tmp_infos = self.signal_long_close()
+        infos += tmp_infos
         if s:
             signals.append(s)
 
         if "long_lock" in self.config:
-            s, infos = self.signal_long_lock(symbol)
+            s, tmp_infos = self.signal_long_lock(symbol)
+            infos += tmp_infos
             if s:
                 signals.append(s)
 
-        s, infos = self.signal_long_open()
+        s, tmp_infos = self.signal_long_open()
+        infos += tmp_infos
         if s:
             signals.append(s)
 
-        s, infos = self.signal_short_close()
+        s, tmp_infos = self.signal_short_close()
+        infos += tmp_infos
         if s:
             signals.append(s)
 
         if "short_lock" in self.config:
-            s, infos = self.signal_short_lock(symbol)
+            s, tmp_infos = self.signal_short_lock(symbol)
+            infos += tmp_infos
             if s:
                 signals.append(s)
 
-        s, infos = self.signal_short_open()
+        s, tmp_infos = self.signal_short_open()
+        infos += tmp_infos
         if s:
             signals.append(s)
 
-        return signals
+        return signals, infos
 
 
     def check_signal_single(self):
         symbol = self.config["symbol"]
         if not self.calc_ti():
-            return []
+            return [], []
 
-        s, infos = self.signal_long_close()
+        infos = []
+        s, tmp_infos = self.signal_long_close()
+        infos += tmp_infos
         if s:
-            return [s]
+            return [s], infos
         if "long_lock" in self.config:
-            s, infos = self.signal_long_lock(symbol)
+            s, tmp_infos = self.signal_long_lock(symbol)
+            infos += tmp_infos
             if s:
-                return [s]
-        s, infos = self.signal_long_open()
+                return [s], infos
+        s, tmp_infos = self.signal_long_open()
+        infos += tmp_infos
         if s:
-            return [s]
+            return [s], infos
 
-        s, infos = self.signal_short_close()
+        s, tmp_infos = self.signal_short_close()
+        infos += tmp_infos
         if s:
-            return [s]
+            return [s], infos
         if "short_lock" in self.config:
-            s, infos = self.signal_short_lock(symbol)
+            s, tmp_infos = self.signal_short_lock(symbol)
+            infos += tmp_infos
             if s:
-                return [s]
-        s, infos = self.signal_short_open()
+                return [s], infos
+        s, tmp_infos = self.signal_short_open()
+        infos += tmp_infos
         if s:
-            return [s]
+            return [s], infos
 
-        return []
+        return [], infos
 
 
     def check(self, symbol, position_info):
@@ -189,11 +203,25 @@ class SignalStrategy(Strategy):
                     rmk = self.merge_infos(tmp_infos, self.aligning_info)
                     return bl.close_long_bill(0, signal["name"], rmk), log_infos
             else:
-                signal, tmp_infos = self.signal_long_open()
-                log_infos += tmp_infos
-                if signal:
+                lock_signal = None
+                if "long_lock" in self.config:
+                    lock_signal, tmp_infos = self.signal_long_lock(symbol)
+                    log_infos += tmp_infos
                     rmk = self.merge_infos(tmp_infos, self.aligning_info)
-                    return bl.open_long_bill(1, signal["name"], rmk), log_infos
+
+                    if lock_signal:
+                        if pst_amount > 0 and not pst_is_lock(position_info):
+                            return bl.lock_long_bill(position_info["pst_rate"], lock_signal["name"], rmk), log_infos
+                    else:
+                        if pst_is_lock(position_info):
+                            return bl.unlock_long_bill(position_info["pst_rate"], "unlock", rmk), log_infos
+
+                if not lock_signal:
+                    signal, tmp_infos = self.signal_long_open()
+                    log_infos += tmp_infos
+                    if signal:
+                        rmk = self.merge_infos(tmp_infos, self.aligning_info)
+                        return bl.open_long_bill(1, signal["name"], rmk), log_infos
 
         if pst_amount == 0 or (pst_amount > 0 and position_info["direction"] == bl.DIRECTION_SHORT):
             signal, tmp_infos = self.signal_short_close()
@@ -203,35 +231,25 @@ class SignalStrategy(Strategy):
                     rmk = self.merge_infos(tmp_infos, self.aligning_info)
                     return bl.close_short_bill(0, signal["name"], rmk), log_infos
             else:
-                signal, tmp_infos = self.signal_short_open()
-                log_infos += tmp_infos
-                if signal:
+                lock_signal = None
+                if "short_lock" in self.config:
+                    lock_signal, tmp_infos = self.signal_short_lock(symbol)
+                    log_infos += tmp_infos
                     rmk = self.merge_infos(tmp_infos, self.aligning_info)
-                    return bl.open_short_bill(1, signal["name"], rmk), log_infos
+                    if lock_signal:
+                        if pst_amount > 0 and not pst_is_lock(position_info):
+                            return bl.lock_short_bill(position_info["pst_rate"], lock_signal["name"], rmk), log_infos
+                    else:
+                        if pst_is_lock(position_info):
+                            return bl.unlock_short_bill(position_info["pst_rate"], "unlock", rmk), log_infos
 
-        if pst_amount <= 0:
-            return None, log_infos
-
-        if "long_lock" in self.config and position_info["direction"] == bl.DIRECTION_LONG:
-            lock_signal, tmp_infos = self.signal_long_lock(symbol)
-            log_infos += tmp_infos
-            rmk = self.merge_infos(tmp_infos, self.aligning_info)
-            if pst_is_lock(position_info):
                 if not lock_signal:
-                    return bl.unlock_long_bill(position_info["pst_rate"], "unlock", rmk), log_infos
-            else:
-                if lock_signal:
-                    return bl.lock_long_bill(position_info["pst_rate"], lock_signal["name"], rmk), log_infos
+                    signal, tmp_infos = self.signal_short_open()
+                    log_infos += tmp_infos
+                    if signal:
+                        rmk = self.merge_infos(tmp_infos, self.aligning_info)
+                        return bl.open_short_bill(1, signal["name"], rmk), log_infos
 
-        if "short_lock" in self.config and position_info["direction"] == bl.DIRECTION_SHORT:
-            lock_signal, tmp_infos = self.signal_short_lock(symbol)
-            log_infos += tmp_infos
-            rmk = self.merge_infos(tmp_infos, self.aligning_info)
-            if pst_is_lock(position_info):
-                if not lock_signal:
-                    return bl.unlock_short_bill(position_info["pst_rate"], "unlock", rmk), log_infos
-            else:
-                if lock_signal:
-                    return bl.lock_short_bill(position_info["pst_rate"], lock_signal["name"], rmk), log_infos
+
 
         return None, log_infos

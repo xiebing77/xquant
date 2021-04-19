@@ -53,7 +53,8 @@ class TestSignal(SignalEngine):
         return signalsets
 
     def handle(self, symbol, strategy, price, create_time, info):
-        signals = strategy.check_signal_single()
+        signals, infos = strategy.check_signal_single()
+        self.log_info(strategy.merge_infos(infos, strategy.aligning_log))
         self.handle_signal(symbol, signals, price, create_time)
         return
 
