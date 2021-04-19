@@ -67,18 +67,29 @@ class Engine:
             info[POSITON_LOW_TIME_KEY]  = pst_first_order[POSITON_LOW_TIME_KEY]
 
         if self.log_switch:
-
-            com_info = "symbol( %s ); current price( %g )" % (symbol, cur_price)
-            his_info = "  history_profit: %g,  history_commission: %g,  history_profit_rate: %g%%" % (
-                info["history_profit"], info["history_commission"], (info["history_profit"] * 100 / self.value))
+            com_info = "  %s current price( %g )" % (symbol, cur_price)
+            his_info = "  limit: %g;  history_profit: %g,  history_commission: %g,  history_profit_rate: %g%%" % (
+                self.value, info["history_profit"], info["history_commission"], (info["history_profit"] * 100 / self.value))
             self.log_info(com_info + ";  " + his_info )
 
-            if info["amount"]:
-                floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(info, self.value, self.config["mode"], cur_price)
-                pst_info = "position(amount: %f,  price: %g, cost price: %g,  value: %g,  commission: %g,  limit: %g,  profit: %g,  profit_rate: %g, total_profit: %s,  total_profit_rate: %g%%)" % (
-                    info["amount"], info["price"], get_cost_price(info), info["value"], info["commission"], self.value, floating_profit, floating_profit_rate, total_profit, total_profit_rate * 100)
-                pst_info += "  start_time: %s\n," % info["start_time"].strftime("%Y-%m-%d %H:%M:%S") if "start_time" in info and info["start_time"] else ""
+            if info[POSITON_AMOUNT_KEY]:
+                pst_info = "  value: %g" % (info[POSITON_VALUE_KEY])
+                if LOCK_POSITON_VALUE_KEY in info:
+                    pst_info += ",  lock_value: %g" % (info[LOCK_POSITON_VALUE_KEY])
+                pst_info += ";  commission: %g,  amount: %f" % (info[POSITON_AMOUNT_KEY], info[POSITON_COMMISSION_KEY])
+                if LOCK_POSITON_AMOUNT_KEY in info:
+                    pst_info += ",  lock_amount: %f" % (info[LOCK_POSITON_AMOUNT_KEY])
                 self.log_info(pst_info)
+
+                price_info = "  pirce: %f" % (-info[POSITON_VALUE_KEY]/info[POSITON_AMOUNT_KEY])
+                if LOCK_POSITON_AMOUNT_KEY in info and info[LOCK_POSITON_AMOUNT_KEY]:
+                    price_info += ",  lock_price: %f" % (info[LOCK_POSITON_VALUE_KEY]/info[LOCK_POSITON_AMOUNT_KEY])
+                self.log_info(price_info)
+
+                floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(info, self.value, self.config["mode"], cur_price)
+                profit_info = "  profit: %g,  profit_rate: %.2f%%, total_profit: %s,  total_profit_rate: %.2f%%)" % (floating_profit, floating_profit_rate*100, total_profit, total_profit_rate*100)
+                self.log_info(profit_info)
+
         # print(info)
         return info
 
