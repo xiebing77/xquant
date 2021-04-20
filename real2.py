@@ -40,11 +40,17 @@ def real2_list(args):
     all_his_profit = 0
     all_flo_profit = 0
     all_commission = 0
-    title1_fmt = "%-30s  %10s  "
-    title2_fmt = "    %-60s  %-20s  %10s"
+
+    title_head_fmt = "%-30s  %10s%12s"
+    head_fmt       = "%-30s  %10s(%10.0f)"
+
     title_profit_fmt = "%21s  %21s  %12s"
     profit_fmt       = "%12.2f(%6.2f%%)  %12.2f(%6.2f%%)  %12.2f"
-    print(title1_fmt % ("instance_id", "value") + title_profit_fmt % ("history_profit", "floating_profit", "commission") + title2_fmt % ("config_path", "exchange", "status"))
+
+    title_tail_fmt = "    %-60s  %-20s  %10s"
+
+
+    print(title_head_fmt % ("instance_id", "value", "") + title_profit_fmt % ("history_profit", "floating_profit", "commission") + title_tail_fmt % ("config_path", "exchange", "status"))
     for s in ss:
         instance_id = s["instance_id"]
         exchange_name = s["exchange"]
@@ -76,9 +82,10 @@ def real2_list(args):
         except Exception as ept:
             profit_info = "error:  %s" % (ept)
 
-        print(title1_fmt % (instance_id, value) + profit_info + title2_fmt % (config_path, exchange_name, status))
+        print(head_fmt % (instance_id, value, (value+history_profit+floating_profit)) + profit_info + title_tail_fmt % (config_path, exchange_name, status))
 
-    print(title1_fmt % ("all", all_value) + profit_fmt % (all_his_profit, all_his_profit/all_value*100, all_flo_profit, all_flo_profit/all_value*100, all_commission))
+    if args.stat:
+        print(head_fmt % ("all", all_value, all_value+all_his_profit+all_flo_profit) + profit_fmt % (all_his_profit, all_his_profit/all_value*100, all_flo_profit, all_flo_profit/all_value*100, all_commission))
 
 
 def real2_update(args):
@@ -153,6 +160,7 @@ if __name__ == "__main__":
     parser_list = subparsers.add_parser('list', help='list of strategy instance')
     parser_list.add_argument('-user', help='user name')
     parser_list.add_argument('--status', default=si.STRATEGY_INSTANCE_STATUS_START, choices=si.strategy_instance_statuses, help='strategy instance status')
+    parser_list.add_argument('--stat', help='stat all', action="store_true")
     parser_list.set_defaults(func=real2_list)
 
     parser_update = subparsers.add_parser('update', help='update strategy instance')
