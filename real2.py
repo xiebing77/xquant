@@ -36,9 +36,12 @@ def real2_list(args):
     td_db = get_mongodb(setup.trade_db_name)
     ss = td_db.find(si.STRATEGY_INSTANCE_COLLECTION_NAME, {"user": args.user})
     #pprint(ss)
+    all_his_profit = 0
+    all_flo_profit = 0
+    all_commission = 0
     title1_fmt = "%-30s  %10s"
     title2_fmt = "%-60s  %-20s  %10s"
-    print((title1_fmt + "    %s    " + title2_fmt) % ("instance_id", "value", "     history_profit       floating_profit", "config_path", "exchange", "status"))
+    print((title1_fmt + "    %s    " + title2_fmt) % ("instance_id", "value", "     history_profit       floating_profit     commission", "config_path", "exchange", "status"))
     for s in ss:
         instance_id = s["instance_id"]
         exchange_name = s["exchange"]
@@ -59,13 +62,19 @@ def real2_list(args):
             orders = realEngine.get_orders(symbol)
             pst_info = realEngine.get_pst_by_orders(orders)
             history_profit, history_profit_rate, history_commission = realEngine.get_history(pst_info)
+            all_his_profit += history_profit
             floating_profit, floating_profit_rate, floating_commission, cur_price = realEngine.get_floating(symbol, pst_info)
-            profit_info = "%10.2f(%6.2f%%)   %10.2f(%6.2f%%)" % (history_profit, history_profit_rate*100, floating_profit, floating_profit_rate*100)
+            all_flo_profit += floating_profit
+            commission = history_commission + floating_commission
+            all_commission += commission
+            profit_info = "%10.2f(%6.2f%%)   %10.2f(%6.2f%%)     %10.2f" % (history_profit, history_profit_rate*100, floating_profit, floating_profit_rate*100, commission)
 
         except Exception as ept:
             profit_info = "error:  %s" % (ept)
 
         print((title1_fmt + "    %s    " + title2_fmt) % (instance_id, value, profit_info, config_path, exchange_name, status))
+
+    print((title1_fmt + "    %10.2f            %10.2f              %10.2f") % ("all", "-", all_his_profit, all_flo_profit, all_commission))
 
 
 def real2_update(args):
