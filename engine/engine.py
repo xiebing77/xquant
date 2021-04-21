@@ -76,7 +76,7 @@ class Engine:
                 pst_info = "  value: %g" % (info[POSITON_VALUE_KEY])
                 if LOCK_POSITON_VALUE_KEY in info:
                     pst_info += ",  lock_value: %g" % (info[LOCK_POSITON_VALUE_KEY])
-                pst_info += ";  commission: %g,  amount: %f" % (info[POSITON_AMOUNT_KEY], info[POSITON_COMMISSION_KEY])
+                pst_info += ";  commission: %g,  amount: %f" % (info[POSITON_COMMISSION_KEY], info[POSITON_AMOUNT_KEY])
                 if LOCK_POSITON_AMOUNT_KEY in info:
                     pst_info += ",  lock_amount: %f" % (info[LOCK_POSITON_AMOUNT_KEY])
                 self.log_info(pst_info)
@@ -317,11 +317,6 @@ class Engine:
             self.log_error("请选择额度模式，默认是0")
 
         limit_rate = limit_price_rate["default"]
-        if direction == bl.DIRECTION_LONG:
-            rate = 1 - limit_rate
-        else:
-            rate = 1 + limit_rate
-
         target_coin, base_coin = xq.get_symbol_coins(symbol)
 
         if action == bl.OPEN_POSITION:
@@ -405,12 +400,20 @@ class Engine:
                 return
 
             target_amount = position_info[POSITON_AMOUNT_KEY]
+            if direction == bl.DIRECTION_LONG:
+                rate = 1 - limit_rate
+            else:
+                rate = 1 + limit_rate
 
         elif action == bl.UNLOCK_POSITION:
             # 解锁仓
             if not pst_is_lock(position_info): # 没有锁仓
                 return
             target_amount = position_info[LOCK_POSITON_AMOUNT_KEY]
+            if direction == bl.DIRECTION_LONG:
+                rate = 1 + limit_rate
+            else:
+                rate = 1 - limit_rate
         else:
             return
 
@@ -524,10 +527,9 @@ class Engine:
         analyze_profit_by_orders(orders, self.config["commission_rate"], self.value, self.config["mode"])
 
 
-    def display(self, symbol, orders, end_price, end_time, print_switch_hl=True, display_rmk=False):
+    def display(self, symbol, orders, end_price, end_time, print_switch_hl=True, display_rmk=False, print_switch_deal=False):
         #print("oders len:  %s" % len(orders))
         #pprint(orders)
-        print_switch_deal = False
         print_switch_commission = False
         print_switch_profit = False
 
@@ -651,13 +653,13 @@ class Engine:
             self.stat(signal_id, orders_df[(orders_df["cycle_id"].isin(cycle_ids))] )
 
 
-    def analyze(self, symbol, orders, print_switch_hl=True, display_rmk=False):
+    def analyze(self, symbol, orders, print_switch_hl=True, display_rmk=False, print_switch_deal=False):
         if len(orders) == 0:
             return
 
         self.analyze_orders(orders)
         latest_price, latest_time = self.md.get_latest_pirce(symbol)
-        self.display(symbol, orders, latest_price, latest_time, print_switch_hl, display_rmk)
+        self.display(symbol, orders, latest_price, latest_time, print_switch_hl, display_rmk, print_switch_deal)
 
 
     def get_pst_by_orders(self, orders):

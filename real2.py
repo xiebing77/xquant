@@ -29,7 +29,7 @@ def real2_analyze(args):
     instance = si.get_strategy_instance(args.sii)
     config = xq.get_strategy_config(instance['config_path'])
 
-    real_analyze(config, args.sii, instance['exchange'], instance['value'], args.hl, args.rmk)
+    real_analyze(config, args.sii, instance['exchange'], instance['value'], args.hl, args.rmk, args.deal)
 
 
 def real2_list(args):
@@ -155,6 +155,7 @@ if __name__ == "__main__":
     parser_analyze.add_argument('-sii', required=True, help='strategy instance id')
     parser_analyze.add_argument('--hl', help='high low', action="store_true")
     parser_analyze.add_argument('--rmk', help='remark', action="store_true")
+    parser_analyze.add_argument('--deal', help='deal amount', action="store_true")
     parser_analyze.set_defaults(func=real2_analyze)
 
     parser_list = subparsers.add_parser('list', help='list of strategy instance')

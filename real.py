@@ -40,12 +40,12 @@ def real_view(config, instance_id, exchange_name, value):
     orders = realEngine.get_orders(symbol)
     realEngine.view(symbol, orders)
 
-def real_analyze(config, instance_id, exchange_name, value, print_switch_hl, display_rmk):
+def real_analyze(config, instance_id, exchange_name, value, print_switch_hl, display_rmk, print_switch_deal):
     symbol = config['symbol']
 
     realEngine = RealEngine(instance_id, exchange_name, config, value)
     orders = realEngine.get_orders(symbol)
-    realEngine.analyze(symbol, orders, print_switch_hl, display_rmk)
+    realEngine.analyze(symbol, orders, print_switch_hl, display_rmk, print_switch_deal)
 
 
 if __name__ == "__main__":
