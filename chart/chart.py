@@ -25,6 +25,8 @@ from chart.volume_indicators import *
 from chart.volatility_indicators import *
 from chart.cycle_indicators import *
 from chart.other_indicators import *
+from chart.pattern_recognition import *
+from chart.statistic_functions import *
 
 
 def chart_mpf2(title, args, symbol, ordersets, klines, md, display_count):
@@ -56,6 +58,8 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
         + get_volatility_indicators_count(args)
         + get_cycle_indicators_count(args)
         + get_other_indicators_count(args)
+        + get_pattern_recognition_count(args)
+        + get_statistic_functions_count(args)
         + len(ordersets))
 
     if args.okls:
@@ -163,6 +167,12 @@ def chart_mpf(title, args, symbol, ordersets, klines, md, display_count, signals
 
     handle_other_indicators(args, axes, i, klines_df, close_times, display_count)
     i += get_other_indicators_count(args)
+
+    handle_pattern_recognition(args, axes, i, klines_df, close_times, display_count)
+    i += get_pattern_recognition_count(args)
+
+    handle_statistic_functions(args, axes, i, klines_df, close_times, display_count)
+    i += get_statistic_functions_count(args)
 
     '''
     ic_key = 'mr'
@@ -276,4 +286,6 @@ def chart_add_all_argument(parser):
     add_argument_volatility_indicators(parser)
     add_argument_cycle_indicators(parser)
     add_argument_other_indicators(parser)
+    add_argument_pattern_recognition(parser)
+    add_argument_statistic_functions(parser)
 

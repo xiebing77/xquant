@@ -16,7 +16,7 @@ def add_argument_overlap_studies(parser):
     group.add_argument('--DEMA', type=int, nargs='?', const=30, help='Double Exponential Moving Average')
     group.add_argument('--EMA', nargs='*', help='Exponential Moving Average')
     group.add_argument('--HT_TRENDLINE', action="store_true", help='Hilbert Transform - Instantaneous Trendline')
-    group.add_argument('--KAMA', type=int, nargs='?', const=30, help='Kaufman Adaptive Moving Average')
+    group.add_argument('--KAMA', nargs='*', help='Kaufman Adaptive Moving Average')
     group.add_argument('--MA', nargs='*', help='Moving average')
     group.add_argument('--MAMA', action="store_true", help='MESA Adaptive Moving Average')
     group.add_argument('--MIDPOINT', type=int, nargs='?', const=14, help='MidPoint over period')
@@ -28,6 +28,8 @@ def add_argument_overlap_studies(parser):
     group.add_argument('--TEMA', type=int, nargs='?', const=30, help='Triple Exponential Moving Average')
     group.add_argument('--TRIMA', type=int, nargs='?', const=30, help='Triangular Moving Average')
     group.add_argument('--WMA', type=int, nargs='?', const=30, help='Weighted Moving Average')
+
+    group.add_argument('--TSF', action="store_true", help='Time Series Forecast')
 
 def handle_overlap_studies(args, kax, klines_df, close_times, display_count):
     all_name = ""
@@ -81,16 +83,6 @@ def handle_overlap_studies(args, kax, klines_df, close_times, display_count):
             emas = talib.EMA(klines_df["close"], timeperiod=e_p)
             kax.plot(close_times, emas[-display_count:], plot_colors[idx]+'--', label="%sEMA" % (e_p))
 
-    os_key = 'HT_TRENDLINE'
-    if args.HT_TRENDLINE:
-        real = talib.HT_TRENDLINE(klines_df["close"])
-        kax.plot(close_times, real[-display_count:], "y", label=os_key)
-
-    os_key = 'KAMA'
-    if args.KAMA:
-        real = talib.KAMA(klines_df["close"], timeperiod=args.KAMA)
-        kax.plot(close_times, real[-display_count:], "y", label=os_key)
-
     if args.MA:
         name = 'MA'
         all_name += "  %s%s" % (name, args.MA)
@@ -101,11 +93,26 @@ def handle_overlap_studies(args, kax, klines_df, close_times, display_count):
             emas = talib.MA(klines_df["close"], timeperiod=e_p)
             kax.plot(close_times, emas[-display_count:], plot_colors[idx], label="%sMA" % (e_p))
 
+    os_key = 'KAMA'
+    if args.KAMA:
+        all_name += "  %s%s" % (os_key, args.KAMA)
+        for idx, e_p in enumerate(args.KAMA):
+            if idx >= len(plot_colors):
+                break
+            e_p = int(e_p)
+            real = talib.KAMA(klines_df["close"], timeperiod=e_p)
+            kax.plot(close_times, real[-display_count:], plot_colors[idx]+'.', label="%s%s" % (e_p, os_key))
+
     os_key = 'MAMA'
     if args.MAMA:
         mama, fama = talib.MAMA(klines_df["close"], fastlimit=0, slowlimit=0)
         kax.plot(close_times, mama[-display_count:], "b", label=os_key)
         kax.plot(close_times, fama[-display_count:], "c", label=os_key)
+
+    os_key = 'HT_TRENDLINE'
+    if args.HT_TRENDLINE:
+        real = talib.HT_TRENDLINE(klines_df["close"])
+        kax.plot(close_times, real[-display_count:], "y", label=os_key)
 
     os_key = 'MIDPOINT'
     if args.MIDPOINT:
@@ -154,6 +161,11 @@ def handle_overlap_studies(args, kax, klines_df, close_times, display_count):
     if args.WMA:
         real = talib.WMA(klines_df["close"], timeperiod=args.WMA)
         kax.plot(close_times, real[-display_count:], "y", label=os_key)
+
+    if args.TSF:
+        name = 'TSF'
+        real = talib.TSF(klines_df["close"], timeperiod=14)
+        kax.plot(close_times, real[-display_count:], "y:", label=name)
 
     return all_name
 

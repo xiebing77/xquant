@@ -29,7 +29,7 @@ def real2_analyze(args):
     instance = si.get_strategy_instance(args.sii)
     config = xq.get_strategy_config(instance['config_path'])
 
-    real_analyze(config, args.sii, instance['exchange'], instance['value'], args.hl, args.rmk, args.deal)
+    real_analyze(config, args.sii, instance['exchange'], instance['value'], args.hl, args.rmk, args.deal, args.lock)
 
 
 def real2_list(args):

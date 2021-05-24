@@ -238,10 +238,80 @@ def get_floating_profit(pst, init_value, mode, cur_price):
     return pst_profit, total_profit, pst_profit_rate, total_profit_rate
 
 
+def get_long_cost(pst):
+    cost = (pst[POSITON_COMMISSION_KEY] - pst[POSITON_VALUE_KEY])
+    if LOCK_POSITON_AMOUNT_KEY in pst:
+        cost += pst[LOCK_POSITON_COMMISSION_KEY]
+        if pst[LOCK_POSITON_AMOUNT_KEY] == 0:  # not lock
+            cost -= pst[LOCK_POSITON_VALUE_KEY]
+        elif pst[LOCK_POSITON_AMOUNT_KEY] == pst[POSITON_AMOUNT_KEY]:  # all lock
+            pass
+        else:  # part lock, not support now
+            pass
+    return cost
+
+
+def get_short_cost(pst):
+    cost = (pst[POSITON_VALUE_KEY] - pst[POSITON_COMMISSION_KEY])
+    if LOCK_POSITON_AMOUNT_KEY in pst:
+        cost -= pst[LOCK_POSITON_COMMISSION_KEY]
+        if pst[LOCK_POSITON_AMOUNT_KEY] == 0:  # not lock
+            cost += pst[LOCK_POSITON_VALUE_KEY]
+        elif pst[LOCK_POSITON_AMOUNT_KEY] == pst[POSITON_AMOUNT_KEY]:  # all lock
+            pass
+        else:  # part lock, not support now
+            pass
+    return cost
+
+
+def get_cost(pst):
+    if pst[POSITON_DIRECTION_KEY] == bl.DIRECTION_LONG:
+        return get_long_cost(pst)
+    else:
+        return get_short_cost(pst)
+
+
 def get_cost_price(pst):
     if pst[POSITON_AMOUNT_KEY] == 0:
         return 0
+    return get_cost(pst) / pst[POSITON_AMOUNT_KEY]
+
+
+def get_open_price(pst):
+    if pst[POSITON_AMOUNT_KEY] == 0:
+        return 0
+    return abs(pst[POSITON_VALUE_KEY] / pst[POSITON_AMOUNT_KEY])
+
+def get_lock_price(pst):
+    if pst[POSITON_AMOUNT_KEY] == 0:
+        return 0
+    if LOCK_POSITON_AMOUNT_KEY not in pst or pst[LOCK_POSITON_AMOUNT_KEY] == 0:
+        return 0
+    return abs(pst[LOCK_POSITON_VALUE_KEY] / pst[LOCK_POSITON_AMOUNT_KEY])
+
+def get_lock_profit(pst):
+    if LOCK_POSITON_AMOUNT_KEY not in pst:
+        return 0
+    if pst[LOCK_POSITON_AMOUNT_KEY] > 0:
+        return 0
+
     if pst[POSITON_DIRECTION_KEY] == bl.DIRECTION_LONG:
-        return (pst[POSITON_COMMISSION_KEY] - pst[POSITON_VALUE_KEY]) / pst[POSITON_AMOUNT_KEY]
+        return pst[LOCK_POSITON_VALUE_KEY]-pst[LOCK_POSITON_COMMISSION_KEY]
     else:
-        return (pst[POSITON_VALUE_KEY] - pst[POSITON_COMMISSION_KEY]) / pst[POSITON_AMOUNT_KEY]
+        return -pst[LOCK_POSITON_VALUE_KEY]-pst[LOCK_POSITON_COMMISSION_KEY]
+
+def get_lock_value(pst):
+    if LOCK_POSITON_AMOUNT_KEY not in pst:
+        return 0
+    if pst[LOCK_POSITON_AMOUNT_KEY] > 0:
+        return 0
+
+    if pst[POSITON_DIRECTION_KEY] == bl.DIRECTION_LONG:
+        return pst[LOCK_POSITON_VALUE_KEY]
+    else:
+        return -pst[LOCK_POSITON_VALUE_KEY]
+
+def get_lock_commission(pst):
+    if LOCK_POSITON_COMMISSION_KEY not in pst:
+        return 0
+    return pst[LOCK_POSITON_COMMISSION_KEY]

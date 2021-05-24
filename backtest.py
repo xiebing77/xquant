@@ -4,6 +4,7 @@ import os
 #sys.path.append('../')
 import argparse
 import time
+import copy
 from datetime import datetime, timedelta
 from multiprocessing import Queue, Pool, Manager
 from multiprocessing import cpu_count
@@ -205,7 +206,8 @@ def run_2kls(engine, md, strategy, start_time, end_time, progress_disp=True):
             break
 
     for micro_idx in range(size+1+int(master_td/micro_td)):
-        if md.get_kline_open_time(micro_original_kls[micro_idx]) >= master_start_open_time:
+        micro_start_open_time = md.get_kline_open_time(micro_original_kls[micro_idx]) + micro_td
+        if micro_start_open_time >= master_start_open_time:
             break
 
     pre_tick_cost_time = total_tick_cost_start = datetime.now()
@@ -224,7 +226,7 @@ def run_2kls(engine, md, strategy, start_time, end_time, progress_disp=True):
         #print("new master open time: %s" % (new_master_open_time))
 
         if tick_idx >= len(tick_klines):
-            tick_klines = md.get_original_klines(tick_collection, new_master_open_time, new_master_open_time + 10*master_td)
+            tick_klines = md.get_original_klines(tick_collection, new_master_open_time, new_master_open_time + 7*master_td)
             tick_idx = 0
 
         while (micro_idx < len(micro_original_kls)):
@@ -251,13 +253,13 @@ def run_2kls(engine, md, strategy, start_time, end_time, progress_disp=True):
                 #print(tick_open_time)
 
                 if not new_master_kl:
-                    new_master_kl = tick_kl
+                    new_master_kl = copy.copy(tick_kl)
                 else:
                     update_kl(md, new_master_kl, tick_kl)
                 master_kls = history_master_kls + [new_master_kl]
 
                 if not new_micro_kl:
-                    new_micro_kl = tick_kl
+                    new_micro_kl = copy.copy(tick_kl)
                 else:
                     update_kl(md, new_micro_kl, tick_kl)
                 micro_kls = history_micro_kls + [new_micro_kl]
@@ -577,7 +579,7 @@ def analyze(args):
     pprint.pprint(config, indent=4)
 
     engine = BackTest(instance_id, instance['mds'], config)
-    engine.analyze(config['symbol'], instance['orders'], args.hl, args.rmk)
+    engine.analyze(config['symbol'], instance['orders'], args.hl, args.rmk, args.deal, args.lock)
 
 
 def sub_cmd_continue(args):
@@ -802,6 +804,8 @@ if __name__ == "__main__":
     parser_analyze = subparsers.add_parser('analyze', help='analyze help')
     parser_analyze.add_argument('-sii', help='strategy instance id')
     parser_analyze.add_argument('--hl', help='high low', action="store_true")
+    parser_analyze.add_argument('--lock', help='lock info', action="store_true")
+    parser_analyze.add_argument('--deal', help='deal info', action="store_true")
     parser_analyze.add_argument('--rmk', help='remark', action="store_true")
     parser_analyze.set_defaults(func=analyze)
 

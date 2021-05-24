@@ -73,17 +73,15 @@ class Engine:
             self.log_info(com_info + ";  " + his_info )
 
             if info[POSITON_AMOUNT_KEY]:
-                pst_info = "  value: %g" % (info[POSITON_VALUE_KEY])
-                if LOCK_POSITON_VALUE_KEY in info:
-                    pst_info += ",  lock_value: %g" % (info[LOCK_POSITON_VALUE_KEY])
-                pst_info += ";  commission: %g,  amount: %f" % (info[POSITON_COMMISSION_KEY], info[POSITON_AMOUNT_KEY])
+                tmp_fmt = " %s: value(%g), amount(%g), commission(%g)"
+                self.log_info(tmp_fmt % ("init", info[POSITON_VALUE_KEY],
+                    info[POSITON_AMOUNT_KEY], info[POSITON_COMMISSION_KEY]))
                 if LOCK_POSITON_AMOUNT_KEY in info:
-                    pst_info += ",  lock_amount: %f" % (info[LOCK_POSITON_AMOUNT_KEY])
-                self.log_info(pst_info)
+                    self.log_info(tmp_fmt % ("lock", info[LOCK_POSITON_VALUE_KEY],
+                        info[LOCK_POSITON_AMOUNT_KEY], info[LOCK_POSITON_COMMISSION_KEY]))
 
-                price_info = "  pirce: %f" % (-info[POSITON_VALUE_KEY]/info[POSITON_AMOUNT_KEY])
-                if LOCK_POSITON_AMOUNT_KEY in info and info[LOCK_POSITON_AMOUNT_KEY]:
-                    price_info += ",  lock_price: %f" % (info[LOCK_POSITON_VALUE_KEY]/info[LOCK_POSITON_AMOUNT_KEY])
+                price_info = "  pirce:  open(%f),  cost(%f),  lock(%f)" % (
+                    get_open_price(info), get_cost_price(info), get_lock_price(info))
                 self.log_info(price_info)
 
                 floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(info, self.value, self.config["mode"], cur_price)
@@ -103,13 +101,15 @@ class Engine:
         return sl_bills + tp_bills
 
     def get_rates(self, position_info, cur_price):
-        pst_price = get_cost_price(position_info)
+        open_price = get_open_price(position_info)
+        cost_price = get_cost_price(position_info)
+
         if position_info["direction"] == bl.DIRECTION_LONG:
-            top_rate = (position_info["high"] / pst_price) - 1
-            cur_rate = (cur_price / pst_price) - 1
+            top_rate = (position_info["high"] - cost_price) / open_price
+            cur_rate = (cur_price - cost_price) / open_price
         else:
-            top_rate = 1 - (position_info["low"] / pst_price)
-            cur_rate = 1 - (cur_price / pst_price)
+            top_rate = (cost_price - position_info["low"]) / open_price
+            cur_rate = (cost_price - cur_price) / open_price
         return top_rate, cur_rate
 
     def get_can_open_time(self, cfg):
@@ -527,7 +527,7 @@ class Engine:
         analyze_profit_by_orders(orders, self.config["commission_rate"], self.value, self.config["mode"])
 
 
-    def display(self, symbol, orders, end_price, end_time, print_switch_hl=True, display_rmk=False, print_switch_deal=False):
+    def display(self, symbol, orders, end_price, end_time, print_switch_hl=True, display_rmk=False, print_switch_deal=False, print_switch_lock=False):
         #print("oders len:  %s" % len(orders))
         #pprint(orders)
         print_switch_commission = False
@@ -536,15 +536,17 @@ class Engine:
         title = " id"
         title += "         profit_rate"
         title += "          create_time       price"
-        title += "               pst_rate"
+        title += "  %24s" % "pst_rate"
 
         if print_switch_deal:
             title += "  deal_amount  deal_value"
         if print_switch_commission:
             title += "  total_commission"
+        if print_switch_lock:
+            title += "  %11s  %11s  %10s" % ("lock(value", "commission)", "cost_price")
         if print_switch_profit:
             title += "        profit(total)"
-        title += "     rmk"
+        title += "  rmk"
         print(title)
 
         cycle_id = 0
@@ -586,6 +588,12 @@ class Engine:
             if print_switch_commission:
                 info += "  %16g" % (
                         pst[TOTAL_COMMISSION_KEY],
+                    )
+            if print_switch_lock:
+                info += "  %11g  %11g  %10g" % (
+                        get_lock_value(pst),
+                        get_lock_commission(pst),
+                        get_cost_price(pst),
                     )
             if print_switch_profit:
                 info += "  {:8.2f}({:9.2f})".format(
@@ -653,13 +661,13 @@ class Engine:
             self.stat(signal_id, orders_df[(orders_df["cycle_id"].isin(cycle_ids))] )
 
 
-    def analyze(self, symbol, orders, print_switch_hl=True, display_rmk=False, print_switch_deal=False):
+    def analyze(self, symbol, orders, print_switch_hl=True, display_rmk=False, print_switch_deal=False, print_switch_lock=False):
         if len(orders) == 0:
             return
 
         self.analyze_orders(orders)
         latest_price, latest_time = self.md.get_latest_pirce(symbol)
-        self.display(symbol, orders, latest_price, latest_time, print_switch_hl, display_rmk, print_switch_deal)
+        self.display(symbol, orders, latest_price, latest_time, print_switch_hl, display_rmk, print_switch_deal, print_switch_lock)
 
 
     def get_pst_by_orders(self, orders):

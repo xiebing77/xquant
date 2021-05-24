@@ -55,11 +55,19 @@ class SignalStrategy(Strategy):
     def __init__(self, strategy_config, engine):
         super().__init__(strategy_config, engine)
         self.open_time = None
+        self.micro_open_time = None
 
     def is_open(self):
         open_time = self.md.get_kline_open_time(self.kls[-1])
         if not self.open_time or self.open_time < open_time:
             self.open_time = open_time
+            return True
+        return False
+
+    def is_micro_open(self):
+        micro_open_time = self.md.get_kline_open_time(self.micro_kls[-1])
+        if not self.micro_open_time or self.micro_open_time < micro_open_time:
+            self.micro_open_time = micro_open_time
             return True
         return False
 
@@ -88,6 +96,9 @@ class SignalStrategy(Strategy):
 
         if self.is_open():
             self.on_open()
+
+        if self.is_micro_open():
+            self.on_micro_open()
 
         self.cur_price = self.md.get_kline_close(master_kls[-1])
         cur_close_time = self.md.get_kline_close_time(master_kls[-1])

@@ -247,6 +247,9 @@ def calc_kd(kls, rsvkey, kkey, dkey, idx):
     kls[idx][kkey] = a_k * kls[idx][rsvkey] + (1 - a_k) * kls[idx-1][kkey]
     kls[idx][dkey] = a_d * kls[idx][kkey] + (1 - a_d) * kls[idx-1][dkey]
 
+def calc_j(kl, kkey, dkey):
+    return (3*kl[kkey] - 2*kl[dkey])
+
 def calc_kd_all(kls, closekey, highkey, lowkey, rsvkey, kkey, dkey, period, idx):
     highs = [float(kl[highkey]) for kl in kls[-period:]]
     lows = [float(kl[lowkey]) for kl in kls[-period:]]
