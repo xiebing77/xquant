@@ -61,7 +61,8 @@ def trans_lock_to_close(lastly_order, rmk, cur_time):
         lastly_order[ORDER_ACTION_KEY] = bl.CLOSE_POSITION
         lastly_order["pst_rate"] = 0
         lastly_order[ORDER_REMARK_KEY] += "  close positon time: %s  " % cur_time + rmk
-        del lastly_order[POSITON_KEY]
+        if POSITON_KEY in lastly_order:
+            del lastly_order[POSITON_KEY]
 
 def get_pst_first_order(orders):
     for pst_first_order in reversed(orders):

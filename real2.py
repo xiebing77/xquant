@@ -154,6 +154,7 @@ if __name__ == "__main__":
     parser_analyze = subparsers.add_parser('analyze', help='analyze strategy instance')
     parser_analyze.add_argument('-sii', required=True, help='strategy instance id')
     parser_analyze.add_argument('--hl', help='high low', action="store_true")
+    parser_analyze.add_argument('--lock', help='lock info', action="store_true")
     parser_analyze.add_argument('--rmk', help='remark', action="store_true")
     parser_analyze.add_argument('--deal', help='deal amount', action="store_true")
     parser_analyze.set_defaults(func=real2_analyze)

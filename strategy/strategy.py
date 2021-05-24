@@ -97,8 +97,8 @@ class SignalStrategy(Strategy):
         if self.is_open():
             self.on_open()
 
-        if self.is_micro_open():
-            self.on_micro_open()
+        #if self.is_micro_open():
+        #    self.on_micro_open()
 
         self.cur_price = self.md.get_kline_close(master_kls[-1])
         cur_close_time = self.md.get_kline_close_time(master_kls[-1])
@@ -210,27 +210,29 @@ class SignalStrategy(Strategy):
             signal, tmp_infos = self.signal_long_close()
             log_infos += tmp_infos
             if signal:
+                log_infos.append("long close signal: %s" % (signal["name"]))
                 if pst_amount > 0:
                     rmk = self.merge_infos(tmp_infos, self.aligning_info)
                     return bl.close_long_bill(0, signal["name"], rmk), log_infos
             else:
-                lock_signal = None
                 if "long_lock" in self.config:
-                    lock_signal, tmp_infos = self.signal_long_lock(symbol)
+                    signal, tmp_infos = self.signal_long_lock(symbol)
                     log_infos += tmp_infos
                     rmk = self.merge_infos(tmp_infos, self.aligning_info)
 
-                    if lock_signal:
+                    if signal:
+                        log_infos.append("long lock signal: %s" % (signal["name"]))
                         if pst_amount > 0 and not pst_is_lock(position_info):
-                            return bl.lock_long_bill(position_info["pst_rate"], lock_signal["name"], rmk), log_infos
+                            return bl.lock_long_bill(position_info["pst_rate"], signal["name"], rmk), log_infos
                     else:
                         if pst_is_lock(position_info):
                             return bl.unlock_long_bill(position_info["pst_rate"], "unlock", rmk), log_infos
 
-                if not lock_signal:
+                if not signal:
                     signal, tmp_infos = self.signal_long_open()
                     log_infos += tmp_infos
                     if signal:
+                        log_infos.append("long open signal: %s" % (signal["name"]))
                         rmk = self.merge_infos(tmp_infos, self.aligning_info)
                         return bl.open_long_bill(1, signal["name"], rmk), log_infos
 
@@ -238,29 +240,30 @@ class SignalStrategy(Strategy):
             signal, tmp_infos = self.signal_short_close()
             log_infos += tmp_infos
             if signal:
+                log_infos.append("short close signal: %s" % (signal["name"]))
                 if pst_amount > 0:
                     rmk = self.merge_infos(tmp_infos, self.aligning_info)
                     return bl.close_short_bill(0, signal["name"], rmk), log_infos
             else:
-                lock_signal = None
                 if "short_lock" in self.config:
-                    lock_signal, tmp_infos = self.signal_short_lock(symbol)
+                    signal, tmp_infos = self.signal_short_lock(symbol)
                     log_infos += tmp_infos
                     rmk = self.merge_infos(tmp_infos, self.aligning_info)
-                    if lock_signal:
+                    if signal:
+                        log_infos.append("short lock signal: %s" % (signal["name"]))
                         if pst_amount > 0 and not pst_is_lock(position_info):
-                            return bl.lock_short_bill(position_info["pst_rate"], lock_signal["name"], rmk), log_infos
+                            return bl.lock_short_bill(position_info["pst_rate"], signal["name"], rmk), log_infos
                     else:
                         if pst_is_lock(position_info):
                             return bl.unlock_short_bill(position_info["pst_rate"], "unlock", rmk), log_infos
 
-                if not lock_signal:
+                if not signal:
                     signal, tmp_infos = self.signal_short_open()
                     log_infos += tmp_infos
                     if signal:
+                        log_infos.append("short open signal: %s" % (signal["name"]))
                         rmk = self.merge_infos(tmp_infos, self.aligning_info)
                         return bl.open_short_bill(1, signal["name"], rmk), log_infos
 
-
-
         return None, log_infos
+

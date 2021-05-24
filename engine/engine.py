@@ -533,9 +533,15 @@ class Engine:
         print_switch_commission = False
         print_switch_profit = False
 
+        if len(orders) == 0:
+            return
+        create_time_key = "create_time"
+        create_time_size = len("%s" % datetime.fromtimestamp(orders[0][create_time_key]))
+
         title = " id"
         title += "         profit_rate"
-        title += "          create_time       price"
+        title += "  %s%s" % ((create_time_size-len(create_time_key))*" ", create_time_key)
+        title += "       price"
         title += "  %24s" % "pst_rate"
 
         if print_switch_deal:
@@ -566,7 +572,7 @@ class Engine:
             info = "%3d" % (index)
             info += "  {:8.2%}({:8.2%})".format(pst_profit_rate, total_profit_rate)
             info += "  %s  %10g" % (
-                    datetime.fromtimestamp(order["create_time"]),
+                    datetime.fromtimestamp(order[create_time_key]),
                     order["deal_value"]/order["deal_amount"],
                 )
 
@@ -637,7 +643,7 @@ class Engine:
         if order[ORDER_ACTION_KEY] in [bl.OPEN_POSITION, bl.UNLOCK_POSITION]:
             pst = get_pst_by_orders(orders, self.config["commission_rate"])
             floating_profit, total_profit, floating_profit_rate, total_profit_rate = get_floating_profit(pst, self.value, self.config["mode"], end_price)
-            print("  {}  {:8.2%}({:8.2%})  {}      {}".format("*", floating_profit_rate, total_profit_rate, end_time, end_price))
+            print("  {}  {:8.2%}({:8.2%})  {}     {}".format("*", floating_profit_rate, total_profit_rate, end_time, end_price))
 
         orders_df = pd.DataFrame(orders)
         orders_df["create_time"] = orders_df["create_time"].map(lambda x: datetime.fromtimestamp(x))
